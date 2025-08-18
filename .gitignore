@@ -1,7 +1,7 @@
 .vs/
-build*/
-out*/
-x64/
+/build*/
+/out*/
+/x64/
 *.user
 *.VC.db
 *.VC.opendb
