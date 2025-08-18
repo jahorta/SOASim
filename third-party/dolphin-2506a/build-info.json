@@ -1,0 +1,19 @@
+{
+  "dolphin_version": "2506a",
+  "commit": "9843115ad8414970312c954d83145300d7cdbec3",
+  "msvc": "19",
+  "cmake": "3.29.msvc4",
+  "arch": "x64",
+  "options": {
+    "ENABLE_QT": false,
+    "ENABLE_SDL": false,
+    "ENABLE_WX": false,
+    "ENABLE_TESTS": false,
+    "ENABLE_ANALYTICS": false,
+    "ENABLE_FFMPEG": false
+  },
+  "runtime": {
+    "Debug": "/MDd",
+    "Release": "/MD"
+  }
+}
