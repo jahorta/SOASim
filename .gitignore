@@ -5,3 +5,7 @@
 *.user
 *.VC.db
 *.VC.opendb
+/SimCore/x64/Debug
+/SimCoreSandbox/x64/Debug
+/SimCoreTests/x64/Debug
+/SimCoreTests.local.runsettings
