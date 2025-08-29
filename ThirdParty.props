@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <DOLPHIN_ROOT>$(SolutionDir)third-party\dolphin-2506a</DOLPHIN_ROOT>
+    <GTEST_ROOT>$(SolutionDir)third-party\googletest-1.17.0</GTEST_ROOT>
+    <VIGEM_ROOT>$(SolutionDir)third-party\vigem-1.21.256</VIGEM_ROOT>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(DOLPHIN_ROOT)\include\Source;$(DOLPHIN_ROOT)\include\Source\Core;$(DOLPHIN_ROOT)\include\Externals\fmt\fmt\include;$(DOLPHIN_ROOT)\include\Externals\lz4\lz4\lib;$(DOLPHIN_ROOT)\include\Externals\zlib-ng;$(GTEST_ROOT)\googletest\include;$(GTEST_ROOT)\googlemock-include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(DOLPHIN_ROOT)\lib\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <Lib>
+      <AdditionalLibraryDirectories>$(DOLPHIN_ROOT)\lib\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <BuildMacro Include="DOLPHIN_ROOT">
+      <Value>$(DOLPHIN_ROOT)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="GTEST_ROOT">
+      <Value>$(GTEST_ROOT)</Value>
+    </BuildMacro>
+    <BuildMacro Include="VIGEM_ROOT">
+      <Value>$(VIGEM_ROOT)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>
