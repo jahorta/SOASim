@@ -11,6 +11,7 @@ struct FakeRunnerPhase : IDolphinRunner
     uint32_t armed_hit_pc{ 0 };
     bool step_one_frame() override { if (i < pcs.size()) ++i; return true; }
     uint32_t get_pc() const override { return (i == 0) ? 0u : pcs[i - 1]; }
+    bool load_savestate(std::string sav) override { return true; }
     void set_next_input(const simcore::GCInputFrame&) override {}
     bool read_u8(uint32_t, uint8_t&) const override { return false; }
     bool read_u16(uint32_t, uint16_t&) const override { return false; }

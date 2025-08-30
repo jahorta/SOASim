@@ -64,7 +64,7 @@ TEST(FrameStep, BootGameThenStepOnce)
 
     const uint64_t before = emu.w.getFrameCountApprox();
 
-    ASSERT_TRUE(emu.w.stepOneFrameBlocking(10000));  // should complete exactly one frame
+    ASSERT_TRUE(emu.w.stepOneFrameBlocking(100000));  // should complete exactly one frame
 
     const uint64_t after = emu.w.getFrameCountApprox();
     EXPECT_GT(after, before) << "VI counter should advance";

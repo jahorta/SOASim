@@ -15,6 +15,7 @@ struct FakeRunner : IDolphinRunner
 
     bool step_one_frame() override { if (i < pcs.size()) ++i; return true; }
     uint32_t get_pc() const override { return i ? pcs[i - 1] : 0; }
+    bool load_savestate(std::string sav) override { return true; }
 
     void set_next_input(const simcore::GCInputFrame& f) override { last = f; }
 
