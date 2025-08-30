@@ -266,6 +266,7 @@ namespace simcore {
         else {
             m_pad.setFrame(GCPadOverride::NeutralFrame());
         }
+        g_controller_interface.UpdateInput();
     }
 
     void DolphinWrapper::setInput(const GCInputFrame& f)
