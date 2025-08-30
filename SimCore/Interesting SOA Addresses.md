@@ -1,0 +1,61 @@
+﻿# Interesting SOA Addresses
+
+### Strings
+- string array for text on overworld location tags found at 0x802b1760
+- string array for maybe text on overworld at 0x802b1f10
+- string array for ship battles at 0x802b3458
+- string array for ship tasks at 0x802b3fa0
+- some x menu strings starting at 0x802b43a8
+- string array for bounties at 0x802b7c64
+- string array for level titles at 0x802b8fa8
+- string array for shop names at 0x802b9564
+- string array for discovery names starts at 0x802b9890
+- string array for discovery descriptions starts at 0x802baca0
+- Struct array for starting PCs at 0x802c4860
+- Struct array for PC Magic at 0x802c4bf0
+- Struct array for PC SMoves at 0x802c52b0
+- Struct array for PC Weapon Info at 0x802c4bf0
+- Struct array for PC Armor Info at 0x802c6190
+- Struct array for PC Accessory Info at 0x802c6e10
+- Struct array for Status Effects at 0x802c7a90
+- Struct array for Useable Item definitions at 0x802c7c34
+- Sring array for useable item descriptions at 0x802c9668
+- String array for SMove descriptions at 0x802ca3e0
+- String array for Weapon descriptions at 0x802cad9c
+- String array for Armor descriptions at 0x802cc714
+- String array for Accessory descriptions at 0x802cd880
+- String array for item descriptions at 0x802cebec
+- String array for fish descriptions at 0x802d000c
+- String array for key item descriptions at 0x802d06c4
+- String array for ship weapon descriptions 0x802d1220
+- String array for ship accessory descriptions at 0x802d1e40
+- String array for ship item descriptions at 0x802d2bf0
+- String array for ship magic descriptions at 0x802d36dc
+- String array for ship crew descriptions at 0x802d3e94
+- String array for ship crew command descriptions at 0x802d4290
+- Struct array for treasure chests at 0x802d59e8
+- Struct array for PC ships at 0x802d6740
+- Struct array for Enemy ships at 0x802d6934
+- Struct array for ship weapons at 0x802d7e4c
+- Struct array for ship accorries at 0x802d83ec
+- Struct array for ship battle items at 0x802d8a2c
+- Struct array for ship crew at 0x802d8e64
+- String array for enemy ship attack names 0x802d917c
+- Struct array for overworld places 0x802e38b8 - Not defined
+- Struct arrays for Inventories:
+  - 0x8030bb50 - Weapons
+  - 0x8030bc88 - Armor
+  - 0x8030bdc8 - Accessories
+  - 0x8030bf08 - Useable Items
+  - 0x8030c048 - Key Items
+  - 0x8030c188 - Ship Items
+  - 0x8030c200 - Ship Cannons
+  - 0x8030c2a0 - Ship Accessories
+- Struct arrays for PCs:
+  - 0x8030b7f4 - Vyse
+  - 0x8030b850 - Aika
+  - 0x8030b8ac - Aika
+  - 0x8030b908 - Drachma
+  - 0x8030b964 - Enrique
+  - 0x8030b9c0 - Gilder
+- Struct array pointers for Battle Combatant Instances start at 0x80309de4
