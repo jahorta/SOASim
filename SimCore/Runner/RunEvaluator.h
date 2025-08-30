@@ -36,8 +36,31 @@ struct RunLogger
     virtual void on_complete(const SimulationResult&) {}
 };
 
+enum class SimPhase { Inputs, UntilBP };
+
+struct PhaseDecision
+{
+    SimPhase next{ SimPhase::UntilBP };
+    bool progressed{ false };
+    bool timeout{ false };
+    std::optional<BreakpointHit> hit{};
+    bool terminal_reached{ false };
+    bool final_success{ false };
+};
+
+struct PhaseBOptions
+{
+    std::vector<BPKey> end_keys;
+    uint32_t timeout_ms{ 5000 };
+};
+
 struct RunEvaluator
 {
+    RunEvaluator(IDolphinRunner& host_,
+        const BreakpointMap& map_,
+        std::vector<PredicatePtr> predicates_,
+        RunLogger* logger_ = nullptr);
+    
     IDolphinRunner& host;
     const BreakpointMap& map;
     std::vector<PredicatePtr> predicates;
@@ -45,4 +68,19 @@ struct RunEvaluator
 
     SimulationResult run(const std::string& branch_id,
         const std::vector<simcore::GCInputFrame>& plan);
+
+    PhaseDecision run_inputs(const std::vector<simcore::GCInputFrame>& frames,
+        SimulationResult& out);
+
+    PhaseDecision run_until_bp(const PhaseBOptions& opt,
+        SimulationResult& out);
+
+private:
+    std::unordered_map<uint32_t, const BPAddr*> by_pc;
+    bool catalog_armed{ false };
+
+    void build_index_once();
+    void ensure_catalog_breakpoints_armed();
+    void eval_predicates_for(BPKey key, SimulationResult& out);
+    bool all_enabled_predicates_passed(const SimulationResult& out) const;
 };

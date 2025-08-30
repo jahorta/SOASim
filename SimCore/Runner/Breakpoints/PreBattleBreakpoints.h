@@ -2,7 +2,7 @@
 #include <string>
 #include "BPCore.h"
 
-namespace battle_rng_screen
+namespace battle_rng_probe
 {
     enum : BPKey
     {

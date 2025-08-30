@@ -94,6 +94,13 @@ namespace simcore {
         bool readF32(uint32_t addr, float& out) const;
         bool readF64(uint32_t addr, double& out) const;
 
+        struct RunUntilHitResult { bool hit; uint32_t pc; const char* reason; };
+        bool armPcBreakpoints(const std::vector<uint32_t>& pcs);
+        bool disarmPcBreakpoints(const std::vector<uint32_t>& pcs);
+        void clearAllPcBreakpoints();
+        RunUntilHitResult runUntilBreakpointBlocking(uint32_t timeout_ms = 5000);
+
+
     private:
         // Non-movable bits live in Impl so the wrapper itself is movable.
         struct Impl;

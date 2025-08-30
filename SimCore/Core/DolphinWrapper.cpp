@@ -41,6 +41,9 @@
 #include <cstdarg>
 
 #include "Common/Logging/LogManager.h"
+#include "Core/PowerPC/BreakPoints.h"
+#include <unordered_set>
+
 
 using namespace std::chrono_literals;
 using namespace std;
@@ -539,6 +542,75 @@ namespace simcore {
         const uint64_t u = mem.Read_U64(addr);
         out = std::bit_cast<double>(u);
         return true;
+    }
+
+    static bool contains_pc(const std::unordered_set<uint32_t>& s, uint32_t v) { return s.find(v) != s.end(); }
+    struct ArmedSet { std::unordered_set<uint32_t> pcs; };
+    static ArmedSet& armed_singleton() { static ArmedSet a; return a; }
+
+    bool DolphinWrapper::armPcBreakpoints(const std::vector<uint32_t>& pcs)
+    {
+        ensureStateCallback();
+        auto& armed = armed_singleton().pcs;
+        return runOnCpuThread([&] {
+            for (auto pc : pcs)
+            {
+                if (armed.insert(pc).second)
+                    Core::System::GetInstance().GetPowerPC().GetBreakPoints().Add(pc);
+            }
+            }, true);
+    }
+
+    bool DolphinWrapper::disarmPcBreakpoints(const std::vector<uint32_t>& pcs)
+    {
+        auto& armed = armed_singleton().pcs;
+        return runOnCpuThread([&] {
+            for (auto pc : pcs)
+            {
+                auto it = armed.find(pc);
+                if (it != armed.end())
+                {
+                    Core::System::GetInstance().GetPowerPC().GetBreakPoints().Remove(pc);
+                    armed.erase(it);
+                }
+            }
+            }, true);
+    }
+
+    void DolphinWrapper::clearAllPcBreakpoints()
+    {
+        auto& armed = armed_singleton().pcs;
+        runOnCpuThread([&] {
+            for (auto pc : armed) Core::System::GetInstance().GetPowerPC().GetBreakPoints().Remove(pc);
+            armed.clear();
+            }, true);
+    }
+
+    DolphinWrapper::RunUntilHitResult DolphinWrapper::runUntilBreakpointBlocking(uint32_t timeout_ms)
+    {
+        ensureStateCallback();
+        auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_ms);
+        auto& armed = armed_singleton().pcs;
+
+        while (std::chrono::steady_clock::now() < deadline)
+        {
+            const uint64_t before = m_impl->m_pause_seq.load(std::memory_order_acquire);
+            Core::DoFrameStep(*m_system);
+
+            std::unique_lock<std::mutex> lk(m_impl->m_step_mtx);
+            const auto remaining = deadline - std::chrono::steady_clock::now();
+            if (remaining <= std::chrono::milliseconds(0)) break;
+            const bool paused = m_impl->m_step_cv.wait_for(
+                lk, remaining,
+                [&] { return m_impl->m_pause_seq.load(std::memory_order_acquire) > before; });
+
+            if (!paused) break;
+
+            const uint32_t pc = getPC();
+            if (contains_pc(armed, pc))
+                return { true, pc, "breakpoint" };
+        }
+        return { false, 0u, "timeout" };
     }
 
 } // namespace simcore

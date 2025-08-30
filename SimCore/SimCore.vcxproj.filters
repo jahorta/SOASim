@@ -81,6 +81,12 @@
     <ClInclude Include="Runner\Breakpoints\PreBattleBreakpoints.h">
       <Filter>Runner</Filter>
     </ClInclude>
+    <ClInclude Include="Runner\DolphinRunnerAdapter.h">
+      <Filter>Runner</Filter>
+    </ClInclude>
+    <ClInclude Include="Runner\SOAConstants.h">
+      <Filter>Runner</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SimCore.cpp">
@@ -755,5 +761,11 @@
     <ClCompile Include="Runner\Breakpoints\PreBattleBreakpoints.cpp">
       <Filter>Runner</Filter>
     </ClCompile>
+    <ClCompile Include="Runner\DolphinRunnerAdapter.cpp">
+      <Filter>Runner</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Interesting SOA Addresses.md" />
   </ItemGroup>
 </Project>

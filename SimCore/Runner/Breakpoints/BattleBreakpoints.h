@@ -8,8 +8,10 @@ namespace battle
     {
         BattleInit = 201,
         BattleInitComplete,
-        StartTurnInputs,
+        FirstTurnInputs,
         StartTurn,
+        StartAction,
+        EndAction,
         EndTurn,
         EndBattle
     };
