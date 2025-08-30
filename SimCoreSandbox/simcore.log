@@ -1,120 +1,32 @@
-[06:32:29.169] [INFO ] [T13189820573557630849] (DolphinWrapper.cpp:93 loadDolphinGUISettings) Loading Dolphin GUI settings
-[06:32:29.437] [INFO ] [T13189820573557630849] (DolphinWrapper.cpp:84 initPads) [Pad] controllers=4
-[06:32:33.883] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:70 main) [sandbox] Game Loaded
-[06:32:33.883] [INFO ] [T13189820573557630849] (DolphinWrapper.cpp:237 loadSavestate) DSP_HLE=1 DSP_THREAD=1 CPU_THREAD=0
-
-[06:32:34.244] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:75 main) [sandbox] Save State Loaded
-[06:32:34.245] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:79 main) [sandbox] Current PC set to 80237BA8
-[06:32:34.308] [INFO ] [T13189820573557630849] (GCPadOverride.cpp:107 install) [TAS] Installed input override on GC port 0
-[06:32:34.308] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:310 stepOneFrameBlocking) [stepOneFrameBlocking] State Before 1
-[06:32:34.308] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:312 stepOneFrameBlocking) [stepOneFrameBlocking] Registering callback if needed
-[06:32:34.308] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:317 stepOneFrameBlocking) [stepOneFrameBlocking] Attempting frame step.
-[06:32:34.812] [TRACE] [T17536116941211965279] (DolphinWrapper.cpp:294 operator ()) [onStateChangedCallback] New State: 1
-[06:32:34.813] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:325 stepOneFrameBlocking) [stepOneFrameBlocking] State After 1
-[06:32:34.813] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:89 main) [sandbox] Current PC set to 800054FC
-[06:32:34.813] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:35 demo_branches) [demo-branches] Running demo.
-[06:32:34.814] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:40 demo_branches) [demo-branches] Insts Chosen InputPlan (1 frames)  [0] START 
-[06:32:34.814] [INFO ] [T13189820573557630849] (DolphinWrapper.cpp:275 applyNextInputFrame) [dw] applying input frame: InputPlan (1 frames)  [0] START 
-[06:32:34.815] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:310 stepOneFrameBlocking) [stepOneFrameBlocking] State Before 1
-[06:32:34.815] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:312 stepOneFrameBlocking) [stepOneFrameBlocking] Registering callback if needed
-[06:32:34.815] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:317 stepOneFrameBlocking) [stepOneFrameBlocking] Attempting frame step.
-[06:32:36.121] [TRACE] [T17536116941211965279] (DolphinWrapper.cpp:294 operator ()) [onStateChangedCallback] New State: 1
-[06:32:36.121] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:325 stepOneFrameBlocking) [stepOneFrameBlocking] State After 1
-[06:32:36.122] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:49 demo_branches) [demo-branches] frame: 9079 pad status: START
-[06:32:36.122] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:40 demo_branches) [demo-branches] Insts Chosen InputPlan (1 frames)  [0] A 
-[06:32:36.123] [INFO ] [T13189820573557630849] (DolphinWrapper.cpp:275 applyNextInputFrame) [dw] applying input frame: InputPlan (1 frames)  [0] A 
-[06:32:36.123] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:310 stepOneFrameBlocking) [stepOneFrameBlocking] State Before 1
-[06:32:36.123] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:312 stepOneFrameBlocking) [stepOneFrameBlocking] Registering callback if needed
-[06:32:36.123] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:317 stepOneFrameBlocking) [stepOneFrameBlocking] Attempting frame step.
-[06:32:36.259] [TRACE] [T17536116941211965279] (DolphinWrapper.cpp:294 operator ()) [onStateChangedCallback] New State: 1
-[06:32:36.259] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:325 stepOneFrameBlocking) [stepOneFrameBlocking] State After 1
-[06:32:36.259] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:49 demo_branches) [demo-branches] frame: 9081 pad status: A
-[06:32:36.260] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:40 demo_branches) [demo-branches] Insts Chosen InputPlan (1 frames)  [0] B 
-[06:32:36.260] [INFO ] [T13189820573557630849] (DolphinWrapper.cpp:275 applyNextInputFrame) [dw] applying input frame: InputPlan (1 frames)  [0] B 
-[06:32:36.260] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:310 stepOneFrameBlocking) [stepOneFrameBlocking] State Before 1
-[06:32:36.260] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:312 stepOneFrameBlocking) [stepOneFrameBlocking] Registering callback if needed
-[06:32:36.260] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:317 stepOneFrameBlocking) [stepOneFrameBlocking] Attempting frame step.
-[06:32:36.431] [TRACE] [T17536116941211965279] (DolphinWrapper.cpp:294 operator ()) [onStateChangedCallback] New State: 1
-[06:32:36.431] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:325 stepOneFrameBlocking) [stepOneFrameBlocking] State After 1
-[06:32:36.431] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:49 demo_branches) [demo-branches] frame: 9083 pad status: B
-[06:32:36.432] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:40 demo_branches) [demo-branches] Insts Chosen InputPlan (1 frames)  [0] X 
-[06:32:36.432] [INFO ] [T13189820573557630849] (DolphinWrapper.cpp:275 applyNextInputFrame) [dw] applying input frame: InputPlan (1 frames)  [0] X 
-[06:32:36.432] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:310 stepOneFrameBlocking) [stepOneFrameBlocking] State Before 1
-[06:32:36.432] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:312 stepOneFrameBlocking) [stepOneFrameBlocking] Registering callback if needed
-[06:32:36.432] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:317 stepOneFrameBlocking) [stepOneFrameBlocking] Attempting frame step.
-[06:32:36.658] [TRACE] [T17536116941211965279] (DolphinWrapper.cpp:294 operator ()) [onStateChangedCallback] New State: 1
-[06:32:36.658] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:325 stepOneFrameBlocking) [stepOneFrameBlocking] State After 1
-[06:32:36.658] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:49 demo_branches) [demo-branches] frame: 9085 pad status: X
-[06:32:36.659] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:40 demo_branches) [demo-branches] Insts Chosen InputPlan (1 frames)  [0] Y 
-[06:32:36.659] [INFO ] [T13189820573557630849] (DolphinWrapper.cpp:275 applyNextInputFrame) [dw] applying input frame: InputPlan (1 frames)  [0] Y 
-[06:32:36.660] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:310 stepOneFrameBlocking) [stepOneFrameBlocking] State Before 1
-[06:32:36.660] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:312 stepOneFrameBlocking) [stepOneFrameBlocking] Registering callback if needed
-[06:32:36.660] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:317 stepOneFrameBlocking) [stepOneFrameBlocking] Attempting frame step.
-[06:32:36.756] [TRACE] [T17536116941211965279] (DolphinWrapper.cpp:294 operator ()) [onStateChangedCallback] New State: 1
-[06:32:36.756] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:325 stepOneFrameBlocking) [stepOneFrameBlocking] State After 1
-[06:32:36.756] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:49 demo_branches) [demo-branches] frame: 9087 pad status: Y
-[06:32:36.756] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:40 demo_branches) [demo-branches] Insts Chosen InputPlan (1 frames)  [0] DUP 
-[06:32:36.757] [INFO ] [T13189820573557630849] (DolphinWrapper.cpp:275 applyNextInputFrame) [dw] applying input frame: InputPlan (1 frames)  [0] DUP 
-[06:32:36.757] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:310 stepOneFrameBlocking) [stepOneFrameBlocking] State Before 1
-[06:32:36.757] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:312 stepOneFrameBlocking) [stepOneFrameBlocking] Registering callback if needed
-[06:32:36.757] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:317 stepOneFrameBlocking) [stepOneFrameBlocking] Attempting frame step.
-[06:32:36.958] [TRACE] [T17536116941211965279] (DolphinWrapper.cpp:294 operator ()) [onStateChangedCallback] New State: 1
-[06:32:36.958] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:325 stepOneFrameBlocking) [stepOneFrameBlocking] State After 1
-[06:32:36.958] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:49 demo_branches) [demo-branches] frame: 9089 pad status: (no changes vs neutral)
-[06:32:36.959] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:40 demo_branches) [demo-branches] Insts Chosen InputPlan (1 frames)  [0] DDOWN 
-[06:32:36.959] [INFO ] [T13189820573557630849] (DolphinWrapper.cpp:275 applyNextInputFrame) [dw] applying input frame: InputPlan (1 frames)  [0] DDOWN 
-[06:32:36.960] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:310 stepOneFrameBlocking) [stepOneFrameBlocking] State Before 1
-[06:32:36.960] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:312 stepOneFrameBlocking) [stepOneFrameBlocking] Registering callback if needed
-[06:32:36.960] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:317 stepOneFrameBlocking) [stepOneFrameBlocking] Attempting frame step.
-[06:32:37.058] [TRACE] [T17536116941211965279] (DolphinWrapper.cpp:294 operator ()) [onStateChangedCallback] New State: 1
-[06:32:37.058] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:325 stepOneFrameBlocking) [stepOneFrameBlocking] State After 1
-[06:32:37.058] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:49 demo_branches) [demo-branches] frame: 9091 pad status: (no changes vs neutral)
-[06:32:37.059] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:40 demo_branches) [demo-branches] Insts Chosen InputPlan (1 frames)  [0] DLEFT 
-[06:32:37.060] [INFO ] [T13189820573557630849] (DolphinWrapper.cpp:275 applyNextInputFrame) [dw] applying input frame: InputPlan (1 frames)  [0] DLEFT 
-[06:32:37.060] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:310 stepOneFrameBlocking) [stepOneFrameBlocking] State Before 1
-[06:32:37.060] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:312 stepOneFrameBlocking) [stepOneFrameBlocking] Registering callback if needed
-[06:32:37.060] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:317 stepOneFrameBlocking) [stepOneFrameBlocking] Attempting frame step.
-[06:32:37.148] [TRACE] [T17536116941211965279] (DolphinWrapper.cpp:294 operator ()) [onStateChangedCallback] New State: 1
-[06:32:37.148] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:325 stepOneFrameBlocking) [stepOneFrameBlocking] State After 1
-[06:32:37.148] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:49 demo_branches) [demo-branches] frame: 9093 pad status: (no changes vs neutral)
-[06:32:37.149] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:40 demo_branches) [demo-branches] Insts Chosen InputPlan (1 frames)  [0] DRIGHT 
-[06:32:37.150] [INFO ] [T13189820573557630849] (DolphinWrapper.cpp:275 applyNextInputFrame) [dw] applying input frame: InputPlan (1 frames)  [0] DRIGHT 
-[06:32:37.151] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:310 stepOneFrameBlocking) [stepOneFrameBlocking] State Before 1
-[06:32:37.151] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:312 stepOneFrameBlocking) [stepOneFrameBlocking] Registering callback if needed
-[06:32:37.151] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:317 stepOneFrameBlocking) [stepOneFrameBlocking] Attempting frame step.
-[06:32:37.241] [TRACE] [T17536116941211965279] (DolphinWrapper.cpp:294 operator ()) [onStateChangedCallback] New State: 1
-[06:32:37.241] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:325 stepOneFrameBlocking) [stepOneFrameBlocking] State After 1
-[06:32:37.242] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:49 demo_branches) [demo-branches] frame: 9095 pad status: (no changes vs neutral)
-[06:32:37.243] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:40 demo_branches) [demo-branches] Insts Chosen InputPlan (1 frames)  [0] buttons=0 JX=100 JY=180 
-[06:32:37.244] [INFO ] [T13189820573557630849] (DolphinWrapper.cpp:275 applyNextInputFrame) [dw] applying input frame: InputPlan (1 frames)  [0] buttons=0 JX=100 JY=180 
-[06:32:37.244] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:310 stepOneFrameBlocking) [stepOneFrameBlocking] State Before 1
-[06:32:37.244] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:312 stepOneFrameBlocking) [stepOneFrameBlocking] Registering callback if needed
-[06:32:37.244] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:317 stepOneFrameBlocking) [stepOneFrameBlocking] Attempting frame step.
-[06:32:37.331] [TRACE] [T17536116941211965279] (DolphinWrapper.cpp:294 operator ()) [onStateChangedCallback] New State: 1
-[06:32:37.331] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:325 stepOneFrameBlocking) [stepOneFrameBlocking] State After 1
-[06:32:37.331] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:49 demo_branches) [demo-branches] frame: 9097 pad status: (no changes vs neutral)
-[06:32:37.332] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:40 demo_branches) [demo-branches] Insts Chosen InputPlan (1 frames)  [0] buttons=0 CX=255 CY=69 
-[06:32:37.333] [INFO ] [T13189820573557630849] (DolphinWrapper.cpp:275 applyNextInputFrame) [dw] applying input frame: InputPlan (1 frames)  [0] buttons=0 CX=255 CY=69 
-[06:32:37.333] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:310 stepOneFrameBlocking) [stepOneFrameBlocking] State Before 1
-[06:32:37.333] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:312 stepOneFrameBlocking) [stepOneFrameBlocking] Registering callback if needed
-[06:32:37.333] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:317 stepOneFrameBlocking) [stepOneFrameBlocking] Attempting frame step.
-[06:32:37.422] [TRACE] [T17536116941211965279] (DolphinWrapper.cpp:294 operator ()) [onStateChangedCallback] New State: 1
-[06:32:37.422] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:325 stepOneFrameBlocking) [stepOneFrameBlocking] State After 1
-[06:32:37.422] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:49 demo_branches) [demo-branches] frame: 9099 pad status: (no changes vs neutral)
-[06:32:37.423] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:40 demo_branches) [demo-branches] Insts Chosen InputPlan (1 frames)  [0] buttons=0 LT=50 RT=16 
-[06:32:37.423] [INFO ] [T13189820573557630849] (DolphinWrapper.cpp:275 applyNextInputFrame) [dw] applying input frame: InputPlan (1 frames)  [0] buttons=0 LT=50 RT=16 
-[06:32:37.424] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:310 stepOneFrameBlocking) [stepOneFrameBlocking] State Before 1
-[06:32:37.424] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:312 stepOneFrameBlocking) [stepOneFrameBlocking] Registering callback if needed
-[06:32:37.424] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:317 stepOneFrameBlocking) [stepOneFrameBlocking] Attempting frame step.
-[06:32:37.511] [TRACE] [T17536116941211965279] (DolphinWrapper.cpp:294 operator ()) [onStateChangedCallback] New State: 1
-[06:32:37.511] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:325 stepOneFrameBlocking) [stepOneFrameBlocking] State After 1
-[06:32:37.512] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:49 demo_branches) [demo-branches] frame: 9101 pad status: buttons=0 LT=50 RT=16
-[06:32:37.513] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:40 demo_branches) [demo-branches] Insts Chosen InputPlan (1 frames)  [0] A+DUP JX=12 JY=126 CX=255 CY=0 
-[06:32:37.515] [INFO ] [T13189820573557630849] (DolphinWrapper.cpp:275 applyNextInputFrame) [dw] applying input frame: InputPlan (1 frames)  [0] A+DUP JX=12 JY=126 CX=255 CY=0 
-[06:32:37.516] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:310 stepOneFrameBlocking) [stepOneFrameBlocking] State Before 1
-[06:32:37.516] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:312 stepOneFrameBlocking) [stepOneFrameBlocking] Registering callback if needed
-[06:32:37.516] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:317 stepOneFrameBlocking) [stepOneFrameBlocking] Attempting frame step.
-[06:32:37.608] [TRACE] [T17536116941211965279] (DolphinWrapper.cpp:294 operator ()) [onStateChangedCallback] New State: 1
-[06:32:37.608] [TRACE] [T13189820573557630849] (DolphinWrapper.cpp:325 stepOneFrameBlocking) [stepOneFrameBlocking] State After 1
-[06:32:37.608] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:49 demo_branches) [demo-branches] frame: 9103 pad status: A
-[06:32:37.609] [INFO ] [T13189820573557630849] (SimCoreSandbox.cpp:91 main) [sandbox] Current PC set to 80237BA8
+[15:35:14.744] [INFO ] [T7614940949405178628] (DolphinWrapper.cpp:88 loadDolphinGUISettings) Loading Dolphin GUI settings
+[15:35:15.017] [INFO ] [T7614940949405178628] (DolphinWrapper.cpp:79 initPads) [Pad] controllers=4
+[15:35:19.572] [INFO ] [T7614940949405178628] (SimCoreSandbox.cpp:108 main) [sandbox] Game Loaded
+[15:35:19.583] [TRACE] [T7614940949405178628] (DolphinWrapper.cpp:224 loadSavestate) DSP_HLE=1 DSP_THREAD=1 CPU_THREAD=0
+[15:35:19.944] [INFO ] [T7614940949405178628] (SimCoreSandbox.cpp:113 main) [sandbox] Save State Loaded
+[15:35:19.945] [INFO ] [T7614940949405178628] (SimCoreSandbox.cpp:117 main) [sandbox] Current PC set to 80101E48
+[15:35:20.009] [INFO ] [T7614940949405178628] (GCPadOverride.cpp:107 install) [TAS] Installed input override on GC port 0
+[15:35:20.009] [TRACE] [T7614940949405178628] (DolphinWrapper.cpp:514 armPcBreakpoints) [core] arming breakpoints
+[15:35:20.009] [TRACE] [T7614940949405178628] (DolphinWrapper.cpp:523 armPcBreakpoints) [core] properly loaded breakpoints: true
+[15:35:20.009] [TRACE] [T7614940949405178628] (DolphinWrapper.cpp:524 armPcBreakpoints) [core] checking current breakpoints
+[15:35:20.010] [TRACE] [T7614940949405178628] (DolphinWrapper.cpp:526 armPcBreakpoints) [core] Breakpoint Present: $80101e94 nb
+[15:35:20.010] [TRACE] [T7614940949405178628] (DolphinWrapper.cpp:533 disarmPcBreakpoints) [core] disarming breakpoints
+[15:35:20.010] [TRACE] [T7614940949405178628] (DolphinWrapper.cpp:547 disarmPcBreakpoints) [core] properly removed breakpoints: true
+[15:35:20.010] [TRACE] [T7614940949405178628] (DolphinWrapper.cpp:548 disarmPcBreakpoints) [core] checking current breakpoints
+[15:35:20.010] [TRACE] [T7614940949405178628] (DolphinWrapper.cpp:288 stepOneFrameBlocking) [stepOneFrameBlocking] Attempting frame step.
+[15:35:20.010] [TRACE] [T7614940949405178628] (DolphinWrapper.cpp:598 waitForPausedCoreState) [run] Core state in frame step: Running
+[15:35:20.578] [TRACE] [T7614940949405178628] (DolphinWrapper.cpp:610 waitForPausedCoreState) [run] Pause state encountered: True
+[15:35:20.578] [TRACE] [T7614940949405178628] (DolphinWrapper.cpp:288 stepOneFrameBlocking) [stepOneFrameBlocking] Attempting frame step.
+[15:35:20.578] [TRACE] [T7614940949405178628] (DolphinWrapper.cpp:598 waitForPausedCoreState) [run] Core state in frame step: Running
+[15:35:20.871] [TRACE] [T7614940949405178628] (DolphinWrapper.cpp:610 waitForPausedCoreState) [run] Pause state encountered: True
+[15:35:20.871] [TRACE] [T7614940949405178628] (DolphinWrapper.cpp:224 loadSavestate) DSP_HLE=1 DSP_THREAD=1 CPU_THREAD=0
+[15:35:21.194] [TRACE] [T7614940949405178628] (DolphinWrapper.cpp:514 armPcBreakpoints) [core] arming breakpoints
+[15:35:21.195] [TRACE] [T7614940949405178628] (DolphinWrapper.cpp:523 armPcBreakpoints) [core] properly loaded breakpoints: true
+[15:35:21.195] [TRACE] [T7614940949405178628] (DolphinWrapper.cpp:524 armPcBreakpoints) [core] checking current breakpoints
+[15:35:21.195] [TRACE] [T7614940949405178628] (DolphinWrapper.cpp:526 armPcBreakpoints) [core] Breakpoint Present: $8000a1dc nb
+[15:35:21.195] [INFO ] [T7614940949405178628] (SimCoreSandbox.cpp:134 main) [sandbox] Inputs After: (no changes vs neutral)
+[15:35:21.195] [INFO ] [T7614940949405178628] (DolphinWrapper.cpp:277 setInput) [set input] applying input frame: InputPlan (1 frames)  [0] buttons=0 JX=0 JY=0 
+[15:35:21.195] [INFO ] [T7614940949405178628] (SimCoreSandbox.cpp:145 main) [sandbox] Inputs After Set Input: (no changes vs neutral)
+[15:35:21.196] [TRACE] [T7614940949405178628] (DolphinWrapper.cpp:573 runUntilBreakpointBlocking) [run] Performing frame step
+[15:35:21.196] [TRACE] [T7614940949405178628] (DolphinWrapper.cpp:598 waitForPausedCoreState) [run] Core state in frame step: Running
+[15:35:21.846] [TRACE] [T7614940949405178628] (DolphinWrapper.cpp:610 waitForPausedCoreState) [run] Pause state encountered: True
+[15:35:21.846] [INFO ] [T7614940949405178628] (SimCoreSandbox.cpp:152 main) [sandbox] Inputs After Run: (no changes vs neutral)
