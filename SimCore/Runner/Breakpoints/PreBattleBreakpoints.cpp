@@ -11,6 +11,7 @@ BreakpointMap battle_rng_probe::defaults()
         { AfterRandSeedSet,   0x8000a1dcu, "AfterRandSeedSet" }
     };
     m.start_key = BeforeRandSeedSet;
+    m.terminal_key = AfterRandSeedSet;
     return m;
 }
 

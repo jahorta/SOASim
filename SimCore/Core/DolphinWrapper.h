@@ -59,6 +59,7 @@ namespace simcore {
         // Input functions
         void setInputPlan(const InputPlan& p) { m_plan = p; m_cursor = 0; }
         void applyNextInputFrame();
+        void setInput(const GCInputFrame& f);
         size_t remainingInputs() const { return (m_cursor < m_plan.size()) ? (m_plan.size() - m_cursor) : 0; }
 
         bool stepOneFrameBlocking(int timeout_ms = 1000);
@@ -100,11 +101,11 @@ namespace simcore {
         void clearAllPcBreakpoints();
         RunUntilHitResult runUntilBreakpointBlocking(uint32_t timeout_ms = 5000);
 
+        void silenceStdOutInfo();
+        void restoreStdOutInfo();
+
 
     private:
-        // Non-movable bits live in Impl so the wrapper itself is movable.
-        struct Impl;
-        std::unique_ptr<Impl> m_impl;
 
         // Cached pointer to Dolphin's singleton System.
         Core::System* m_system = nullptr;
@@ -121,7 +122,7 @@ namespace simcore {
         InputPlan m_plan;
         size_t m_cursor = 0;
 
-        void ensureStateCallback();
+        bool waitForPausedCoreState(uint32_t timeout_ms, uint32_t poll_rate = 5);
 
         std::filesystem::path m_user_dir;
         std::filesystem::path m_qt_base_dir;

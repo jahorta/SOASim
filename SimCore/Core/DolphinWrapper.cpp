@@ -51,15 +51,6 @@ namespace fs = std::filesystem;
 
 namespace simcore {
 
-    // ===== Impl lives here so DolphinWrapper is movable ==========================
-    struct DolphinWrapper::Impl {
-        std::mutex m_step_mtx;
-        std::condition_variable m_step_cv;
-        std::atomic<uint64_t> m_pause_seq{ 0 };
-        bool m_state_cb_registered = false;
-        int  m_state_cb_cookie = 0;
-    };
-
     // --- small helpers ----------------------------------------------------------
 
     static inline const char* RegionToString(DiscIO::Region r) {
@@ -115,7 +106,6 @@ namespace simcore {
     // --- class impl -------------------------------------------------------------
 
     DolphinWrapper::DolphinWrapper()
-        : m_impl(std::make_unique<Impl>())
     {
         m_system = &Core::System::GetInstance();
         log::Logger::get().open_file("simcore.log", false);
@@ -138,13 +128,6 @@ namespace simcore {
     }
 
     void DolphinWrapper::shutdownCore() {
-        if (!m_impl) return;
-
-        if (m_impl->m_state_cb_registered) {
-            Core::RemoveOnStateChangedCallback(&m_impl->m_state_cb_cookie);
-            m_impl->m_state_cb_registered = false;
-        }
-
         if (Core::IsRunning(*m_system))
             Core::Stop(*m_system);
 
@@ -235,7 +218,7 @@ namespace simcore {
         mgr->SetEnable(Common::Log::LogType::COMMON, true);
 
         auto b = [&](const auto& info) { return !!Config::Get(info); };
-        SCLOGI("DSP_HLE=%d DSP_THREAD=%d CPU_THREAD=%d\n",
+        SCLOGT("DSP_HLE=%d DSP_THREAD=%d CPU_THREAD=%d",
             int(b(Config::MAIN_DSP_HLE)),
             int(b(Config::MAIN_DSP_THREAD)),
             int(b(Config::MAIN_CPU_THREAD)));
@@ -274,60 +257,37 @@ namespace simcore {
     }
 
     void DolphinWrapper::applyNextInputFrame() {
+        if (!m_system_pad_is_inited) return;
+
         if (m_cursor < m_plan.size()) {
             m_pad.setFrame(m_plan[m_cursor++]);
-            SCLOGI("[dw] applying input frame: %s", DescribeChosenInputs(InputPlan{ m_plan[m_cursor-1] }, " ").c_str());
+            SCLOGI("[next input] applying input frame: %s", DescribeChosenInputs(InputPlan{ m_plan[m_cursor - 1] }, " ").c_str());
         }
         else {
             m_pad.setFrame(GCPadOverride::NeutralFrame());
         }
     }
 
-    // -- Frame Advancing --------------------------------
-
-    void DolphinWrapper::ensureStateCallback()
+    void DolphinWrapper::setInput(const GCInputFrame& f)
     {
-        if (m_impl->m_state_cb_registered) return;
+        if (!m_system_pad_is_inited) return;
 
-        Impl* impl = m_impl.get();               // stable across moves
-        Core::System* sys = m_system;        // Dolphin singleton; stable
-        auto* logger = &log::Logger::get();
-
-        m_impl->m_state_cb_cookie = Core::AddOnStateChangedCallback(
-            [impl, sys, logger](Core::State s) {
-                logger->logf(log::Level::Trace, __FILE__, __LINE__, __func__, "[onStateChangedCallback] New State: %d", std::va_list(Core::GetState(*sys)));
-                if (s == Core::State::Paused) {
-                    impl->m_pause_seq.fetch_add(1, std::memory_order_acq_rel);
-                    std::lock_guard<std::mutex> lk(impl->m_step_mtx);
-                    impl->m_step_cv.notify_all();
-                }
-            });
-
-        m_impl->m_state_cb_registered = true;
+        m_pad.setFrame(f);
+        SCLOGI("[set input] applying input frame: %s", DescribeChosenInputs(InputPlan{ f }, " ").c_str());
+        g_controller_interface.UpdateInput();
     }
+
+    // -- Frame Advancing --------------------------------
 
     bool DolphinWrapper::stepOneFrameBlocking(int timeout_ms)
     {
         if (!Core::IsRunning(*m_system))
             return false;
 
-        SCLOGT("[stepOneFrameBlocking] State Before %d", Core::GetState(*m_system));
-
-        SCLOGT("[stepOneFrameBlocking] Registering callback if needed");
-        ensureStateCallback();
-
-        const uint64_t before = m_impl->m_pause_seq.load(std::memory_order_acquire);
-
         SCLOGT("[stepOneFrameBlocking] Attempting frame step.");
         Core::DoFrameStep(*m_system);   // schedules a single frame and re-pauses
 
-        std::unique_lock<std::mutex> lk(m_impl->m_step_mtx);
-        const bool ok = m_impl->m_step_cv.wait_for(
-            lk, std::chrono::milliseconds(timeout_ms),
-            [&] { return m_impl->m_pause_seq.load(std::memory_order_acquire) > before; });
-
-        SCLOGT("[stepOneFrameBlocking] State After %d", Core::GetState(*m_system));
-        return ok;
+        return waitForPausedCoreState(timeout_ms);
     }
 
     static uint64_t g_vi_ticks_baseline = 0;
@@ -550,67 +510,104 @@ namespace simcore {
 
     bool DolphinWrapper::armPcBreakpoints(const std::vector<uint32_t>& pcs)
     {
-        ensureStateCallback();
+        SCLOGT("[core] arming breakpoints");
         auto& armed = armed_singleton().pcs;
-        return runOnCpuThread([&] {
+        bool arm_result = runOnCpuThread([&] {
             for (auto pc : pcs)
             {
                 if (armed.insert(pc).second)
-                    Core::System::GetInstance().GetPowerPC().GetBreakPoints().Add(pc);
+                    m_system->GetPowerPC().GetBreakPoints().Add(pc);
             }
             }, true);
+        SCLOGT("[core] properly loaded breakpoints: %s", arm_result ? "true" : "false");
+        SCLOGT("[core] checking current breakpoints");
+        for (auto bp : m_system->GetPowerPC().GetBreakPoints().GetStrings()) {
+            SCLOGT("[core] Breakpoint Present: %s", bp.c_str());
+        }
+        return arm_result;
     }
 
     bool DolphinWrapper::disarmPcBreakpoints(const std::vector<uint32_t>& pcs)
     {
+        SCLOGT("[core] disarming breakpoints");
         auto& armed = armed_singleton().pcs;
-        return runOnCpuThread([&] {
+        bool disarm_result = runOnCpuThread([&] {
             for (auto pc : pcs)
             {
                 auto it = armed.find(pc);
                 if (it != armed.end())
                 {
-                    Core::System::GetInstance().GetPowerPC().GetBreakPoints().Remove(pc);
+                    m_system->GetPowerPC().GetBreakPoints().Remove(pc);
                     armed.erase(it);
                 }
             }
             }, true);
+
+        SCLOGT("[core] properly removed breakpoints: %s", disarm_result ? "true" : "false");
+        SCLOGT("[core] checking current breakpoints");
+        for (auto bp : m_system->GetPowerPC().GetBreakPoints().GetStrings()) {
+            SCLOGT("[core] Breakpoint Present: %s", bp.c_str());
+        }
+        return disarm_result;
     }
 
     void DolphinWrapper::clearAllPcBreakpoints()
     {
+        SCLOGT("[core] disarming all breakpoints");
         auto& armed = armed_singleton().pcs;
-        runOnCpuThread([&] {
-            for (auto pc : armed) Core::System::GetInstance().GetPowerPC().GetBreakPoints().Remove(pc);
+        bool disarm_result = runOnCpuThread([&] {
+            for (auto pc : armed) m_system->GetPowerPC().GetBreakPoints().Remove(pc);
             armed.clear();
             }, true);
+        SCLOGT("[core] properly removed breakpoints: %s", disarm_result ? "true" : "false");
     }
 
     DolphinWrapper::RunUntilHitResult DolphinWrapper::runUntilBreakpointBlocking(uint32_t timeout_ms)
     {
-        ensureStateCallback();
         auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_ms);
         auto& armed = armed_singleton().pcs;
 
         while (std::chrono::steady_clock::now() < deadline)
         {
-            const uint64_t before = m_impl->m_pause_seq.load(std::memory_order_acquire);
-            Core::DoFrameStep(*m_system);
+            SCLOGT("[run] Performing frame step");
+            
+            Core::SetState(*m_system, Core::State::Running);
 
-            std::unique_lock<std::mutex> lk(m_impl->m_step_mtx);
-            const auto remaining = deadline - std::chrono::steady_clock::now();
-            if (remaining <= std::chrono::milliseconds(0)) break;
-            const bool paused = m_impl->m_step_cv.wait_for(
-                lk, remaining,
-                [&] { return m_impl->m_pause_seq.load(std::memory_order_acquire) > before; });
-
-            if (!paused) break;
-
-            const uint32_t pc = getPC();
-            if (contains_pc(armed, pc))
-                return { true, pc, "breakpoint" };
+            if (waitForPausedCoreState(5000)) {
+                const uint32_t pc = getPC();
+                if (contains_pc(armed, pc))
+                    return { true, pc, "breakpoint" };
+            }
         }
         return { false, 0u, "timeout" };
+    }
+
+    void DolphinWrapper::silenceStdOutInfo()
+    {
+        log::Logger::get().set_stdout_level(log::Level::Warn);
+    }
+
+    void DolphinWrapper::restoreStdOutInfo()
+    {
+        log::Logger::get().set_stdout_level(log::Level::Info);
+    }
+
+    bool DolphinWrapper::waitForPausedCoreState(uint32_t timeout_ms, uint32_t poll_rate_ms)
+    {
+        SCLOGT("[run] Core state in frame step: %s", Core::GetState(*m_system) == Core::State::Paused ? "Paused" : Core::GetState(*m_system) == Core::State::Running ? "Running" : "other");
+
+        auto start = std::chrono::steady_clock::now();
+        auto deadline = start + std::chrono::milliseconds(timeout_ms);
+
+        while (std::chrono::steady_clock::now() < deadline) {
+            if (Core::GetState(*m_system) == Core::State::Paused) 
+                break;
+            std::this_thread::sleep_for(std::chrono::milliseconds(poll_rate_ms));
+        }
+        
+        bool result = Core::GetState(*m_system) == Core::State::Paused;
+        SCLOGT("[run] Pause state encountered: %s", result ? "True" : "False");
+        return result;
     }
 
 } // namespace simcore

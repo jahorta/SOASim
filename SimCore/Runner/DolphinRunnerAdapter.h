@@ -10,6 +10,7 @@ public:
 
     bool step_one_frame() override;
     uint32_t get_pc() const override;
+    bool load_savestate(std::string sav) override;
 
     void set_next_input(const simcore::GCInputFrame& f) override;
 

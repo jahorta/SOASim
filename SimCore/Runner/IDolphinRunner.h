@@ -8,6 +8,7 @@ struct IDolphinRunner
     virtual ~IDolphinRunner() = default;
     virtual bool step_one_frame() = 0;
     virtual uint32_t get_pc() const = 0;
+    virtual bool load_savestate(std::string sav) = 0;
 
     virtual void set_next_input(const simcore::GCInputFrame& f) = 0;
 

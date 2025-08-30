@@ -16,6 +16,10 @@ uint32_t DolphinRunnerAdapter::get_pc() const
     return m_w.getPC();
 }
 
+bool DolphinRunnerAdapter::load_savestate(std::string sav) {
+    return m_w.loadSavestate(sav);
+}
+
 void DolphinRunnerAdapter::set_next_input(const simcore::GCInputFrame& f)
 {
     m_w.setInputPlan(simcore::InputPlan{ f });
