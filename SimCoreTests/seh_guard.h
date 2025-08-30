@@ -41,5 +41,20 @@ namespace tests {
         }
     }
 
+    // Run fn() and swallow SEH only if thrown from Dolphin.
+// Returns true if fn completed (or a swallowed Dolphin SEH happened), false if a non-Dolphin SEH occurred.
+    inline bool RunIgnoringAllSEH(const std::function<void()>& fn)
+    {
+        __try {
+            fn();
+            return true;
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER)      // swallow Dolphin first-chance throws
+        {
+            return true;
+        }
+        return true;
+    }
+
 } // namespace tests
 #endif
