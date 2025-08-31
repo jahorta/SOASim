@@ -25,12 +25,10 @@ namespace simcore {
         for (int i = 0; i < width; ++i)
             std::printf("%c", (i < filled) ? '#' : ' ');
         std::printf("] %3d%% (%zu/%zu)", static_cast<int>(std::round(frac * 100.0)), done, total);
-        std::fflush(stdout);
-    }
-
-    static void finish_progress_bar()
-    {
-        std::printf("\n\n");
+        if (done >= total)
+        {
+            std::printf("\n");
+        }
         std::fflush(stdout);
     }
     // -----------------------------------------
@@ -190,21 +188,45 @@ namespace simcore {
     {
         std::vector<const RandSeedEntry*> entries;
         entries.reserve(N * N);
-        for (const auto& e : r.entries) if (e.family == fam && e.samples_per_axis == N) entries.push_back(&e);
-        if (entries.size() != (size_t)N * N) { SCLOGI("[SeedProbe] Grid for %s missing/size mismatch.", title); return; }
+        for (const auto& e : r.entries)
+            if (e.family == fam && e.samples_per_axis == N)
+                entries.push_back(&e);
 
-        SCLOGI("[SeedProbe] %s delta grid (N=%d)   legend: ' *'(|delta|>F), ' -h'/' h' nibble, ' 0' zero", title, N);
+        if (entries.size() != static_cast<size_t>(N * N)) {
+            std::printf("[SeedProbe] Grid for %s missing/size mismatch.\n", title);
+            return;
+        }
 
+        // X ticks from first row, Y ticks from first column
+        std::vector<int> xvals(N), yvals(N);
+        for (int col = 0; col < N; ++col) xvals[col] = static_cast<int>(entries[col]->x);
+        for (int row = 0; row < N; ++row) yvals[row] = static_cast<int>(entries[row * N]->y);
+
+        std::printf("[SeedProbe] %s delta grid (N=%d)\nlegend: ' *'(|delta|>FF), '-h'/' h' nibble, '00'..'FF' positive, ' 0' zero\n", title, N);
+
+        // Top axis labels
+        std::printf("    "); // left margin for Y label (3) + space
+        for (int col = 0; col < N; ++col)
+            std::printf("\x1b[2;37m%02X\x1b[0m ", xvals[col]);
+        std::printf("\n");
+
+        // Rows with left/right Y labels
         size_t idx = 0;
         for (int row = 0; row < N; ++row) {
+            // Left Y label
+            std::printf(" \x1b[2;37m%02X\x1b[0m ", yvals[row]);
+
             for (int col = 0; col < N; ++col) {
                 const auto* p = entries[idx++];
                 long long d = (p->ok ? p->delta : 0x7fff); // treat missing as big
                 print_colored_cell(d);
                 std::printf(" ");
             }
+
             std::printf("\n");
         }
+
+        std::printf("\n\n");
         std::fflush(stdout);
     }
 

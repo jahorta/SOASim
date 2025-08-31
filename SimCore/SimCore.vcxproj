@@ -116,7 +116,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -141,7 +141,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -166,6 +166,7 @@
     <ClInclude Include="Core\Input\GCPadOverride.h" />
     <ClInclude Include="Core\Input\InputPlan.h" />
     <ClInclude Include="Core\Input\InputPlanFmt.h" />
+    <ClInclude Include="Core\Shims\StateBufferShim.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Runner\Breakpoints\BattleBreakpoints.h" />
     <ClInclude Include="Runner\Breakpoints\BPCore.h" />
@@ -1028,6 +1029,7 @@
     <ClCompile Include="Core\HostStubs.cpp" />
     <ClCompile Include="Core\Input\GCPadOverride.cpp" />
     <ClCompile Include="Core\Input\InputPlanFmt.cpp" />
+    <ClCompile Include="Core\Shims\StateBufferShim.cpp" />
     <ClCompile Include="Runner\Breakpoints\BattleBreakpoints.cpp" />
     <ClCompile Include="Runner\Breakpoints\OverworldBreakpoints.cpp" />
     <ClCompile Include="Runner\Breakpoints\PreBattleBreakpoints.cpp" />

@@ -20,14 +20,14 @@ static std::string strip_quotes(std::string s) {
     return s;
 }
 
-static fs::path prompt_path(const char* prompt, bool require_exists, bool allow_empty) {
+static fs::path prompt_path(const char* prompt, bool require_exists, bool allow_empty, std::string def) {
     for (;;) {
         std::cout << prompt;
         std::string line;
         if (!std::getline(std::cin, line)) return {};
         line = trim(strip_quotes(line));
         if (line.empty()) {
-            if (allow_empty) return {};
+            if (allow_empty) return {def};
             continue;
         }
         fs::path p = fs::path(line).lexically_normal();

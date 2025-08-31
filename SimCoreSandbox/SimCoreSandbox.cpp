@@ -51,11 +51,15 @@ void run_seed_probe_entrypoint(std::string sav, DolphinRunnerAdapter& emu)
 {
     BreakpointMap pre = battle_rng_probe::defaults();
     RunEvaluator runner{ emu, pre, {} };
+    
+    emu.load_savestate(sav);
+    Common::UniqueBuffer<u8> prebattle_ss{};
+    emu.save_savestate_to_buffer(prebattle_ss);
 
     SeedProbeOps ops{
         /*reset_to_prebattle=*/
         [&]() {
-            emu.load_savestate(sav);
+           emu.load_savestate_from_buffer(prebattle_ss);
         },
         /*apply_input_snapshot=*/
         [&emu](const GCInputFrame& s) {
@@ -72,7 +76,7 @@ void run_seed_probe_entrypoint(std::string sav, DolphinRunnerAdapter& emu)
     };
 
     SeedProbeConfig cfg{};
-    cfg.samples_per_axis = 6;      // e.g. 5x5 per family
+    cfg.samples_per_axis = 13;      // e.g. 5x5 per family
     cfg.cap_trigger_top = true;    // avoids digital-L/R bleed at exactly 1.0
     cfg.run_timeout_ms = 10000;
     cfg.rng_addr = 0x803469a8u;
@@ -85,11 +89,9 @@ void run_seed_probe_entrypoint(std::string sav, DolphinRunnerAdapter& emu)
     // write lines to a file if desired
 }
 
-
-
 int main() {
-    auto iso = prompt_path("ISO path: ", true, false);
-    auto sav = prompt_path("Savestate path: ", true, false);
+    auto iso = prompt_path("ISO path: ", true, true, std::string("D:\\SoATAS\\SkiesofArcadiaLegends(USA).gcm"));
+    auto sav = prompt_path("Savestate path: ", true, true, std::string("D:\\SoATAS\\dolphin-2506a-x64\\User\\StateSaves\\GEAE8P.s04"));
 
     simboot::BootOptions opts{};
     opts.user_dir = std::filesystem::current_path() / "SOASimUser";
@@ -117,46 +119,46 @@ int main() {
     SCLOGI("[sandbox] Current PC set to %08X", emu.getPC());
     emu.ConfigurePortsStandardPadP1();
 
-    uint32_t breakpoint = 0x80101e94;
-    emu.armPcBreakpoints({ breakpoint });
-    emu.disarmPcBreakpoints({ breakpoint });
+    //uint32_t breakpoint = 0x80101e94;
+    //emu.armPcBreakpoints({ breakpoint });
+    //emu.disarmPcBreakpoints({ breakpoint });
 
-    emu.stepOneFrameBlocking(10000);
-    emu.stepOneFrameBlocking(10000);
-
-
-    emu.loadSavestate(sav.string());
-    uint32_t final_bp = 0x8000a1dc;
-    emu.armPcBreakpoints({ final_bp });
-
-    GCPadStatus st{};
-    emu.QueryPadStatus(0, &st);
-    SCLOGI("[sandbox] Inputs After: %s", DescribeFrame(FromGCPadStatus(st)).c_str());
-
-    GCInputFrame zero{};
-    zero.main_x = 0;
-    zero.main_y = 0;
-
-    auto before = std::chrono::steady_clock::now();
-    emu.setInput(zero);
-
-    GCPadStatus sta = {};
-    emu.QueryPadStatus(0, &sta);
-    SCLOGI("[sandbox] Inputs After Set Input: %s", DescribeFrame(FromGCPadStatus(sta)).c_str());
-
-    emu.runUntilBreakpointBlocking(20000);
-    auto duration = std::chrono::steady_clock::now() - before;
-
-    GCPadStatus stb = {};
-    emu.QueryPadStatus(0, &stb);
-    SCLOGI("[sandbox] Inputs After Run: %s", DescribeFrame(FromGCPadStatus(stb)).c_str());
+    //emu.stepOneFrameBlocking(10000);
+    //emu.stepOneFrameBlocking(10000);
 
 
-    //DolphinRunnerAdapter runner{ emu };
+    //emu.loadSavestate(sav.string());
+    //uint32_t final_bp = 0x8000a1dc;
+    //emu.armPcBreakpoints({ final_bp });
 
-    //emu.silenceStdOutInfo();
-    //run_seed_probe_entrypoint(sav.string(), runner);
-    //emu.restoreStdOutInfo();
+    //GCPadStatus st{};
+    //emu.QueryPadStatus(0, &st);
+    //SCLOGI("[sandbox] Inputs After: %s", DescribeFrame(FromGCPadStatus(st)).c_str());
+
+    //GCInputFrame zero{};
+    //zero.main_x = 0;
+    //zero.main_y = 0;
+
+    //auto before = std::chrono::steady_clock::now();
+    //emu.setInput(zero);
+
+    //GCPadStatus sta = {};
+    //emu.QueryPadStatus(0, &sta);
+    //SCLOGI("[sandbox] Inputs After Set Input: %s", DescribeFrame(FromGCPadStatus(sta)).c_str());
+
+    //emu.runUntilBreakpointBlocking(20000);
+    //auto duration = std::chrono::steady_clock::now() - before;
+
+    //GCPadStatus stb = {};
+    //emu.QueryPadStatus(0, &stb);
+    //SCLOGI("[sandbox] Inputs After Run: %s", DescribeFrame(FromGCPadStatus(stb)).c_str());
+
+
+    DolphinRunnerAdapter runner{ emu };
+
+    emu.silenceStdOutInfo();
+    run_seed_probe_entrypoint(sav.string(), runner);
+    emu.restoreStdOutInfo();
 
     return 0;
 }

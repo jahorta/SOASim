@@ -11,6 +11,8 @@ public:
     bool step_one_frame() override;
     uint32_t get_pc() const override;
     bool load_savestate(std::string sav) override;
+    bool save_savestate_to_buffer(Common::UniqueBuffer<u8>& buffer) override;
+    bool load_savestate_from_buffer(Common::UniqueBuffer<u8>& buffer) override;
 
     void set_next_input(const simcore::GCInputFrame& f) override;
 

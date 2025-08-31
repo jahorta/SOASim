@@ -20,6 +20,16 @@ bool DolphinRunnerAdapter::load_savestate(std::string sav) {
     return m_w.loadSavestate(sav);
 }
 
+bool DolphinRunnerAdapter::save_savestate_to_buffer(Common::UniqueBuffer<u8>& buffer) {
+
+    return m_w.saveStateToBuffer(buffer);
+}
+
+bool DolphinRunnerAdapter::load_savestate_from_buffer(Common::UniqueBuffer<u8>& buffer) {
+
+    return m_w.loadStateFromBuffer(buffer);
+}
+
 void DolphinRunnerAdapter::set_next_input(const simcore::GCInputFrame& f)
 {
     m_w.setInputPlan(simcore::InputPlan{ f });

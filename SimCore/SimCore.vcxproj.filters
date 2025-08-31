@@ -87,6 +87,9 @@
     <ClInclude Include="Runner\SOAConstants.h">
       <Filter>Runner</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Shims\StateBufferShim.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SimCore.cpp">
@@ -763,6 +766,9 @@
     </ClCompile>
     <ClCompile Include="Runner\DolphinRunnerAdapter.cpp">
       <Filter>Runner</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Shims\StateBufferShim.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

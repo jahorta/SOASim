@@ -43,6 +43,7 @@
 #include "Common/Logging/LogManager.h"
 #include "Core/PowerPC/BreakPoints.h"
 #include <unordered_set>
+#include "Shims/StateBufferShim.h"
 
 
 using namespace std::chrono_literals;
@@ -160,6 +161,8 @@ namespace simcore {
         SConfig::Init();
         SConfig::GetInstance().LoadSettings();
 
+        sterilizeConfigs();
+
         m_system_pad_is_inited = loadDolphinGUISettings(wsi);
 
         auto volume = DiscIO::CreateVolume(iso_path);
@@ -198,14 +201,26 @@ namespace simcore {
 
     uint32_t DolphinWrapper::getPC()
     {
-        Core::CPUThreadGuard guard(*m_system);
-        return m_system->GetPowerPC().GetPPCState().pc;
+        if (Core::GetState(*m_system) == Core::State::Paused)
+            return m_system->GetPowerPC().GetPPCState().pc;
+        
+        uint32_t pc = 0;
+        runOnCpuThread([&] {
+            pc = m_system->GetPowerPC().GetPPCState().pc;
+            }, true );
+        return pc;
     }
 
     uint64_t DolphinWrapper::getTBR()
     {
-        Core::CPUThreadGuard guard(*m_system);
-        return m_system->GetPowerPC().ReadFullTimeBaseValue();
+        if (Core::GetState(*m_system) == Core::State::Paused)
+            return m_system->GetPowerPC().ReadFullTimeBaseValue();
+        
+        uint64_t tbr = 0;
+        runOnCpuThread([&] {
+            tbr = m_system->GetPowerPC().ReadFullTimeBaseValue();
+            }, true);
+        return tbr;
     }
 
     bool DolphinWrapper::loadSavestate(const std::string& state_path)
@@ -245,6 +260,18 @@ namespace simcore {
         else {
             return false;
         }
+    }
+
+    bool DolphinWrapper::saveStateToBuffer(Common::UniqueBuffer<u8>& buffer)
+    {
+        State::SaveToBuffer(*m_system, buffer);
+        return true;
+    }
+
+    bool DolphinWrapper::loadStateFromBuffer(Common::UniqueBuffer<u8>& buf)
+    {
+        SOASim_LoadFromBufferShim(*m_system, buf);
+        return true;
     }
 
     void DolphinWrapper::setUserDirectory(const std::string& abs_path)
@@ -567,6 +594,7 @@ namespace simcore {
     {
         auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_ms);
         auto& armed = armed_singleton().pcs;
+        DolphinWrapper::RunUntilHitResult result{ false, 0u, "timeout" };
 
         while (std::chrono::steady_clock::now() < deadline)
         {
@@ -577,10 +605,13 @@ namespace simcore {
             if (waitForPausedCoreState(5000)) {
                 const uint32_t pc = getPC();
                 if (contains_pc(armed, pc))
-                    return { true, pc, "breakpoint" };
+                {
+                    result = { true, pc, "breakpoint" };
+                    break;
+                }
             }
         }
-        return { false, 0u, "timeout" };
+        return result;
     }
 
     void DolphinWrapper::silenceStdOutInfo()
@@ -609,6 +640,15 @@ namespace simcore {
         bool result = Core::GetState(*m_system) == Core::State::Paused;
         SCLOGT("[run] Pause state encountered: %s", result ? "True" : "False");
         return result;
+    }
+
+    void DolphinWrapper::sterilizeConfigs()
+    {
+        SCLOGT("Setting GFX Backend to Null.");
+        Config::SetCurrent(Config::MAIN_GFX_BACKEND, std::string("Null"));
+
+        SCLOGT("Turning off background input.");
+        Config::SetCurrent(Config::MAIN_INPUT_BACKGROUND_INPUT, false);
     }
 
 } // namespace simcore

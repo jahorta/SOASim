@@ -15,6 +15,7 @@
 #include "Config/SimConfig.h"
 #include "Core/InputCommon/GCPadStatus.h"
 #include "Input/GCPadOverride.h"
+#include "Core/Common/Buffer.h"
 
 namespace Core { class System; }
 
@@ -44,6 +45,8 @@ namespace simcore {
 
         bool loadGame(const std::string& iso_path);
         bool loadSavestate(const std::string& state_path);
+        bool saveStateToBuffer(Common::UniqueBuffer<u8>& buffer);
+        bool loadStateFromBuffer(Common::UniqueBuffer<u8>& buffer);
 
         // Disc metadata captured during last loadGame()
         std::optional<DiscInfo> getDiscInfo() const { return m_disc_info; }
@@ -122,11 +125,12 @@ namespace simcore {
         InputPlan m_plan;
         size_t m_cursor = 0;
 
-        bool waitForPausedCoreState(uint32_t timeout_ms, uint32_t poll_rate = 5);
+        bool waitForPausedCoreState(uint32_t timeout_ms, uint32_t poll_rate = 10);
 
         std::filesystem::path m_user_dir;
         std::filesystem::path m_qt_base_dir;
         bool m_imported_from_qt = false;
+        void sterilizeConfigs();
 
     };
 

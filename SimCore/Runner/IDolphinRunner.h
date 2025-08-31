@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <vector>
 #include "../Core/Input/InputPlan.h"
+#include "Core/Common/Buffer.h"
 
 struct IDolphinRunner
 {
@@ -9,6 +10,8 @@ struct IDolphinRunner
     virtual bool step_one_frame() = 0;
     virtual uint32_t get_pc() const = 0;
     virtual bool load_savestate(std::string sav) = 0;
+    virtual bool save_savestate_to_buffer(Common::UniqueBuffer<u8>& buffer) = 0;
+    virtual bool load_savestate_from_buffer(Common::UniqueBuffer<u8>& buffer) = 0;
 
     virtual void set_next_input(const simcore::GCInputFrame& f) = 0;
 
