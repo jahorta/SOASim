@@ -16,7 +16,7 @@ namespace simcore {
             // [0..255] (128 center) -> [-1..1]
             const double d = (static_cast<int>(v) - 128) / 128.0;
             return d < -1.0 ? -1.0 : (d > 1.0 ? 1.0 : d);
-        }
+    }
         inline double trig_from_u8(uint8_t v) {
             double d = static_cast<double>(v) / 255.0;
             return d < 0.0 ? 0.0 : (d > 1.0 ? 1.0 : d);
@@ -79,14 +79,14 @@ namespace simcore {
 
                 // Main stick
                 if (group == "Main Stick") {
-                    if (control == "X Axis") return axis_from_u8(f.main_x);
-                    if (control == "Y Axis") return axis_from_u8(f.main_y);
+                    if (control == "X") return axis_from_u8(f.main_x);
+                    if (control == "Y") return axis_from_u8(f.main_y);
                 }
 
                 // C-Stick
                 if (group == "C-Stick") {
-                    if (control == "X Axis") return axis_from_u8(f.c_x);
-                    if (control == "Y Axis") return axis_from_u8(f.c_y);
+                    if (control == "X") return axis_from_u8(f.c_x);
+                    if (control == "Y") return axis_from_u8(f.c_y);
                 }
 
                 // Triggers (analog + digitals here in some builds)
