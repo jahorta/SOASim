@@ -42,6 +42,11 @@ struct BreakpointMap
         }
         return false;
     }
+
+    const BPAddr* find(BPKey k) const {
+        for (const auto& e : addrs) if (e.key == k) return &e;
+        return nullptr;
+    }
 };
 
 // helpers (header-only) for tiny config parsing

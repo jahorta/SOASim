@@ -594,7 +594,6 @@ namespace simcore {
     {
         auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_ms);
         auto& armed = armed_singleton().pcs;
-        DolphinWrapper::RunUntilHitResult result{ false, 0u, "timeout" };
 
         while (std::chrono::steady_clock::now() < deadline)
         {
@@ -606,12 +605,12 @@ namespace simcore {
                 const uint32_t pc = getPC();
                 if (contains_pc(armed, pc))
                 {
-                    result = { true, pc, "breakpoint" };
+                    return { true, pc, "breakpoint" };
                     break;
                 }
             }
         }
-        return result;
+        return { false, 0u, "timeout" };
     }
 
     void DolphinWrapper::silenceStdOutInfo()

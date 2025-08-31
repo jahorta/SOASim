@@ -172,11 +172,9 @@
     <ClInclude Include="Runner\Breakpoints\BPCore.h" />
     <ClInclude Include="Runner\Breakpoints\OverworldBreakpoints.h" />
     <ClInclude Include="Runner\Breakpoints\PreBattleBreakpoints.h" />
-    <ClInclude Include="Runner\Breakpoints\Predicate.h" />
-    <ClInclude Include="Runner\DolphinRunnerAdapter.h" />
-    <ClInclude Include="Runner\IDolphinRunner.h" />
     <ClInclude Include="Runner\LineRunLogger.h" />
-    <ClInclude Include="Runner\RunEvaluator.h" />
+    <ClInclude Include="Runner\PhaseEngine.h" />
+    <ClInclude Include="Runner\Predicates\PredicateCatalog.h" />
     <ClInclude Include="Runner\SOAConstants.h" />
     <ClInclude Include="Utils\Log.h" />
     <ClInclude Include="Utils\SafeEnv.h" />
@@ -1033,8 +1031,8 @@
     <ClCompile Include="Runner\Breakpoints\BattleBreakpoints.cpp" />
     <ClCompile Include="Runner\Breakpoints\OverworldBreakpoints.cpp" />
     <ClCompile Include="Runner\Breakpoints\PreBattleBreakpoints.cpp" />
-    <ClCompile Include="Runner\DolphinRunnerAdapter.cpp" />
-    <ClCompile Include="Runner\RunEvaluator.cpp" />
+    <ClCompile Include="Runner\PhaseEngine.cpp" />
+    <ClCompile Include="Runner\Predicates\PredicateCatalog.cpp" />
     <ClCompile Include="SimCore.cpp" />
     <ClCompile Include="Utils\Log.cpp" />
     <ClCompile Include="Utils\SafeEnv.cpp" />

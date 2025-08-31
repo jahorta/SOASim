@@ -57,19 +57,10 @@
     <ClInclude Include="Runner\Breakpoints\BPCore.h">
       <Filter>Runner</Filter>
     </ClInclude>
-    <ClInclude Include="Runner\IDolphinRunner.h">
-      <Filter>Runner</Filter>
-    </ClInclude>
     <ClInclude Include="Runner\LineRunLogger.h">
       <Filter>Runner</Filter>
     </ClInclude>
     <ClInclude Include="Runner\Breakpoints\OverworldBreakpoints.h">
-      <Filter>Runner</Filter>
-    </ClInclude>
-    <ClInclude Include="Runner\Breakpoints\Predicate.h">
-      <Filter>Runner</Filter>
-    </ClInclude>
-    <ClInclude Include="Runner\RunEvaluator.h">
       <Filter>Runner</Filter>
     </ClInclude>
     <ClInclude Include="Utils\Log.h">
@@ -81,14 +72,17 @@
     <ClInclude Include="Runner\Breakpoints\PreBattleBreakpoints.h">
       <Filter>Runner</Filter>
     </ClInclude>
-    <ClInclude Include="Runner\DolphinRunnerAdapter.h">
-      <Filter>Runner</Filter>
-    </ClInclude>
     <ClInclude Include="Runner\SOAConstants.h">
       <Filter>Runner</Filter>
     </ClInclude>
     <ClInclude Include="Core\Shims\StateBufferShim.h">
       <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Runner\Predicates\PredicateCatalog.h">
+      <Filter>Runner</Filter>
+    </ClInclude>
+    <ClInclude Include="Runner\PhaseEngine.h">
+      <Filter>Runner</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -752,9 +746,6 @@
     <ClCompile Include="Runner\Breakpoints\OverworldBreakpoints.cpp">
       <Filter>Runner</Filter>
     </ClCompile>
-    <ClCompile Include="Runner\RunEvaluator.cpp">
-      <Filter>Runner</Filter>
-    </ClCompile>
     <ClCompile Include="Utils\Log.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
@@ -764,11 +755,14 @@
     <ClCompile Include="Runner\Breakpoints\PreBattleBreakpoints.cpp">
       <Filter>Runner</Filter>
     </ClCompile>
-    <ClCompile Include="Runner\DolphinRunnerAdapter.cpp">
-      <Filter>Runner</Filter>
-    </ClCompile>
     <ClCompile Include="Core\Shims\StateBufferShim.cpp">
       <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Runner\Predicates\PredicateCatalog.cpp">
+      <Filter>Runner</Filter>
+    </ClCompile>
+    <ClCompile Include="Runner\PhaseEngine.cpp">
+      <Filter>Runner</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
