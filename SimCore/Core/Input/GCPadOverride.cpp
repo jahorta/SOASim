@@ -14,8 +14,10 @@ namespace simcore {
 
         inline double axis_from_u8(uint8_t v) {
             // [0..255] (128 center) -> [-1..1]
-            const double d = (static_cast<int>(v) - 128) / 128.0;
-            return d < -1.0 ? -1.0 : (d > 1.0 ? 1.0 : d);
+            const double d = (static_cast<int>(v) - 128);
+            if (d == 0) return 0.0;
+            if (d > 0)  return std::min(1.0, static_cast<double>(d) / 127.0);
+            else        return std::max(-1.01, static_cast<double>(d) / 127.0);
     }
         inline double trig_from_u8(uint8_t v) {
             double d = static_cast<double>(v) / 255.0;
