@@ -274,8 +274,8 @@ namespace simcore {
         if (!m_system_pad_is_inited) return;
 
         m_pad.setFrame(f);
-        SCLOGI("[set input] applying input frame: %s", DescribeChosenInputs(InputPlan{ f }, " ").c_str());
-        g_controller_interface.UpdateInput();
+
+        SCLOGI("[set input] applying input frame: %s", DescribeFrame(f).c_str());
     }
 
     // -- Frame Advancing --------------------------------
