@@ -2,163 +2,210 @@
 //
 
 #define NOMINMAX
-#include "Core/DolphinWrapper.h"
-#include "Core/System.h"
-#include "Core/PowerPC/PowerPC.h"
-#include "Core/PowerPC/BreakPoints.h"
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <string>
+#include <format>
+#include <vector>
+#include <unordered_map>
+#include <chrono>
+#include <thread>
+#include <filesystem>
+#include <algorithm>
+
+#include <fstream>
+#include <iostream>
+#include <limits>
+
 #include "Boot/Boot.h"
 #include "Core/Input/InputPlan.h"
-#include "Core/Input/InputPlanFmt.h"
-#include "Core/HW/SI/SI.h"
-#include "Core/HW/GCPad.h"                                       // Pad::Initialize/Shutdown
-#include <iostream>
-#include <Utils/Log.h>
-#include "prompt_path.cpp"
-#include "SeedProbe.h"
+#include "Runner/Breakpoints/BPCore.h"
 #include "Runner/Breakpoints/PreBattleBreakpoints.h"
-#include "Runner/RunEvaluator.h"
-#include "Runner/DolphinRunnerAdapter.h"
+#include "Runner/Parallel/ParallelPhaseScriptRunner.h"
+#include "Runner/Script/Programs/SeedProbeScript.h"
+#include "SeedProbe.h"
+#include "prompt_path.cpp"
+#include <Utils/EnsureSys.h>
 
 using namespace simcore;
 
-static void apply_snapshot_via_pad(DolphinRunnerAdapter& emu, const GCInputFrame& s)
-{
-    emu.set_next_input(s);
+static uint32_t parse_hex_u32(const char* s) {
+    return static_cast<uint32_t>(std::strtoul(s, nullptr, 16));
 }
 
-static bool run_until_after_seed_ms(BreakpointMap& pre, RunEvaluator& runner, uint32_t ms)
-{
-    // Replace with your Phase-B runner that waits for a list of BPs
-    // and returns true if AfterRandSeedSet hits within timeout.
-    PhaseBOptions opt{};
-    opt.end_keys = { pre.terminal_key.value()};
-    opt.timeout_ms = ms;
-
-    SimulationResult out{};
-    return runner.run_until_bp(opt, out).final_success;
-}
-
-static uint32_t read_u32_from_core(DolphinRunnerAdapter& emu, uint32_t addr)
-{
-    // Replace with your Dolphin memory read.
-    uint32_t out = 0;
-    if (emu.read_u32(addr, out))
-        return out;
-    return 0;
-}
-
-void run_seed_probe_entrypoint(std::string sav, DolphinRunnerAdapter& emu)
-{
-    BreakpointMap pre = battle_rng_probe::defaults();
-    RunEvaluator runner{ emu, pre, {} };
+void run_family(ParallelPhaseScriptRunner& runner, const SeedFamily fam, const int N, RandSeedProbeResult& res) {
     
-    emu.load_savestate(sav);
-    Common::UniqueBuffer<u8> prebattle_ss{};
-    emu.save_savestate_to_buffer(prebattle_ss);
+    int res_entries_size = res.entries.size();
+    res.entries.reserve((N * N) + res.entries.size());
 
-    SeedProbeOps ops{
-        /*reset_to_prebattle=*/
-        [&]() {
-           emu.load_savestate_from_buffer(prebattle_ss);
-        },
-        /*apply_input_snapshot=*/
-        [&emu](const GCInputFrame& s) {
-            apply_snapshot_via_pad(emu, s);
-        },
-        /*run_until_after_seed=*/
-        [&](uint32_t ms) {
-            return run_until_after_seed_ms(pre, runner, ms);
-        },
-        /*read_u32=*/
-        [&emu](uint32_t addr) {
-            return read_u32_from_core(emu, addr);
+    InputPlan inputs;
+    std::string title;
+    switch (fam) {
+    case SeedFamily::Neutral:
+        inputs.push_back({});
+        break;
+    case SeedFamily::Main:
+        inputs = build_grid_main(N);
+        title = "JStick";
+        break;
+    case SeedFamily::CStick:
+        inputs = build_grid_cstick(N);
+        title = "CStick";
+        break;
+    case SeedFamily::Triggers:
+        inputs = build_grid_triggers(N, true);
+        title = "Triggers";
+        break;
+    default:
+        return;
+    }
+
+    std::vector<PSJob> jobs;
+    jobs.reserve(N * N);
+    for (auto i : inputs) {
+        jobs.emplace_back(i);
+    }
+
+    SCLOGT("[sandbox] Sending Jobs");
+    std::unordered_map<uint64_t, PSJob> job_lookup;
+    for (const auto& j : jobs) {
+        const uint64_t id = runner.submit(j);
+        job_lookup.emplace(id, j);
+    }
+
+    const size_t total = jobs.size();
+    size_t done = 0;
+    std::vector<PRResult> results;
+    results.reserve(total);
+
+    SCLOGT("[sandbox] Receiving Results");
+    while (done < total) {
+        PRResult r{};
+        if (runner.try_get_result(r)) {
+            results.push_back(r);
+            ++done;
+
+            draw_progress_bar(title.c_str(), done, total);
+
+            std::optional<uint32_t> seed;
+            auto it = r.ps.ctx.find("seed");
+            if (it != r.ps.ctx.end())
+                if (auto p = std::get_if<uint32_t>(&it->second))
+                {
+                    seed = *p;
+                    if (fam == SeedFamily::Neutral)
+                        res.base_seed = seed.value();
+                    else
+                    {
+                        auto input = job_lookup.find(r.job_id)->second.input;
+                        float x, y;
+                        switch (fam) {
+                        case SeedFamily::Main:
+                            x = input.main_x;
+                            y = input.main_y;
+                            break;
+                        case SeedFamily::CStick:
+                            x = input.c_x;
+                            y = input.c_y;
+                            break;
+                        case SeedFamily::Triggers:
+                            x = input.trig_l;
+                            y = input.trig_r;
+                            break;
+                        default:
+                            break;
+                        }
+                        
+                        res.entries.push_back(RandSeedEntry{
+                            N, fam, x, y, seed.value(), (int64_t)(int32_t)seed.value() - (int64_t)(int32_t)res.base_seed, /*ok*/true,
+                            std::format("{}({:02X},{:02X})", title, int(x), int(y))
+                            });
+                    }
+                }
+
+            SCLOGT("[Result] job=%llu worker=%zu accepted=%d ok=%d pc=%08X seed=%s",
+                static_cast<unsigned long long>(r.job_id),
+                r.worker_id,
+                int(r.accepted),
+                int(r.ps.ok),
+                r.ps.last_hit_pc,
+                seed.has_value() ? std::format("{}", seed.value()).c_str() : "None");
+
         }
-    };
-
-    SeedProbeConfig cfg{};
-    cfg.samples_per_axis = 13;      // e.g. 5x5 per family
-    cfg.cap_trigger_top = true;    // avoids digital-L/R bleed at exactly 1.0
-    cfg.run_timeout_ms = 10000;
-    cfg.rng_addr = 0x803469a8u;
-
-    auto res = run_seed_probe(cfg, ops);
-    //log_probe_summary(res);
-
-    // Optional CSV dump
-    auto csv = to_csv_lines(res);
-    // write lines to a file if desired
+        else {
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        }
+    }
 }
 
-int main() {
+int main(int argc, char** argv) {
     auto iso = prompt_path("ISO path: ", true, true, std::string("D:\\SoATAS\\SkiesofArcadiaLegends(USA).gcm"));
     auto sav = prompt_path("Savestate path: ", true, true, std::string("D:\\SoATAS\\dolphin-2506a-x64\\User\\StateSaves\\GEAE8P.s04"));
 
-    simboot::BootOptions opts{};
-    opts.user_dir = std::filesystem::current_path() / "SOASimUser";
-    opts.dolphin_qt_base = R"(D:\SoATAS\dolphin-2506a-x64)";
-    opts.force_p1_standard_pad = false;
-    opts.force_resync_from_base = false;
+    char exePath[MAX_PATH]{};
+    GetModuleFileNameA(NULL, exePath, MAX_PATH);
+    std::string base = exePath;
+    auto pos = base.find_last_of("\\/");
+    base = (pos == std::string::npos) ? "." : base.substr(0, pos);
 
-    std::string err;
-    DolphinWrapper emu;
-    if (!simboot::BootDolphinWrapper(emu, opts, &err)) {
-        SCLOGE("[sandbox] Boot Failed: %s", err.c_str());
-        return 1; 
+    log::Logger::get().set_file_level(log::Level::Trace);
+    simcore::log::Logger::get().open_file((std::filesystem::path(base) / "simcoresandbox.log").string().c_str(), false);
+    SCLOGI("[sandbox] Starting...");
+
+    const std::string iso_path = iso.string();
+    const std::string savestate_path = sav.string();
+    const std::string qt_base_dir = R"(D:\SoATAS\dolphin-2506a-x64)";
+    const size_t     workers = 5;
+    const uint32_t   rng_addr = 0x803469A8u;
+    const uint32_t   timeout_ms = 10000u;
+
+    if (!simcore::EnsureSysBesideExe(qt_base_dir)) {
+        SCLOGE("EnsureSysBesideExe failed. Expected Sys under sandbox / worker exe directory.");
+        return 1;
     }
 
-    if (emu.loadGame(iso.string()))
-        SCLOGI("[sandbox] Game Loaded");
-    else
-        SCLOGI("[sandbox] Game Failed to load");
-    
-    if (emu.loadSavestate(sav.string()))
-        SCLOGI("[sandbox] Save State Loaded");
-    else
-        SCLOGI("[sandbox] Save State Failed to load");
+    // PhaseScript: apply 1 frame input -> run until BP -> read RNG -> emit "seed".
+    PhaseScript program = MakeSeedProbeProgram(timeout_ms);
 
-    SCLOGI("[sandbox] Current PC set to %08X", emu.getPC());
-    emu.ConfigurePortsStandardPadP1();
+    // VM init: initial savestate + default timeout.
+    PSInit psinit{};
+    psinit.savestate_path = savestate_path;
+    psinit.default_timeout_ms = timeout_ms;
 
-    //uint32_t breakpoint = 0x80101e94;
-    //emu.armPcBreakpoints({ breakpoint });
-    //emu.disarmPcBreakpoints({ breakpoint });
+    // Boot plan: use your Boot module; keep ISO and portable base fixed for the lifetime of the pool.
+    BootPlan boot{};
+    boot.boot.user_dir = (std::filesystem::path(base) / ".work" / "runner").string(); // runner will derive per-thread dirs if needed
+    boot.boot.dolphin_qt_base = qt_base_dir;
+    boot.boot.force_resync_from_base = true;
+    boot.boot.save_config_on_success = true;
+    boot.iso_path = iso_path;
 
-    //emu.stepOneFrameBlocking(10000);
-    //emu.stepOneFrameBlocking(10000);
+    // Runner
+    ParallelPhaseScriptRunner runner(workers);
+    runner.start(boot, psinit, program);
 
+    RandSeedProbeResult results;
+    int N = 9;
 
-    //emu.loadSavestate(sav.string());
-    //uint32_t final_bp = 0x8000a1dc;
-    //emu.armPcBreakpoints({ final_bp });
+    // Build a small batch of jobs (neutral + a few sample stick positions).
+    run_family(runner, SeedFamily::Neutral, 1, results);
+    run_family(runner, SeedFamily::Main, N, results);
+    run_family(runner, SeedFamily::CStick, N, results);
+    run_family(runner, SeedFamily::Triggers, N, results);
 
-    //GCPadStatus st{};
-    //emu.QueryPadStatus(0, &st);
-    //SCLOGI("[sandbox] Inputs After: %s", DescribeFrame(FromGCPadStatus(st)).c_str());
+    std::sort(results.entries.begin(), results.entries.end(), [](const RandSeedEntry& a, const RandSeedEntry& b) {
+        if (a.family != b.family)
+            return a.family < b.family;
+        if (a.y == b.y)
+            return a.x < b.x;
+        return a.y < b.y;
+    });
 
-    //GCInputFrame zero{};
-    //zero.main_x = 0;
-    //zero.main_y = 0;
+    print_family_grid(results, SeedFamily::Main, N, "JStick ");
+    print_family_grid(results, SeedFamily::CStick, N, "CStick ");
+    print_family_grid(results, SeedFamily::Triggers, N, "Triggers ");
 
-    //auto before = std::chrono::steady_clock::now();
-    //emu.setInput(zero);
-
-    //GCPadStatus sta = {};
-    //emu.QueryPadStatus(0, &sta);
-    //SCLOGI("[sandbox] Inputs After Set Input: %s", DescribeFrame(FromGCPadStatus(sta)).c_str());
-
-    //emu.runUntilBreakpointBlocking(20000);
-    //auto duration = std::chrono::steady_clock::now() - before;
-
-    //GCPadStatus stb = {};
-    //emu.QueryPadStatus(0, &stb);
-    //SCLOGI("[sandbox] Inputs After Run: %s", DescribeFrame(FromGCPadStatus(stb)).c_str());
-
-
-    DolphinRunnerAdapter runner{ emu };
-
-    emu.silenceStdOutInfo();
-    run_seed_probe_entrypoint(sav.string(), runner);
-    emu.restoreStdOutInfo();
-
+    runner.stop();
     return 0;
-}
+    }

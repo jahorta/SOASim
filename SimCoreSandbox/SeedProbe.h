@@ -44,9 +44,11 @@ namespace simcore {
     std::vector<GCInputFrame> build_grid_cstick(int n);
     std::vector<GCInputFrame> build_grid_triggers(int n, bool cap_top);
 
-    RandSeedProbeResult run_seed_probe(const SeedProbeConfig& cfg, const SeedProbeOps& ops);
+    void draw_progress_bar(const char* label, size_t done, size_t total);
 
     void log_probe_summary(const RandSeedProbeResult& r);
     std::vector<std::string> to_csv_lines(const RandSeedProbeResult& r);
+
+    void print_family_grid(const RandSeedProbeResult& r, SeedFamily fam, int N, const char* title);
 
 } // namespace simcore

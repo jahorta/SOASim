@@ -12,7 +12,7 @@
 namespace simcore {
 
     // ---------- progress bar helpers ----------
-    static void draw_progress_bar(const char* label, size_t done, size_t total)
+    void draw_progress_bar(const char* label, size_t done, size_t total)
     {
         if (total == 0) return;
         const int width = 40; // characters in the bar
@@ -92,8 +92,8 @@ namespace simcore {
 
     std::vector<GCInputFrame> build_grid_triggers(int n, bool cap_top) {
         std::vector<GCInputFrame> out;
-        auto ls = levels_u8(0, 255, n, false);
-        auto rs = levels_u8(0, 255, n, false);
+        auto ls = levels_u8(0, 255, n, cap_top);
+        auto rs = levels_u8(0, 255, n, cap_top);
         out.reserve(n * n);
         for (float r : rs) for (float l : ls) out.push_back(set_trig(neutral_frame(), l, r));
         return out;
@@ -184,7 +184,7 @@ namespace simcore {
         }
     }
 
-    static void print_family_grid(const RandSeedProbeResult& r, SeedFamily fam, int N, const char* title)
+    void print_family_grid(const RandSeedProbeResult& r, SeedFamily fam, int N, const char* title)
     {
         std::vector<const RandSeedEntry*> entries;
         entries.reserve(N * N);
@@ -228,84 +228,6 @@ namespace simcore {
 
         std::printf("\n\n");
         std::fflush(stdout);
-    }
-
-    RandSeedProbeResult run_seed_probe(const SeedProbeConfig& cfg, const SeedProbeOps& ops) {
-        RandSeedProbeResult result{};
-        std::vector<RandSeedEntry> out;
-
-        // Neutral
-        {
-            ops.reset_to_prebattle();
-            auto f = neutral_frame();
-            ops.apply_input_frame(f);
-            bool hit = ops.run_until_after_seed(cfg.run_timeout_ms);
-
-            RandSeedEntry e{};
-            e.samples_per_axis = cfg.samples_per_axis;
-            e.family = SeedFamily::Neutral;
-            e.x = 0.0f; e.y = 0.0f;
-            e.ok = hit;
-            if (hit) e.seed = ops.read_u32(cfg.rng_addr);
-            label_entry(e);
-            out.push_back(e);
-
-            if (!hit) {
-                SCLOGI("[SeedProbe] Neutral failed to hit AfterRandSeedSet.");
-                result.entries = std::move(out);
-                result.base_seed = 0;
-                return result;
-            }
-            result.base_seed = e.seed;
-            SCLOGI("[SeedProbe] Base seed (Neutral) = 0x%08X", result.base_seed);
-        }
-
-        const int N = cfg.samples_per_axis;
-        auto g_main = build_grid_main(N);
-        auto g_cstick = build_grid_cstick(N);
-        auto g_trig = build_grid_triggers(N, cfg.cap_trigger_top);
-
-        auto run_grid = [&](SeedFamily fam, const std::vector<GCInputFrame>& grid, const char* label) {
-            const size_t total = grid.size();
-            size_t done = 0;
-            if (total > 0) draw_progress_bar(label, 0, total);
-            
-            for (const auto& f : grid) {
-                SCLOGT("[run eval] starting %s (%d/%d)", label, done+1, total);
-
-                ops.reset_to_prebattle();
-                ops.apply_input_frame(f);
-                bool hit = ops.run_until_after_seed(cfg.run_timeout_ms);
-
-                RandSeedEntry e{};
-                e.samples_per_axis = N;
-                e.family = fam;
-                if (fam == SeedFamily::Main) { e.x = f.main_x; e.y = f.main_y; }
-                if (fam == SeedFamily::CStick) { e.x = f.c_x;    e.y = f.c_y; }
-                if (fam == SeedFamily::Triggers) { e.x = f.trig_l; e.y = f.trig_r; }
-                e.ok = hit;
-                if (hit) e.seed = ops.read_u32(cfg.rng_addr);
-                label_entry(e);
-                out.push_back(e);
-
-                ++done;
-                draw_progress_bar(label, done, total);
-            }
-            };
-
-        run_grid(SeedFamily::Main, g_main, "JStick");
-        run_grid(SeedFamily::CStick, g_cstick, "CStick");
-        run_grid(SeedFamily::Triggers, g_trig, "Triggers");
-
-        for (auto& e : out) if (e.ok) e.delta = signed_delta(e.seed, result.base_seed);
-
-        result.entries = std::move(out);
-
-        print_family_grid(result, SeedFamily::Main, N, "Main");
-        print_family_grid(result, SeedFamily::CStick, N, "CStick");
-        print_family_grid(result, SeedFamily::Triggers, N, "Triggers");
-
-        return result;
     }
 
     void log_probe_summary(const RandSeedProbeResult& r) {

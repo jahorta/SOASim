@@ -29,5 +29,8 @@
     <ClInclude Include="SeedProbe.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SeedProbe2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
