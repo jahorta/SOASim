@@ -6,7 +6,7 @@ namespace overworld
 {
     enum : BPKey
     {
-        OverworldInit = 1,
+        OverworldInit = 501,
         StartTravelInputs,
         RandomEncounter,
         ReachedGoal

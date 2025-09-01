@@ -4,16 +4,19 @@
 #ifdef _WIN32
 #include <windows.h>
 #endif
+#include <ctime>
 
 namespace simcore::log{
 
     static std::string fmt_v(const char* fmt, std::va_list ap) {
         std::va_list ap2; va_copy(ap2, ap);
-        int n = std::vsnprintf(nullptr, 0, fmt, ap2);
+        const int n = std::vsnprintf(nullptr, 0, fmt, ap2);
         va_end(ap2);
         if (n <= 0) return {};
-        std::string s; s.resize(size_t(n));
-        std::vsnprintf(&s[0], s.size() + 1, fmt, ap);
+        std::string s;
+        std::vector<char> buf(static_cast<size_t>(n) + 1);
+        std::vsnprintf(buf.data(), buf.size(), fmt, ap);
+        s.assign(buf.data(), static_cast<size_t>(n));
         return s;
     }
 

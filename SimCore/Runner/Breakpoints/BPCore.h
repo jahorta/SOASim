@@ -17,8 +17,8 @@ struct BPAddr
 struct BreakpointMap
 {
     std::vector<BPAddr> addrs;
-    BPKey start_key;
-    std::optional<BPKey> terminal_key;
+    BPKey start_key{ 0 };
+    BPKey terminal_key{ 0 };
 
     std::optional<BPKey> match(uint32_t pc) const
     {
@@ -46,6 +46,12 @@ struct BreakpointMap
     const BPAddr* find(BPKey k) const {
         for (const auto& e : addrs) if (e.key == k) return &e;
         return nullptr;
+    }
+
+    inline std::vector<BPKey> get_keys() {
+        std::vector<BPKey> out;
+        for (auto e : addrs) out.emplace_back(e.key);
+        return out;
     }
 };
 

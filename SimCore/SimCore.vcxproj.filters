@@ -25,6 +25,12 @@
     <Filter Include="Utils">
       <UniqueIdentifier>{44d5a27b-0a42-4f94-83b3-20b148da213b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="RunnerPrograms">
+      <UniqueIdentifier>{0e246091-c186-4944-9970-fea7e83d3784}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RunnerParallel">
+      <UniqueIdentifier>{b647e348-4ca8-4ad9-b705-221011c4a2ab}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -83,6 +89,36 @@
     </ClInclude>
     <ClInclude Include="Runner\PhaseEngine.h">
       <Filter>Runner</Filter>
+    </ClInclude>
+    <ClInclude Include="Runner\JobRunner.h">
+      <Filter>Runner</Filter>
+    </ClInclude>
+    <ClInclude Include="Runner\Script\PhaseScriptVM.h">
+      <Filter>RunnerPrograms</Filter>
+    </ClInclude>
+    <ClInclude Include="Runner\Script\Programs\SeedProbeScript.h">
+      <Filter>RunnerPrograms</Filter>
+    </ClInclude>
+    <ClInclude Include="Runner\Parallel\ParallelPhaseScriptRunner.h">
+      <Filter>RunnerParallel</Filter>
+    </ClInclude>
+    <ClInclude Include="Runner\Parallel\TSQueue.h">
+      <Filter>RunnerParallel</Filter>
+    </ClInclude>
+    <ClInclude Include="Runner\Parallel\ProcessWorker.h">
+      <Filter>RunnerParallel</Filter>
+    </ClInclude>
+    <ClInclude Include="Runner\Parallel\PRTypes.h">
+      <Filter>RunnerParallel</Filter>
+    </ClInclude>
+    <ClInclude Include="Runner\IPC\Wire.h">
+      <Filter>RunnerParallel</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\ThreadName.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\EnsureSys.h">
+      <Filter>Utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -763,6 +799,21 @@
     </ClCompile>
     <ClCompile Include="Runner\PhaseEngine.cpp">
       <Filter>Runner</Filter>
+    </ClCompile>
+    <ClCompile Include="Runner\Script\PhaseScriptVM.cpp">
+      <Filter>RunnerPrograms</Filter>
+    </ClCompile>
+    <ClCompile Include="Runner\Parallel\ParallelPhaseScriptRunner.cpp">
+      <Filter>RunnerParallel</Filter>
+    </ClCompile>
+    <ClCompile Include="Runner\Parallel\ProcessWorker.cpp">
+      <Filter>RunnerParallel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\dolphin-2506a\Source\Core\Core\HW\DSPHLE\UCodes\UCodes.cpp">
+      <Filter>DolphinSource</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\EnsureSys.cpp">
+      <Filter>Utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

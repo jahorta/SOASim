@@ -172,12 +172,22 @@
     <ClInclude Include="Runner\Breakpoints\BPCore.h" />
     <ClInclude Include="Runner\Breakpoints\OverworldBreakpoints.h" />
     <ClInclude Include="Runner\Breakpoints\PreBattleBreakpoints.h" />
+    <ClInclude Include="Runner\IPC\Wire.h" />
+    <ClInclude Include="Runner\JobRunner.h" />
     <ClInclude Include="Runner\LineRunLogger.h" />
+    <ClInclude Include="Runner\Parallel\ParallelPhaseScriptRunner.h" />
+    <ClInclude Include="Runner\Parallel\ProcessWorker.h" />
+    <ClInclude Include="Runner\Parallel\PRTypes.h" />
+    <ClInclude Include="Runner\Parallel\TSQueue.h" />
     <ClInclude Include="Runner\PhaseEngine.h" />
     <ClInclude Include="Runner\Predicates\PredicateCatalog.h" />
+    <ClInclude Include="Runner\Script\PhaseScriptVM.h" />
+    <ClInclude Include="Runner\Script\Programs\SeedProbeScript.h" />
     <ClInclude Include="Runner\SOAConstants.h" />
+    <ClInclude Include="Utils\EnsureSys.h" />
     <ClInclude Include="Utils\Log.h" />
     <ClInclude Include="Utils\SafeEnv.h" />
+    <ClInclude Include="Utils\ThreadName.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\dolphin-2506a\Source\Core\Common\Analytics.cpp">
@@ -555,6 +565,9 @@
     <ClCompile Include="..\..\dolphin-2506a\Source\Core\Core\HW\DSP.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\dolphin-2506a\Source\Core\Core\HW\DSPHLE\UCodes\UCodes.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\..\dolphin-2506a\Source\Core\Core\HW\GBACore.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -1031,9 +1044,13 @@
     <ClCompile Include="Runner\Breakpoints\BattleBreakpoints.cpp" />
     <ClCompile Include="Runner\Breakpoints\OverworldBreakpoints.cpp" />
     <ClCompile Include="Runner\Breakpoints\PreBattleBreakpoints.cpp" />
+    <ClCompile Include="Runner\Parallel\ParallelPhaseScriptRunner.cpp" />
+    <ClCompile Include="Runner\Parallel\ProcessWorker.cpp" />
     <ClCompile Include="Runner\PhaseEngine.cpp" />
     <ClCompile Include="Runner\Predicates\PredicateCatalog.cpp" />
+    <ClCompile Include="Runner\Script\PhaseScriptVM.cpp" />
     <ClCompile Include="SimCore.cpp" />
+    <ClCompile Include="Utils\EnsureSys.cpp" />
     <ClCompile Include="Utils\Log.cpp" />
     <ClCompile Include="Utils\SafeEnv.cpp" />
   </ItemGroup>

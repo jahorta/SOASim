@@ -13,7 +13,6 @@ namespace simboot {
         std::filesystem::path user_dir;          // isolated User/ for this simulator
         std::filesystem::path dolphin_qt_base;   // MUST be portable (contains portable.txt)
         bool force_resync_from_base = false;     // recopy Sys+User even if already synced
-        bool force_p1_standard_pad = false;     // after sync, set Port1=Standard Controller
         bool save_config_on_success = true;      // write simulator.ini so next run auto-loads
         std::filesystem::path config_path = simcore::SimConfigIO::DefaultConfigPath(); // where to save
     };

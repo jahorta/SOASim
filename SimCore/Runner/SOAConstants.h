@@ -3,6 +3,7 @@
 #include <vector>
 
 namespace SOA {
+
 	const std::vector<std::string> EnemyNames{
 		"Soldier",
 		"Guard",
@@ -250,4 +251,8 @@ namespace SOA {
 		"Frock",
 		"Frock"
 	};
+
+	namespace ADDR {
+		const uint32_t RNG_SEED = 0x803469A8;
+	}
 }

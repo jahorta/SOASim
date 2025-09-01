@@ -50,11 +50,6 @@ namespace simboot {
             return false;
         }
 
-        // 4) (Optional) force Port 1 = Standard Controller in-memory
-        if (opts.force_p1_standard_pad) {
-            dw.ConfigurePortsStandardPadP1();
-        }
-
         // 5) Persist config for next time (paths only; never touches DolphinQt install)
         if (opts.save_config_on_success) {
             simcore::SimConfig cfg{ opts.user_dir, opts.dolphin_qt_base };
@@ -79,7 +74,6 @@ namespace simboot {
         opts.user_dir = cfg->user_dir;
         opts.dolphin_qt_base = cfg->qt_base_dir;
         opts.force_resync_from_base = false;   // usually not needed; set true if you want to refresh
-        opts.force_p1_standard_pad = false;   // inherit bindings from the base's User/
         opts.save_config_on_success = false;   // already have one
         opts.config_path = config_path;
 

@@ -40,7 +40,6 @@
 #include <chrono>
 #include <cstdarg>
 
-#include "Common/Logging/LogManager.h"
 #include "Core/PowerPC/BreakPoints.h"
 #include <unordered_set>
 #include "Shims/StateBufferShim.h"
@@ -228,10 +227,6 @@ namespace simcore {
         if (!Core::IsRunning(*m_system))
             return false;
 
-        auto* mgr = Common::Log::LogManager::GetInstance();
-        mgr->EnableListener(Common::Log::LogListener::FILE_LISTENER, true);
-        mgr->SetEnable(Common::Log::LogType::COMMON, true);
-
         auto b = [&](const auto& info) { return !!Config::Get(info); };
         SCLOGT("DSP_HLE=%d DSP_THREAD=%d CPU_THREAD=%d",
             int(b(Config::MAIN_DSP_HLE)),
@@ -251,9 +246,7 @@ namespace simcore {
 
         DisarmAnyActiveMovie(*m_system);
 
-        if ((pc_before != getPC() || tbr_before != getTBR() ||
-            (!m_ran_since_last_load && strcmp(m_last_save_state.c_str(), state_path.c_str())))
-            && Core::IsRunning(*m_system)) {
+        if (Core::IsRunning(*m_system) && (pc_before != getPC() || tbr_before != getTBR() || state_path._Equal(m_last_save_state))) {
             m_last_save_state = state_path;
             return true;
         }
@@ -447,14 +440,8 @@ namespace simcore {
         if (m_imported_from_qt && !force) return true;
 
         std::string err;
-        const fs::path base_sys = m_qt_base_dir / "Sys";
         const fs::path base_user = m_qt_base_dir / "User";
-        if (!require_exists_dir(base_sys, "Sys", &err)) { if (error_out) *error_out = err; return false; }
         if (!require_exists_dir(base_user, "User", &err)) { if (error_out) *error_out = err; return false; }
-
-        const fs::path our_sys = m_user_dir / "Sys";
-        if (!copy_tree(base_sys, our_sys, &err)) { if (error_out) *error_out = err; return false; }
-
         if (!copy_tree(base_user, m_user_dir, &err)) { if (error_out) *error_out = err; return false; }
 
         SConfig::GetInstance().LoadSettings();
@@ -488,47 +475,99 @@ namespace simcore {
     bool simcore::DolphinWrapper::readU8(uint32_t addr, uint8_t& out) const
     {
         if (!isRunning()) return false;
-        Core::CPUThreadGuard guard(Core::System::GetInstance());
-        auto& mem = guard.GetSystem().GetMemory();
-        out = mem.Read_U8(addr);
+
+        if (Core::GetState(*m_system) == Core::State::Paused)
+        {
+            auto& mem = m_system->GetMemory();
+            out = mem.Read_U8(addr);
+        }
+        else {
+            Core::CPUThreadGuard guard(Core::System::GetInstance());
+            auto& mem = guard.GetSystem().GetMemory();
+            out = mem.Read_U8(addr);
+        }
+
+        SCLOGT("[mem read] Successfully read u8: 0x%X", out);
         return true;
     }
 
     bool simcore::DolphinWrapper::readU16(uint32_t addr, uint16_t& out) const
     {
         if (!isRunning()) return false;
-        Core::CPUThreadGuard guard(Core::System::GetInstance());
-        auto& mem = guard.GetSystem().GetMemory();
-        out = mem.Read_U16(addr);
+
+        if (Core::GetState(*m_system) == Core::State::Paused)
+        {
+            auto& mem = m_system->GetMemory();
+            out = mem.Read_U16(addr);
+        }
+        else {
+            Core::CPUThreadGuard guard(Core::System::GetInstance());
+            auto& mem = guard.GetSystem().GetMemory();
+            out = mem.Read_U16(addr);
+        }
+
+        SCLOGT("[mem read] Successfully read u16: 0x%X", out);
         return true;
     }
 
     bool simcore::DolphinWrapper::readU32(uint32_t addr, uint32_t& out) const
     {
         if (!isRunning()) return false;
-        Core::CPUThreadGuard guard(Core::System::GetInstance());
-        auto& mem = guard.GetSystem().GetMemory();
-        out = mem.Read_U32(addr);
+
+        if (Core::GetState(*m_system) == Core::State::Paused)
+        {
+            auto& mem = m_system->GetMemory();
+            out = mem.Read_U32(addr);
+        }
+        else {
+            Core::CPUThreadGuard guard(Core::System::GetInstance());
+            auto& mem = guard.GetSystem().GetMemory();
+            out = mem.Read_U32(addr);
+        }
+
+        SCLOGT("[mem read] Successfully read u32: 0x%X", out);
         return true;
     }
 
     bool simcore::DolphinWrapper::readF32(uint32_t addr, float& out) const
     {
         if (!isRunning()) return false;
-        Core::CPUThreadGuard guard(Core::System::GetInstance());
-        auto& mem = guard.GetSystem().GetMemory();
-        uint32_t u = mem.Read_U32(addr);
+
+        uint32_t u;
+        if (Core::GetState(*m_system) == Core::State::Paused)
+        {
+            auto& mem = m_system->GetMemory();
+            u = mem.Read_U32(addr);
+        }
+        else {
+            Core::CPUThreadGuard guard(Core::System::GetInstance());
+            auto& mem = guard.GetSystem().GetMemory();
+            u = mem.Read_U32(addr);
+        }
+
         out = std::bit_cast<float>(u);
+        SCLOGT("[mem read] Successfully read float: %.2f", out);
         return true;
     }
 
     bool simcore::DolphinWrapper::readF64(uint32_t addr, double& out) const
     {
         if (!isRunning()) return false;
-        Core::CPUThreadGuard guard(Core::System::GetInstance());
-        auto& mem = guard.GetSystem().GetMemory();
-        const uint64_t u = mem.Read_U64(addr);
+
+        uint64_t u;
+        if (Core::GetState(*m_system) == Core::State::Paused)
+        {
+            auto& mem = m_system->GetMemory();
+            u = mem.Read_U64(addr);
+        }
+        else {
+            Core::CPUThreadGuard guard(Core::System::GetInstance());
+            auto& mem = guard.GetSystem().GetMemory();
+            u = mem.Read_U64(addr);
+        }
+
         out = std::bit_cast<double>(u);
+        SCLOGT("[mem read] Successfully read double: %.2f", out);
         return true;
     }
 
