@@ -156,12 +156,16 @@ int main(int argc, char** argv) {
     const std::string iso_path = iso.string();
     const std::string savestate_path = sav.string();
     const std::string qt_base_dir = R"(D:\SoATAS\dolphin-2506a-x64)";
-    const size_t     workers = 5;
     const uint32_t   rng_addr = 0x803469A8u;
     const uint32_t   timeout_ms = 10000u;
 
+    // CONSTANTS FOR CONTROL!!!!!
+    const int    N = 20;
+    const size_t workers = 5;
     const int    min_value = 0x30;
     const int    max_value = 0xD0;
+
+
     if (!simcore::EnsureSysBesideExe(qt_base_dir)) {
         SCLOGE("EnsureSysBesideExe failed. Expected Sys under sandbox / worker exe directory.");
         return 1;
@@ -188,7 +192,6 @@ int main(int argc, char** argv) {
     runner.start(boot, psinit, program);
 
     RandSeedProbeResult results;
-    int N = 9;
 
     // Build a small batch of jobs (neutral + a few sample stick positions).
     run_family(runner, SeedFamily::Neutral, 1, min_value, max_value, results);
