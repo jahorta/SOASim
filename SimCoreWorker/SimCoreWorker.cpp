@@ -84,9 +84,16 @@ int main(int argc, char** argv)
 
     set_this_thread_name_utf8((std::string("WorkerMain-") + std::to_string(worker_id)).c_str());
 
+    // Ensure the userdir exists and open a per-worker log file
+    std::filesystem::path log_path = std::filesystem::path(userdir) /
+        ("worker-" + std::to_string(worker_id) + ".log");
+    std::error_code ec;
+    std::filesystem::create_directories(log_path.parent_path(), ec);
+
     auto& L = simcore::log::Logger::get();
-    L.set_levels(simcore::log::Level::Off, simcore::log::Level::Trace);
-    if (!logfile.empty()) L.open_file((std::filesystem::path(userdir) / "worker.log").string().c_str(), /*append=*/false);
+    // File sink: lowest threshold so everything is captured; console is muted
+    L.open_file(log_path.string().c_str(), /*append=*/false);
+    L.set_levels(simcore::log::Level::Off, simcore::log::Level::Debug);
     
     SCLOGI("[Worker %zu] Initializing", worker_id);
 
