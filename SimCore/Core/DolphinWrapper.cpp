@@ -108,8 +108,8 @@ namespace simcore {
     DolphinWrapper::DolphinWrapper()
     {
         m_system = &Core::System::GetInstance();
-        log::Logger::get().open_file("simcore.log", false);
-        log::Logger::get().set_levels(log::Level::Info, log::Level::Trace);
+        //log::Logger::get().open_file("simcore.log", false);
+        //log::Logger::get().set_levels(log::Level::Info, log::Level::Trace);
     }
     
 
@@ -316,7 +316,6 @@ namespace simcore {
             SCLOGD("[INP] next <neutral>");
             m_pad.setFrame(GCPadOverride::NeutralFrame());
         }
-        g_controller_interface.UpdateInput();
     }
 
     void DolphinWrapper::setInput(const GCInputFrame& f)
@@ -712,7 +711,7 @@ namespace simcore {
         }
         
 
-        bool result = Core::GetState(*m_system) == Core::State::Paused;
+        bool result = Core::GetState(*m_system) == Core::State::Paused;        
         SCLOGD("[DW/run] waitForPaused end ok=%d waited_ms=%lld state=%d",
             result ? 1 : 0,
             (long long)std::chrono::duration_cast<std::chrono::milliseconds>(
