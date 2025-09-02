@@ -7,7 +7,7 @@
 
 namespace simcore::log {
 
-    enum class Level : int { Trace = 0, Debug, Info, Warn, Error, Fatal, Off };
+    enum class Level : int { Debug = 0, Trace, Info, Warn, Error, Fatal, Off };
 
     class Logger {
     public:
