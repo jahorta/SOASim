@@ -4,9 +4,6 @@
 #include <sstream>
 #include <algorithm>
 
-#ifndef SCLOGI
-#define SCLOGI(...) do { std::printf(__VA_ARGS__); std::printf("\n"); } while(0)
-#endif
 #include <Utils/Log.h>
 
 namespace simcore {
