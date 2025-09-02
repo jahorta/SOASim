@@ -9,7 +9,7 @@ namespace simcore {
     inline PhaseScript MakeSeedProbeProgram(uint32_t run_timeout_ms)
     {
         PhaseScript ps{};
-        ps.canonical_bp_keys = battle_rng_probe::defaults().get_keys();
+        ps.canonical_bp_keys = {battle_rng_probe::AfterRandSeedSet};
 
         ps.ops.push_back({ PSOpCode::ARM_PHASE_BPS_ONCE });
 
