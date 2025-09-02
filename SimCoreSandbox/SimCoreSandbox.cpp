@@ -149,8 +149,8 @@ int main(int argc, char** argv) {
     auto pos = base.find_last_of("\\/");
     base = (pos == std::string::npos) ? "." : base.substr(0, pos);
 
-    log::Logger::get().set_file_level(log::Level::Trace);
-    simcore::log::Logger::get().open_file((std::filesystem::path(base) / "simcoresandbox.log").string().c_str(), false);
+    log::Logger::get().set_levels(log::Level::Info, log::Level::Debug);
+    simcore::log::Logger::get().open_file((std::filesystem::path(base) / "sandbox.log").string().c_str(), false);
     SCLOGI("[sandbox] Starting...");
 
     const std::string iso_path = iso.string();
