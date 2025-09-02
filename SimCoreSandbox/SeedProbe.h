@@ -40,9 +40,9 @@ namespace simcore {
         std::function<uint32_t(uint32_t)> read_u32;
     };
 
-    std::vector<GCInputFrame> build_grid_main(int n);
-    std::vector<GCInputFrame> build_grid_cstick(int n);
-    std::vector<GCInputFrame> build_grid_triggers(int n, bool cap_top);
+    std::vector<GCInputFrame> build_grid_main(int n, int min_value = 0, int max_value = 255);
+    std::vector<GCInputFrame> build_grid_cstick(int n, int min_value = 0, int max_value = 255);
+    std::vector<GCInputFrame> build_grid_triggers(int n, int min_value = 0, int max_value = 255, bool cap_top = true);
 
     void draw_progress_bar(const char* label, size_t done, size_t total);
 

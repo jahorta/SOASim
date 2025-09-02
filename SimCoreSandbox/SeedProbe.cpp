@@ -69,28 +69,28 @@ namespace simcore {
         return f;
     }
 
-    std::vector<GCInputFrame> build_grid_main(int n) {
+    std::vector<GCInputFrame> build_grid_main(int n, int min_value, int max_value) {
         std::vector<GCInputFrame> out;
-        auto xs = levels_u8(0, 255, n, false);
-        auto ys = levels_u8(0, 255, n, false);
+        auto xs = levels_u8(min_value, max_value, n, false);
+        auto ys = levels_u8(min_value, max_value, n, false);
         out.reserve(n * n);
         for (float y : ys) for (float x : xs) out.push_back(set_main(neutral_frame(), x, y));
         return out;
     }
 
-    std::vector<GCInputFrame> build_grid_cstick(int n) {
+    std::vector<GCInputFrame> build_grid_cstick(int n, int min_value, int max_value) {
         std::vector<GCInputFrame> out;
-        auto xs = levels_u8(0, 255, n, false);
-        auto ys = levels_u8(0, 255, n, false);
+        auto xs = levels_u8(min_value, max_value, n, false);
+        auto ys = levels_u8(min_value, max_value, n, false);
         out.reserve(n * n);
         for (float y : ys) for (float x : xs) out.push_back(set_c(neutral_frame(), x, y));
         return out;
     }
 
-    std::vector<GCInputFrame> build_grid_triggers(int n, bool cap_top) {
+    std::vector<GCInputFrame> build_grid_triggers(int n, int min_value, int max_value, bool cap_top) {
         std::vector<GCInputFrame> out;
-        auto ls = levels_u8(0, 255, n, cap_top);
-        auto rs = levels_u8(0, 255, n, cap_top);
+        auto ls = levels_u8(min_value, max_value, n, cap_top);
+        auto rs = levels_u8(min_value, max_value, n, cap_top);
         out.reserve(n * n);
         for (float r : rs) for (float l : ls) out.push_back(set_trig(neutral_frame(), l, r));
         return out;
