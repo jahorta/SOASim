@@ -80,6 +80,7 @@ namespace simcore {
             case PSOpCode::APPLY_INPUT: {
                 const GCInputFrame& f = op.input.has_value() ? op.input.value() : job.input;
                 host_.setInput(f);
+
                 break;
             }
 
@@ -131,7 +132,7 @@ namespace simcore {
                 R.ctx[op.em.key] = ctx[op.em.key]; // copy selected value to result
                 break;
             }
-        }
+            }
         }
 
         R.ok = true;
