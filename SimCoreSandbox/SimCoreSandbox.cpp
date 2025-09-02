@@ -34,7 +34,7 @@ static uint32_t parse_hex_u32(const char* s) {
     return static_cast<uint32_t>(std::strtoul(s, nullptr, 16));
 }
 
-void run_family(ParallelPhaseScriptRunner& runner, const SeedFamily fam, const int N, RandSeedProbeResult& res) {
+void run_family(ParallelPhaseScriptRunner& runner, const SeedFamily fam, const int N, int min_value, int max_value, RandSeedProbeResult& res) {
     
     int res_entries_size = res.entries.size();
     res.entries.reserve((N * N) + res.entries.size());
@@ -46,15 +46,15 @@ void run_family(ParallelPhaseScriptRunner& runner, const SeedFamily fam, const i
         inputs.push_back({});
         break;
     case SeedFamily::Main:
-        inputs = build_grid_main(N);
+        inputs = build_grid_main(N, min_value, max_value);
         title = "JStick";
         break;
     case SeedFamily::CStick:
-        inputs = build_grid_cstick(N);
+        inputs = build_grid_cstick(N, min_value, max_value);
         title = "CStick";
         break;
     case SeedFamily::Triggers:
-        inputs = build_grid_triggers(N, true);
+        inputs = build_grid_triggers(N, min_value, max_value, true);
         title = "Triggers";
         break;
     default:
@@ -160,6 +160,8 @@ int main(int argc, char** argv) {
     const uint32_t   rng_addr = 0x803469A8u;
     const uint32_t   timeout_ms = 10000u;
 
+    const int    min_value = 0x30;
+    const int    max_value = 0xD0;
     if (!simcore::EnsureSysBesideExe(qt_base_dir)) {
         SCLOGE("EnsureSysBesideExe failed. Expected Sys under sandbox / worker exe directory.");
         return 1;
@@ -189,10 +191,10 @@ int main(int argc, char** argv) {
     int N = 9;
 
     // Build a small batch of jobs (neutral + a few sample stick positions).
-    run_family(runner, SeedFamily::Neutral, 1, results);
-    run_family(runner, SeedFamily::Main, N, results);
-    run_family(runner, SeedFamily::CStick, N, results);
-    run_family(runner, SeedFamily::Triggers, N, results);
+    run_family(runner, SeedFamily::Neutral, 1, min_value, max_value, results);
+    run_family(runner, SeedFamily::Main, N, min_value, max_value, results);
+    run_family(runner, SeedFamily::CStick, N, min_value, max_value, results);
+    run_family(runner, SeedFamily::Triggers, N, min_value, max_value, results);
 
     std::sort(results.entries.begin(), results.entries.end(), [](const RandSeedEntry& a, const RandSeedEntry& b) {
         if (a.family != b.family)
