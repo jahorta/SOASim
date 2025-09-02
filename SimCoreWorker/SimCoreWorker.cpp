@@ -94,7 +94,7 @@ int main(int argc, char** argv)
     // File sink: lowest threshold so everything is captured; console is muted
     L.open_file(log_path.string().c_str(), /*append=*/false);
     L.set_levels(simcore::log::Level::Off, simcore::log::Level::Debug);
-    
+
     SCLOGI("[Worker %zu] Initializing", worker_id);
 
     SCLOGD("[Worker %zu] args iso=%s sav=%s qtbase=%s userdir=%s timeout=%u",
@@ -106,6 +106,7 @@ int main(int argc, char** argv)
     if (hIn == NULL || hIn == INVALID_HANDLE_VALUE || hOut == NULL || hOut == INVALID_HANDLE_VALUE) {
         SCLOGE("[Worker %zu] invalid std handles", worker_id);
         return WorkerExitCode::INVALID_HANDLES;
+    }
 
     auto sys_dsp = std::filesystem::path(exe_dir_w()) / "Sys" / "GC" / "dsp_coef.bin";
     if (!std::filesystem::exists(sys_dsp)) {
@@ -113,7 +114,6 @@ int main(int argc, char** argv)
         (void)write_all(hOut, &wr, sizeof(wr));
         SCLOGE("[Worker %zu] Missing Sys beside exe (%ws). Ensure parent copied from --qtbase.", worker_id, sys_dsp.c_str());
         return WERR_SysMissing;
-    }
     }
 
     BootPlan boot{};
