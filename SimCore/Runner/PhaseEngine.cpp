@@ -79,7 +79,11 @@ PhaseResult PhaseEngine::eval_for_hit(uint32_t pc,
 PhaseResult PhaseEngine::run_until_bp(uint32_t timeout_ms,
     const std::vector<PredicateDef>& predicates) {
     arm_phase_breakpoints_once();
+
+    SCLOGD("[PhaseB] until_bp start timeout=%u", timeout_ms);
     auto r = host_.runUntilBreakpointBlocking(timeout_ms);
+    SCLOGD("[PhaseB] until_bp %s pc=%08X", r.hit ? "HIT" : "TIMEOUT", r.pc);
+
     if (!r.hit) {
         PhaseResult pr{}; pr.reason = "timeout"; return pr;
     }
@@ -94,6 +98,7 @@ PhaseResult PhaseEngine::run_inputs(const BranchSpec& branch,
     std::unordered_map<std::string, int64_t> metrics;
 
     for (size_t i = 0; i < branch.inputs.size(); ++i) {
+        SCLOGD("[PhaseA] frame=%zu apply", i);
         host_.setInput(branch.inputs[i]);
         host_.stepOneFrameBlocking();
 
@@ -102,6 +107,8 @@ PhaseResult PhaseEngine::run_inputs(const BranchSpec& branch,
         if (r.hit) {
             return eval_for_hit(r.pc, predicates, metrics);
         }
+        SCLOGD("[PhaseA] post-frame=%zu hit=%d pc=%08X",
+            i, r.hit ? 1 : 0, r.pc);
     }
 
     PhaseResult pr{}; pr.reason = "no_bp"; return pr;

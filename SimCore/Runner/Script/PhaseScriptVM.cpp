@@ -34,6 +34,8 @@ namespace simcore {
         init_ = init;
         prog_ = program;
 
+        SCLOGD("[VM] init begin sav=%s timeout=%u", init.savestate_path.c_str(), init.default_timeout_ms);
+
         // 0) Disarm previous set (if any), so we can change canonical keys safely
         if (armed_ && !armed_pcs_.empty()) {
             host_.disarmPcBreakpoints(armed_pcs_);
@@ -50,10 +52,13 @@ namespace simcore {
         phase_.canonical_bp_keys = prog_.canonical_bp_keys;
         phase_.allowed_predicates.clear();
 
+        SCLOGD("[VM] attach bp count=%zu", program.canonical_bp_keys.size());
         arm_bps_once();
 
         // 3) Snapshot for per-job resets
-        return save_snapshot();
+        bool snapshot_success = save_snapshot();
+        if (snapshot_success) SCLOGD("[VM] init ok");
+        return snapshot_success;
     }
 
     PSResult PhaseScriptVM::run(const PSJob& job)
@@ -79,20 +84,40 @@ namespace simcore {
             }
 
             case PSOpCode::STEP_FRAMES: {
+                SCLOGD("[VM] phase=run_inputs begin frames=%zu", op.step.n);
                 for (uint32_t i = 0; i < op.step.n; ++i) host_.stepOneFrameBlocking();
+                SCLOGD("[VM] phase=run_inputs end");
                 break;
             }
 
             case PSOpCode::RUN_UNTIL_BP: {
+                SCLOGD("[VM] phase=run_until_bp begin armed=%zu", armed_pcs_.size());
                 auto rr = host_.runUntilBreakpointBlocking(op.to.ms ? op.to.ms : timeout_ms);
-                if (!rr.hit) return R; // timeout -> not ok
+
+                SCLOGD("[VM] phase=run_until_bp end result=%s pc=%08X", rr.hit ? "ok" : "fail", rr.pc);
+                if (!rr.hit) 
+                {
+                    SCLOGD("[VM] timeout waiting for bp; last_pc=%08X", rr.pc);
+                    return R; // timeout -> not ok
+                }
                 R.last_hit_pc = rr.pc;
                 break;
             }
 
             case PSOpCode::READ_U8: { uint8_t  v{}; if (!read_u8(op.rd.addr, v)) return R; ctx[op.rd.dst_key] = v; break; }
             case PSOpCode::READ_U16: { uint16_t v{}; if (!read_u16(op.rd.addr, v)) return R; ctx[op.rd.dst_key] = v; break; }
-            case PSOpCode::READ_U32: { uint32_t v{}; if (!read_u32(op.rd.addr, v)) return R; ctx[op.rd.dst_key] = v; break; }
+            case PSOpCode::READ_U32: 
+            { 
+                uint32_t v{}; 
+                if (!read_u32(op.rd.addr, v)) 
+                {
+                    SCLOGD("[VM] READ_U32 FAIL @%08X key=%s", op.rd.addr, op.rd.dst_key.c_str());
+                    return R;
+                }
+                SCLOGD("[VM] READ_U32 @%08X -> %08X key=%s", op.rd.addr, v, op.rd.dst_key.c_str());
+                ctx[op.rd.dst_key] = v; 
+                break; 
+            }
             case PSOpCode::READ_F32: { float    v{}; if (!read_f32(op.rd.addr, v)) return R; ctx[op.rd.dst_key] = v; break; }
             case PSOpCode::READ_F64: { double   v{}; if (!read_f64(op.rd.addr, v)) return R; ctx[op.rd.dst_key] = v; break; }
 
@@ -101,9 +126,12 @@ namespace simcore {
                 break;
 
             case PSOpCode::EMIT_RESULT:
+            {
+                SCLOGD("[VM] EMIT_RESULT %s=%08X", op.em.key.c_str(), ctx[op.em.key]);
                 R.ctx[op.em.key] = ctx[op.em.key]; // copy selected value to result
                 break;
             }
+        }
         }
 
         R.ok = true;

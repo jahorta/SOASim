@@ -90,6 +90,9 @@ int main(int argc, char** argv)
     
     SCLOGI("[Worker %zu] Initializing", worker_id);
 
+    SCLOGD("[Worker %zu] args iso=%s sav=%s qtbase=%s userdir=%s timeout=%u",
+        worker_id, iso.c_str(), sav.c_str(), qtbase.c_str(), userdir.c_str(), timeout_ms);
+
     // Use inherited anonymous pipes as binary channels
     HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -114,6 +117,9 @@ int main(int argc, char** argv)
     boot.iso_path = iso;
 
     DolphinWrapper host;
+
+    SCLOGD("[Worker %zu] BootDolphinWrapper begin (user_dir=%s qtbase=%s)",
+        worker_id, boot.boot.user_dir.c_str(), boot.boot.dolphin_qt_base.c_str());
     std::string err;
     if (!simboot::BootDolphinWrapper(host, boot.boot, &err)) {
         WireReady wr{}; wr.tag = MSG_READY; wr.ok = 0; wr.error = WERR_BootFail;
@@ -121,12 +127,16 @@ int main(int argc, char** argv)
         SCLOGE("[Worker %zu] Boot failed: %s", worker_id, err.c_str());
         return WERR_BootFail;
     }
+    SCLOGD("[Worker %zu] BootDolphinWrapper ok", worker_id);
+
+    SCLOGD("[Worker %zu] loadGame(%s) begin", worker_id, boot.iso_path.c_str());
     if (!host.loadGame(boot.iso_path)) {
         WireReady wr{}; wr.tag = MSG_READY; wr.ok = 0; wr.error = WERR_LoadGame;
         (void)write_all(hOut, &wr, sizeof(wr));
         SCLOGE("[Worker %zu] loadGame failed: %s", worker_id, boot.iso_path.c_str());
         return WERR_LoadGame;
     }
+    SCLOGD("[Worker %zu] loadGame ok", worker_id);
 
     host.ConfigurePortsStandardPadP1();
 
@@ -138,6 +148,8 @@ int main(int argc, char** argv)
     init.savestate_path = sav;
     init.default_timeout_ms = timeout_ms;
 
+    SCLOGD("[Worker %zu] VM.init(sav=%s, default_timeout=%u) begin; bp_count=%zu",
+        worker_id, init.savestate_path.c_str(), init.default_timeout_ms, bpmap.addrs.size());
     PhaseScriptVM vm(host, bpmap);
     if (!vm.init(init, program)) {
         WireReady wr{}; wr.tag = MSG_READY; wr.ok = 0; wr.error = WERR_VMInit;
@@ -145,12 +157,14 @@ int main(int argc, char** argv)
         SCLOGE("[Worker %zu] VM init failed", worker_id);
         return WERR_VMInit;
     }
+    SCLOGD("[Worker %zu] VM.init ok", worker_id);
 
     WireReady wrdy{}; wrdy.tag = MSG_READY; wrdy.ok = 1;
     if (!write_all(hOut, &wrdy, sizeof(wrdy))) {
         SCLOGE("[Worker %zu] failed to write READY", worker_id);
         return WorkerExitCode::SEND_READY_FAILED;
     }
+    SCLOGE("[Worker %zu] READY sent", worker_id);
 
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
@@ -167,7 +181,10 @@ int main(int argc, char** argv)
         f.buttons = wj.buttons;
 
         PSJob job{ f };
+        SCLOGD("[Worker %zu] job recv id=%u epoch=%u", worker_id, wj.job_id, wj.epoch);
         auto R = vm.run(job);
+        SCLOGD("[Worker %zu] run done id=%u epoch=%u ok=%d last_pc=%08X ctx_keys=%zu",
+            worker_id, wj.job_id, wj.epoch, R.ok ? 1 : 0, R.last_hit_pc, R.ctx.size());
 
         WireResult wr{};
         wr.tag = MSG_RESULT;
@@ -176,8 +193,15 @@ int main(int argc, char** argv)
         wr.ok = R.ok ? 1 : 0;
         wr.last_pc = R.last_hit_pc;
         auto it = R.ctx.find("seed");
-        if (it != R.ctx.end()) {
-            if (auto p = std::get_if<uint32_t>(&it->second)) wr.seed = *p;
+        if (it == R.ctx.end()) {
+            SCLOGD("[Worker %zu] id=%u epoch=%u seed: <missing>", worker_id, wj.job_id, wj.epoch);
+        }
+        else if (auto p = std::get_if<uint32_t>(&it->second)) {
+            SCLOGD("[Worker %zu] id=%u epoch=%u seed=%08X", worker_id, wj.job_id, wj.epoch, *p);
+            wr.seed = *p;
+        }
+        else {
+            SCLOGD("[Worker %zu] id=%u epoch=%u seed: <present but not u32>", worker_id, wj.job_id, wj.epoch);
         }
 
         if (!write_all(hOut, &wr, sizeof(wr))) break;

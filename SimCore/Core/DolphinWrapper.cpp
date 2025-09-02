@@ -185,6 +185,10 @@ namespace simcore {
         if (!Core::IsRunning(*m_system))
             return false;
 
+        const auto start = std::chrono::steady_clock::now();
+        SCLOGD("[DW] runOnCpuThread begin wait=%d running=%d state=%d",
+            waitForCompletion ? 1 : 0, Core::IsRunning(*m_system) ? 1 : 0, (int)Core::GetState(*m_system));
+
         std::atomic<bool> done{ false };
         Core::RunOnCPUThread(*m_system, [&] {
             fn();
@@ -194,6 +198,10 @@ namespace simcore {
         auto deadline = std::chrono::steady_clock::now() + 5s;
         while (!done && std::chrono::steady_clock::now() < deadline)
             std::this_thread::sleep_for(1ms);
+
+        const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now() - start).count();
+        SCLOGD("[DW] runOnCpuThread end   done=%d ms=%lld", done ? 1 : 0, (long long)ms);
 
         return done.load();
     }
@@ -227,18 +235,18 @@ namespace simcore {
         if (!Core::IsRunning(*m_system))
             return false;
 
-        auto b = [&](const auto& info) { return !!Config::Get(info); };
-        SCLOGT("DSP_HLE=%d DSP_THREAD=%d CPU_THREAD=%d",
-            int(b(Config::MAIN_DSP_HLE)),
-            int(b(Config::MAIN_DSP_THREAD)),
-            int(b(Config::MAIN_CPU_THREAD)));
+        SCLOGD("[DW] loadSavestateFromFile begin path=%s is_cpu_thread=%d state=%d",
+            state_path.c_str(), Core::IsCPUThread(), (int)Core::GetState(*m_system));
 
         uint32_t pc_before = getPC();
         uint64_t tbr_before = getTBR();
 
         const bool scheduled = runOnCpuThread([&] {
             State::LoadAs(*m_system, state_path);
-            });
+            }, true);
+
+        // (you already do pc_before/tbr_before)
+        SCLOGD("[DW] loadSavestate scheduled=%d", scheduled ? 1 : 0);
 
         if (!scheduled) {
             return false;
@@ -246,7 +254,15 @@ namespace simcore {
 
         DisarmAnyActiveMovie(*m_system);
 
-        if (Core::IsRunning(*m_system) && (pc_before != getPC() || tbr_before != getTBR() || state_path._Equal(m_last_save_state))) {
+        // Right before the final return
+        const uint32_t pc_after = getPC();
+        const uint64_t tbr_after = getTBR();
+
+        SCLOGD("[DW] loadSavestate end state=%d pc:%08X->%08X tbr:%016llX->%016llX movie_disarmed",
+            (int)Core::GetState(*m_system), pc_before, pc_after,
+            (unsigned long long)tbr_before, (unsigned long long)tbr_after);
+
+        if (Core::IsRunning(*m_system) && (pc_before != pc_after || tbr_before != tbr_after || state_path._Equal(m_last_save_state))) {
             m_last_save_state = state_path;
             return true;
         }
@@ -263,7 +279,18 @@ namespace simcore {
 
     bool DolphinWrapper::loadStateFromBuffer(Common::UniqueBuffer<u8>& buf)
     {
+        SCLOGD("[DW] loadStateFromBuffer begin state=%d is_cpu_thread=%d",
+            (int)Core::GetState(*m_system), Core::IsCPUThread());
+        const uint32_t pc_before = getPC();
+        const uint64_t tbr_before = getTBR();
+        
         SOASim_LoadFromBufferShim(*m_system, buf);
+
+        const uint32_t pc_after = getPC();
+        const uint64_t tbr_after = getTBR();
+        SCLOGD("[DW] loadStateFromBuffer end   state=%d pc:%08X->%08X tbr:%016llX->%016llX",
+            (int)Core::GetState(*m_system), pc_before, pc_after,
+            (unsigned long long)tbr_before, (unsigned long long)tbr_after);
         return true;
     }
 
@@ -280,10 +307,13 @@ namespace simcore {
         if (!m_system_pad_is_inited) return;
 
         if (m_cursor < m_plan.size()) {
+            const auto& f = m_plan[m_cursor];
+            SCLOGD("[INP] next #%zu btn=%04X main=(%u,%u) c=(%u,%u) trig=(%u,%u)",
+                m_cursor, f.buttons, f.main_x, f.main_y, f.c_x, f.c_y, f.trig_l, f.trig_r);
             m_pad.setFrame(m_plan[m_cursor++]);
-            SCLOGI("[next input] applying input frame: %s", DescribeChosenInputs(InputPlan{ m_plan[m_cursor - 1] }, " ").c_str());
         }
         else {
+            SCLOGD("[INP] next <neutral>");
             m_pad.setFrame(GCPadOverride::NeutralFrame());
         }
         g_controller_interface.UpdateInput();
@@ -295,7 +325,8 @@ namespace simcore {
 
         m_pad.setFrame(f);
 
-        SCLOGI("[set input] applying input frame: %s", DescribeFrame(f).c_str());
+        SCLOGD("[INP] set btn=%04X main=(%u,%u) c=(%u,%u) trig=(%u,%u)",
+            f.buttons, f.main_x, f.main_y, f.c_x, f.c_y, f.trig_l, f.trig_r);
     }
 
     // -- Frame Advancing --------------------------------
@@ -305,10 +336,12 @@ namespace simcore {
         if (!Core::IsRunning(*m_system))
             return false;
 
-        SCLOGT("[stepOneFrameBlocking] Attempting frame step.");
+        SCLOGD("[DW/run] step begin state=%d", (int)Core::GetState(*m_system));
         Core::DoFrameStep(*m_system);   // schedules a single frame and re-pauses
 
-        return waitForPausedCoreState(timeout_ms);
+        const bool ok = waitForPausedCoreState(timeout_ms);
+        SCLOGD("[DW/run] step end   ok=%d state=%d pc=%08X", ok ? 1 : 0, (int)Core::GetState(*m_system), getPC());
+        return ok;
     }
 
     static uint64_t g_vi_ticks_baseline = 0;
@@ -634,21 +667,24 @@ namespace simcore {
         auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_ms);
         auto& armed = armed_singleton().pcs;
 
+        SCLOGD("[DW/run] until_bp start timeout_ms=%u armed=%zu state=%d",
+            timeout_ms, armed.size(), (int)Core::GetState(*m_system));
+
+        size_t polls = 0;
         while (std::chrono::steady_clock::now() < deadline)
         {
-            SCLOGT("[run] Performing frame step");
-            
             Core::SetState(*m_system, Core::State::Running);
-
             if (waitForPausedCoreState(5000)) {
                 const uint32_t pc = getPC();
-                if (contains_pc(armed, pc))
-                {
+                if (contains_pc(armed, pc)) {
+                    SCLOGD("[DW/run] until_bp HIT pc=%08X polls=%zu", pc, polls);
                     return { true, pc, "breakpoint" };
-                    break;
                 }
             }
+            if ((polls++ & 0x3F) == 0) // every 64 polls
+                SCLOGD("[DW/run] until_bp poll=%zu state=%d pc=%08X", polls, (int)Core::GetState(*m_system), getPC());
         }
+        SCLOGD("[DW/run] until_bp TIMEOUT polls=%zu last_pc=%08X", polls, getPC());
         return { false, 0u, "timeout" };
     }
 
@@ -664,9 +700,9 @@ namespace simcore {
 
     bool DolphinWrapper::waitForPausedCoreState(uint32_t timeout_ms, uint32_t poll_rate_ms)
     {
-        SCLOGT("[run] Core state in frame step: %s", Core::GetState(*m_system) == Core::State::Paused ? "Paused" : Core::GetState(*m_system) == Core::State::Running ? "Running" : "other");
+        const auto start = std::chrono::steady_clock::now();
+        SCLOGD("[DW/run] waitForPaused start state=%d timeout=%u", (int)Core::GetState(*m_system), timeout_ms);
 
-        auto start = std::chrono::steady_clock::now();
         auto deadline = start + std::chrono::milliseconds(timeout_ms);
 
         while (std::chrono::steady_clock::now() < deadline) {
@@ -675,8 +711,13 @@ namespace simcore {
             std::this_thread::sleep_for(std::chrono::milliseconds(poll_rate_ms));
         }
         
+
         bool result = Core::GetState(*m_system) == Core::State::Paused;
-        SCLOGT("[run] Pause state encountered: %s", result ? "True" : "False");
+        SCLOGD("[DW/run] waitForPaused end ok=%d waited_ms=%lld state=%d",
+            result ? 1 : 0,
+            (long long)std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::steady_clock::now() - start).count(),
+            (int)Core::GetState(*m_system));
         return result;
     }
 
