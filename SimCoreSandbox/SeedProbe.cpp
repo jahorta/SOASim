@@ -114,25 +114,36 @@ namespace simcore {
     // ANSI color helpers
     static const char* ansi_reset() { return "\x1b[0m"; }
     static const char* ansi_dim() { return "\x1b[2m"; }
-    static const char* color_for_delta(long long d) {
-        if (d == 0) return "\x1b[2;37m"; // dim gray
-        long long ad = std::llabs(d);
-        int nib = (int)(ad & 0xF);
-        if (nib == 0) nib = 1;
-        if (d < 0) {
-            static const int neg_palette[16] = {
-                196, 160, 124, 88, 52,  130, 94,  58,
-                202, 166,  9,  1,  95,  131, 167, 203
-            };
-            return ("\x1b[38;5;" + std::to_string(neg_palette[nib % 16]) + "m").c_str(); // UB if returned pointer to temp
+    static const char* color_for_delta(long long d)
+    {
+        if (d == 0) return "\x1b[2;37m";
+
+        const unsigned long long ad = static_cast<unsigned long long>(std::llabs(d));
+
+        if (d < 0)
+        {
+            // -1 = red, -2 = orange, <= -3 = dark red
+            if (ad == 1) return "\x1b[38;5;196m";
+            if (ad == 2) return "\x1b[38;5;208m";
+            return "\x1b[38;5;52m";
         }
-        else {
-            static const int pos_palette[16] = {
-                46,  47,  48,  49,  50,  82,  118, 154,
-                33,  39,  45,  51,  87,  123, 159, 195
-            };
-            return ("\x1b[38;5;" + std::to_string(pos_palette[nib % 16]) + "m").c_str();
-        }
+
+        // Wide positive palette (greens->teals->cyans->blues->light-cyans), high separation
+        static const char* POS[] = {
+            "\x1b[38;5;46m",  "\x1b[38;5;76m",  "\x1b[38;5;82m",  "\x1b[38;5;118m",
+            "\x1b[38;5;154m", "\x1b[38;5;190m", "\x1b[38;5;226m", "\x1b[38;5;40m",
+            "\x1b[38;5;44m",  "\x1b[38;5;49m",  "\x1b[38;5;33m",  "\x1b[38;5;39m",
+            "\x1b[38;5;45m",  "\x1b[38;5;51m",  "\x1b[38;5;69m",  "\x1b[38;5;75m",
+            "\x1b[38;5;81m",  "\x1b[38;5;87m",  "\x1b[38;5;114m", "\x1b[38;5;123m",
+            "\x1b[38;5;141m", "\x1b[38;5;153m", "\x1b[38;5;159m", "\x1b[38;5;195m"
+        };
+        static const unsigned PERM[] = {
+            0, 12, 6, 18, 3, 15, 9, 21, 1, 13, 7, 19, 4, 16, 10, 22, 2, 14, 8, 20, 5, 17, 11, 23
+        };
+        constexpr unsigned N = sizeof(POS) / sizeof(POS[0]);
+
+        const unsigned idx = PERM[(ad - 1) % N];
+        return POS[idx];
     }
 
     // safe color printer (avoid returning temporaries)
@@ -169,15 +180,8 @@ namespace simcore {
         if (d == 0) {
             std::printf("\x1b[2;37m%c%c\x1b[0m", cell[0], cell[1]);
         }
-        else if (d < 0) {
-            static const int pal[] = { 196,160,124,88,52,130,94,58,202,166,9,1,95,131,167,203 };
-            int c = pal[(nib == 0 ? 1 : nib) % 16];
-            std::printf("\x1b[38;5;%dm%c%c\x1b[0m", c, cell[0], cell[1]);
-        }
         else {
-            static const int pal[] = { 46,47,48,49,50,82,118,154,33,39,45,51,87,123,159,195 };
-            int c = pal[(nib == 0 ? 1 : nib) % 16];
-            std::printf("\x1b[38;5;%dm%c%c\x1b[0m", c, cell[0], cell[1]);
+            std::printf("%s%c%c\x1b[0m", color_for_delta(d), cell[0], cell[1]);
         }
     }
 
