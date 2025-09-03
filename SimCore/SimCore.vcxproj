@@ -184,6 +184,7 @@
     <ClInclude Include="Runner\Script\PhaseScriptVM.h" />
     <ClInclude Include="Runner\Script\Programs\SeedProbeScript.h" />
     <ClInclude Include="Runner\SOAConstants.h" />
+    <ClInclude Include="Utils\DeltaColorizer.h" />
     <ClInclude Include="Utils\EnsureSys.h" />
     <ClInclude Include="Utils\Log.h" />
     <ClInclude Include="Utils\SafeEnv.h" />

@@ -5,6 +5,7 @@
 #include <algorithm>
 
 #include <Utils/Log.h>
+#include <Utils/DeltaColorizer.h>
 
 namespace simcore {
 
@@ -111,80 +112,6 @@ namespace simcore {
         }
     }
 
-    // ANSI color helpers
-    static const char* ansi_reset() { return "\x1b[0m"; }
-    static const char* ansi_dim() { return "\x1b[2m"; }
-    static const char* color_for_delta(long long d)
-    {
-        if (d == 0) return "\x1b[2;37m";
-
-        const unsigned long long ad = static_cast<unsigned long long>(std::llabs(d));
-
-        if (d < 0)
-        {
-            // -1 = red, -2 = orange, <= -3 = dark red
-            if (ad == 1) return "\x1b[38;5;196m";
-            if (ad == 2) return "\x1b[38;5;208m";
-            return "\x1b[38;5;52m";
-        }
-
-        // Wide positive palette (greens->teals->cyans->blues->light-cyans), high separation
-        static const char* POS[] = {
-            "\x1b[38;5;46m",  "\x1b[38;5;76m",  "\x1b[38;5;82m",  "\x1b[38;5;118m",
-            "\x1b[38;5;154m", "\x1b[38;5;190m", "\x1b[38;5;226m", "\x1b[38;5;40m",
-            "\x1b[38;5;44m",  "\x1b[38;5;49m",  "\x1b[38;5;33m",  "\x1b[38;5;39m",
-            "\x1b[38;5;45m",  "\x1b[38;5;51m",  "\x1b[38;5;69m",  "\x1b[38;5;75m",
-            "\x1b[38;5;81m",  "\x1b[38;5;87m",  "\x1b[38;5;114m", "\x1b[38;5;123m",
-            "\x1b[38;5;141m", "\x1b[38;5;153m", "\x1b[38;5;159m", "\x1b[38;5;195m"
-        };
-        static const unsigned PERM[] = {
-            0, 12, 6, 18, 3, 15, 9, 21, 1, 13, 7, 19, 4, 16, 10, 22, 2, 14, 8, 20, 5, 17, 11, 23
-        };
-        constexpr unsigned N = sizeof(POS) / sizeof(POS[0]);
-
-        const unsigned idx = PERM[(ad - 1) % N];
-        return POS[idx];
-    }
-
-    // safe color printer (avoid returning temporaries)
-    static void print_colored_cell(long long d) {
-        char cell[3] = { ' ', '0', 0 };
-        bool big = (std::llabs(d) > 0xF);
-        if (big) { cell[0] = ' '; cell[1] = '*'; }
-        else if (d == 0) { cell[0] = ' '; cell[1] = '0'; }
-        else if (d < 0) {
-            int nib = (int)(-d) & 0xF;
-            static const char hex[] = "0123456789ABCDEF";
-            cell[0] = '-'; cell[1] = hex[nib];
-        }
-        else {
-            if (d <= 0xFF) {
-                static const char hex[] = "0123456789ABCDEF";
-                char hi = hex[(d >> 4) & 0xF];
-                char lo = hex[d & 0xF];
-                cell[0] = hi; cell[1] = lo;
-            }
-            else {
-                cell[0] = ' '; cell[1] = '*'; // too large
-            }
-        }
-
-        if (big) {
-            std::printf("\x1b[1;35m%c%c\x1b[0m", cell[0], cell[1]); // bright magenta for overflow
-            return;
-        }
-
-        // choose color
-        long long ad = std::llabs(d);
-        int nib = (int)(ad & 0xF);
-        if (d == 0) {
-            std::printf("\x1b[2;37m%c%c\x1b[0m", cell[0], cell[1]);
-        }
-        else {
-            std::printf("%s%c%c\x1b[0m", color_for_delta(d), cell[0], cell[1]);
-        }
-    }
-
     void print_family_grid(const RandSeedProbeResult& r, SeedFamily fam, int N, const char* title)
     {
         std::vector<const RandSeedEntry*> entries;
@@ -197,6 +124,10 @@ namespace simcore {
             std::printf("[SeedProbe] Grid for %s missing/size mismatch.\n", title);
             return;
         }
+
+        color_lut_begin();
+        for (auto& e : r.entries) color_lut_ingest(e.delta);
+        color_lut_finalize();
 
         // X ticks from first row, Y ticks from first column
         std::vector<int> xvals(N), yvals(N);
@@ -220,8 +151,7 @@ namespace simcore {
             for (int col = 0; col < N; ++col) {
                 const auto* p = entries[idx++];
                 long long d = (p->ok ? p->delta : 0x7fff); // treat missing as big
-                print_colored_cell(d);
-                std::printf(" ");
+                std::printf("%s%s%s ", color_for_delta(p->delta), fmt_delta_hex(p->delta).c_str(), color_reset());
             }
 
             std::printf("\n");

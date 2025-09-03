@@ -120,6 +120,9 @@
     <ClInclude Include="Utils\EnsureSys.h">
       <Filter>Utils</Filter>
     </ClInclude>
+    <ClInclude Include="Utils\DeltaColorizer.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SimCore.cpp">

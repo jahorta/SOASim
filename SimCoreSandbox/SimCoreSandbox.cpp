@@ -160,10 +160,10 @@ int main(int argc, char** argv) {
     const uint32_t   timeout_ms = 10000u;
 
     // CONSTANTS FOR CONTROL!!!!!
-    const int    N = 20;
-    const size_t workers = 5;
+    const int    N = 15;
+    const size_t workers = 28;
     const int    min_value = 0x30;
-    const int    max_value = 0xD0;
+    const int    max_value = 0xCF;
 
 
     if (!simcore::EnsureSysBesideExe(qt_base_dir)) {
