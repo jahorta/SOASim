@@ -1,8 +1,42 @@
 #include "ParallelPhaseScriptRunner.h"
+#include <tlhelp32.h>
+
+
 #include "../../Utils/ThreadName.h"
 #include "../IPC/Wire.h"
 
 namespace simcore {
+
+    static void kill_stale_workers(bool aggressive = false) {
+        HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        if (snap == INVALID_HANDLE_VALUE) return;
+
+        PROCESSENTRY32 pe{}; pe.dwSize = sizeof(pe);
+        if (!Process32First(snap, &pe)) { CloseHandle(snap); return; }
+
+        DWORD this_pid = GetCurrentProcessId();
+
+        do {
+            if (_wcsicmp(pe.szExeFile, L"SimCoreWorker.exe") != 0) continue;
+
+            // Optional: avoid killing our own future children by checking parentage.
+            // If your spawner sets the parent properly, you can skip those with th32ParentProcessID==this_pid.
+            if (!aggressive && pe.th32ParentProcessID == this_pid) continue;
+
+            HANDLE h = OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pe.th32ProcessID);
+            if (!h) continue;
+
+            // Optional: you can add a runtime check on image path here via QueryFullProcessImageNameW
+            // to ensure it's your worker in your repo path.
+
+            // First try a gentle close by sending CTRL_BREAK or closing pipes—if you track handles.
+            // Here we just hard terminate as a last resort:
+            TerminateProcess(h, 0);
+            CloseHandle(h);
+        } while (Process32Next(snap, &pe));
+
+        CloseHandle(snap);
+    }
 
     ParallelPhaseScriptRunner::ParallelPhaseScriptRunner(size_t n)
     {
@@ -27,6 +61,9 @@ namespace simcore {
         const PhaseScript& program)
     {
         if (epoch_.load() != 0) return false;
+        
+        kill_stale_workers();
+
         const uint64_t e = 1;
         epoch_.store(e);
 
@@ -208,15 +245,23 @@ namespace simcore {
     void ParallelPhaseScriptRunner::stop()
     {
         if (stop_.exchange(true)) return;
-        jobs_->close();
-        for (auto& w : workers_) {
+        if (jobs_) jobs_->close();  // stop feeding new work
+
+        for (auto& w : workers_) {                  // graceful signal
             if (w->running.exchange(false)) {
-                if (w->proc) w->proc->stop();
+                if (w->proc) w->proc->close_stdin();// EOF -> worker exits its ReadFile loop
             }
         }
-        for (auto& w : workers_) {
-            if (w->th.joinable()) w->th.join();
+
+        constexpr DWORD kWaitMs = 3000;
+        for (auto& w : workers_) {                  // wait then hard kill if needed
+            if (w->proc && !w->proc->wait(kWaitMs))
+            {
+                w->proc->terminate(); (void)w->proc->wait(1000);
+            }
         }
+
+        for (auto& w : workers_) if (w->th.joinable()) w->th.join();
     }
 
 } // namespace simcore
