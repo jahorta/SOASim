@@ -156,6 +156,7 @@ namespace simcore {
             // ignore unknown tags
         }
 
+        release_slot();
         running_.store(false);
     }
 
