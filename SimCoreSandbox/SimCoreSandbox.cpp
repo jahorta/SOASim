@@ -27,117 +27,9 @@
 #include "SeedProbe.h"
 #include "prompt_path.cpp"
 #include <Utils/EnsureSys.h>
+#include <Phases/RNGSeedDeltaMap.h>
 
 using namespace simcore;
-
-static uint32_t parse_hex_u32(const char* s) {
-    return static_cast<uint32_t>(std::strtoul(s, nullptr, 16));
-}
-
-void run_family(ParallelPhaseScriptRunner& runner, const SeedFamily fam, const int N, int min_value, int max_value, RandSeedProbeResult& res) {
-    
-    int res_entries_size = res.entries.size();
-    res.entries.reserve((N * N) + res.entries.size());
-
-    InputPlan inputs;
-    std::string title;
-    switch (fam) {
-    case SeedFamily::Neutral:
-        inputs.push_back({});
-        break;
-    case SeedFamily::Main:
-        inputs = build_grid_main(N, min_value, max_value);
-        title = "JStick";
-        break;
-    case SeedFamily::CStick:
-        inputs = build_grid_cstick(N, min_value, max_value);
-        title = "CStick";
-        break;
-    case SeedFamily::Triggers:
-        inputs = build_grid_triggers(N, min_value, max_value, true);
-        title = "Triggers";
-        break;
-    default:
-        return;
-    }
-
-    std::vector<PSJob> jobs;
-    jobs.reserve(N * N);
-    for (auto i : inputs) {
-        jobs.emplace_back(i);
-    }
-
-    SCLOGT("[sandbox] Sending Jobs");
-    std::unordered_map<uint64_t, PSJob> job_lookup;
-    for (const auto& j : jobs) {
-        const uint64_t id = runner.submit(j);
-        job_lookup.emplace(id, j);
-    }
-
-    const size_t total = jobs.size();
-    size_t done = 0;
-    std::vector<PRResult> results;
-    results.reserve(total);
-
-    SCLOGT("[sandbox] Receiving Results");
-    while (done < total) {
-        PRResult r{};
-        if (runner.try_get_result(r)) {
-            results.push_back(r);
-            ++done;
-
-            draw_progress_bar(title.c_str(), done, total);
-
-            std::optional<uint32_t> seed;
-            auto it = r.ps.ctx.find("seed");
-            if (it != r.ps.ctx.end())
-                if (auto p = std::get_if<uint32_t>(&it->second))
-                {
-                    seed = *p;
-                    if (fam == SeedFamily::Neutral)
-                        res.base_seed = seed.value();
-                    else
-                    {
-                        auto input = job_lookup.find(r.job_id)->second.input;
-                        float x, y;
-                        switch (fam) {
-                        case SeedFamily::Main:
-                            x = input.main_x;
-                            y = input.main_y;
-                            break;
-                        case SeedFamily::CStick:
-                            x = input.c_x;
-                            y = input.c_y;
-                            break;
-                        case SeedFamily::Triggers:
-                            x = input.trig_l;
-                            y = input.trig_r;
-                            break;
-                        default:
-                            break;
-                        }
-                        
-                        res.entries.push_back(RandSeedEntry{
-                            N, fam, x, y, seed.value(), (int64_t)(int32_t)seed.value() - (int64_t)(int32_t)res.base_seed, /*ok*/true,
-                            std::format("{}({:02X},{:02X})", title, int(x), int(y))
-                            });
-                    }
-                }
-
-            SCLOGT("[Result] job=%llu worker=%zu accepted=%d ok=%d pc=%08X seed=%s",
-                static_cast<unsigned long long>(r.job_id),
-                r.worker_id,
-                int(r.accepted),
-                int(r.ps.ok),
-                r.ps.last_hit_pc,
-                seed.has_value() ? std::format("{}", seed.value()).c_str() : "None");
-
-        }
-        else {
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        }
-    }
-}
 
 int main(int argc, char** argv) {
     auto iso = prompt_path("ISO path: ", true, true, std::string("D:\\SoATAS\\SkiesofArcadiaLegends(USA).gcm"));
@@ -150,7 +42,7 @@ int main(int argc, char** argv) {
     base = (pos == std::string::npos) ? "." : base.substr(0, pos);
 
     log::Logger::get().set_levels(log::Level::Info, log::Level::Debug);
-    simcore::log::Logger::get().open_file((std::filesystem::path(base) / "sandbox.log").string().c_str(), false);
+    log::Logger::get().open_file((std::filesystem::path(base) / "sandbox.log").string().c_str(), false);
     SCLOGI("[sandbox] Starting...");
 
     const std::string iso_path = iso.string();
@@ -160,13 +52,13 @@ int main(int argc, char** argv) {
     const uint32_t   timeout_ms = 10000u;
 
     // CONSTANTS FOR CONTROL!!!!!
-    const int    N = 15;
-    const size_t workers = 28;
+    const int    N = 8;
+    const size_t workers = 10;
     const int    min_value = 0x30;
     const int    max_value = 0xCF;
 
 
-    if (!simcore::EnsureSysBesideExe(qt_base_dir)) {
+    if (!EnsureSysBesideExe(qt_base_dir)) {
         SCLOGE("EnsureSysBesideExe failed. Expected Sys under sandbox / worker exe directory.");
         return 1;
     }
@@ -189,27 +81,23 @@ int main(int argc, char** argv) {
 
     // Runner
     ParallelPhaseScriptRunner runner(workers);
-    runner.start(boot, psinit, program);
+    RngSeedDeltaArgs args{};
+    args.boot = boot;
+    args.savestate_path = savestate_path;
+    args.samples_per_axis = N;
+    args.min_value = 0;
+    args.max_value = 255;
+    args.cap_trigger_top = true;
+    args.run_timeout_ms = 10000;
 
-    RandSeedProbeResult results;
+    auto result = RunRngSeedDeltaMap(runner, args);
 
-    // Build a small batch of jobs (neutral + a few sample stick positions).
-    run_family(runner, SeedFamily::Neutral, 1, min_value, max_value, results);
-    run_family(runner, SeedFamily::Main, N, min_value, max_value, results);
-    run_family(runner, SeedFamily::CStick, N, min_value, max_value, results);
-    run_family(runner, SeedFamily::Triggers, N, min_value, max_value, results);
+    // visualize however you like
+    // e.g., print grids like your existing helpers
 
-    std::sort(results.entries.begin(), results.entries.end(), [](const RandSeedEntry& a, const RandSeedEntry& b) {
-        if (a.family != b.family)
-            return a.family < b.family;
-        if (a.y == b.y)
-            return a.x < b.x;
-        return a.y < b.y;
-    });
-
-    print_family_grid(results, SeedFamily::Main, N, "JStick ");
-    print_family_grid(results, SeedFamily::CStick, N, "CStick ");
-    print_family_grid(results, SeedFamily::Triggers, N, "Triggers ");
+    sandbox::print_family_grid(result, SeedFamily::Main, args.samples_per_axis, "JStick ");
+    sandbox::print_family_grid(result, SeedFamily::CStick, args.samples_per_axis, "CStick ");
+    sandbox::print_family_grid(result, SeedFamily::Triggers, args.samples_per_axis, "Triggers ");
 
     runner.stop();
     return 0;

@@ -7,7 +7,7 @@
 #include <Utils/Log.h>
 #include <Utils/DeltaColorizer.h>
 
-namespace simcore {
+namespace sandbox {
 
     // ---------- progress bar helpers ----------
     void draw_progress_bar(const char* label, size_t done, size_t total)
@@ -52,72 +52,18 @@ namespace simcore {
         return v;
     }
 
-    static GCInputFrame neutral_frame() {
-        GCInputFrame f{};
-        return f;
-    }
-
-    static GCInputFrame set_main(GCInputFrame f, float x, float y) {
-        f.main_x = x; f.main_y = y;
-        return f;
-    }
-    static GCInputFrame set_c(GCInputFrame f, float x, float y) {
-        f.c_x = x; f.c_y = y;
-        return f;
-    }
-    static GCInputFrame set_trig(GCInputFrame f, float l, float r) {
-        f.trig_l = l; f.trig_r = r;
-        return f;
-    }
-
-    std::vector<GCInputFrame> build_grid_main(int n, int min_value, int max_value) {
-        std::vector<GCInputFrame> out;
-        auto xs = levels_u8(min_value, max_value, n, false);
-        auto ys = levels_u8(min_value, max_value, n, false);
-        out.reserve(n * n);
-        for (float y : ys) for (float x : xs) out.push_back(set_main(neutral_frame(), x, y));
-        return out;
-    }
-
-    std::vector<GCInputFrame> build_grid_cstick(int n, int min_value, int max_value) {
-        std::vector<GCInputFrame> out;
-        auto xs = levels_u8(min_value, max_value, n, false);
-        auto ys = levels_u8(min_value, max_value, n, false);
-        out.reserve(n * n);
-        for (float y : ys) for (float x : xs) out.push_back(set_c(neutral_frame(), x, y));
-        return out;
-    }
-
-    std::vector<GCInputFrame> build_grid_triggers(int n, int min_value, int max_value, bool cap_top) {
-        std::vector<GCInputFrame> out;
-        auto ls = levels_u8(min_value, max_value, n, cap_top);
-        auto rs = levels_u8(min_value, max_value, n, cap_top);
-        out.reserve(n * n);
-        for (float r : rs) for (float l : ls) out.push_back(set_trig(neutral_frame(), l, r));
-        return out;
-    }
-
     static long long signed_delta(uint32_t a, uint32_t b) {
         const long long sa = (long long)(int32_t)a;
         const long long sb = (long long)(int32_t)b;
         return sa - sb;
     }
 
-    static void label_entry(RandSeedEntry& e) {
-        switch (e.family) {
-        case SeedFamily::Neutral:  e.label = "Neutral"; break;
-        case SeedFamily::Main:     e.label = "Main(" + std::to_string(e.x) + "," + std::to_string(e.y) + ")"; break;
-        case SeedFamily::CStick:   e.label = "CStick(" + std::to_string(e.x) + "," + std::to_string(e.y) + ")"; break;
-        case SeedFamily::Triggers: e.label = "Triggers(L=" + std::to_string(e.x) + ",R=" + std::to_string(e.y) + ")"; break;
-        }
-    }
-
-    void print_family_grid(const RandSeedProbeResult& r, SeedFamily fam, int N, const char* title)
+    void print_family_grid(const simcore::RandSeedProbeResult& r, simcore::SeedFamily fam, int N, const char* title)
     {
-        std::vector<const RandSeedEntry*> entries;
+        std::vector<const simcore::RandSeedEntry*> entries;
         entries.reserve(N * N);
         for (const auto& e : r.entries)
-            if (e.family == fam && e.samples_per_axis == N)
+            if (e.family == fam)
                 entries.push_back(&e);
 
         if (entries.size() != static_cast<size_t>(N * N)) {
@@ -161,7 +107,7 @@ namespace simcore {
         std::fflush(stdout);
     }
 
-    void log_probe_summary(const RandSeedProbeResult& r) {
+    void log_probe_summary(const simcore::RandSeedProbeResult& r) {
         SCLOGI("[SeedProbe] Summary: base=0x%08X, entries=%zu", r.base_seed, r.entries.size());
         for (const auto& e : r.entries) {
             if (!e.ok) { SCLOGI("  %-28s  hit=0  seed=--------  delta=------", e.label.c_str()); continue; }
@@ -169,15 +115,15 @@ namespace simcore {
         }
     }
 
-    std::vector<std::string> to_csv_lines(const RandSeedProbeResult& r) {
+    std::vector<std::string> to_csv_lines(const simcore::RandSeedProbeResult& r) {
         std::vector<std::string> lines;
         lines.emplace_back("family,x,y,seed_hex,seed_dec,delta");
-        auto fam_name = [](SeedFamily f) {
+        auto fam_name = [](simcore::SeedFamily f) {
             switch (f) {
-            case SeedFamily::Neutral:  return "Neutral";
-            case SeedFamily::Main:     return "Main";
-            case SeedFamily::CStick:   return "CStick";
-            case SeedFamily::Triggers: return "Triggers";
+            case simcore::SeedFamily::Neutral:  return "Neutral";
+            case simcore::SeedFamily::Main:     return "Main";
+            case simcore::SeedFamily::CStick:   return "CStick";
+            case simcore::SeedFamily::Triggers: return "Triggers";
             }
             return "Unknown";
             };
