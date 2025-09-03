@@ -31,6 +31,9 @@
     <Filter Include="RunnerParallel">
       <UniqueIdentifier>{b647e348-4ca8-4ad9-b705-221011c4a2ab}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Phases">
+      <UniqueIdentifier>{eb879b3c-e922-4ee8-a291-4569a8483ab3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -122,6 +125,15 @@
     </ClInclude>
     <ClInclude Include="Utils\DeltaColorizer.h">
       <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\MultiProgress.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\ProgressBar.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Phases\RNGSeedDeltaMap.h">
+      <Filter>Phases</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -817,6 +829,15 @@
     </ClCompile>
     <ClCompile Include="Utils\EnsureSys.cpp">
       <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\ProgressBar.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\MultiProgress.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Phases\RNGSeedDeltaMap.cpp">
+      <Filter>Phases</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

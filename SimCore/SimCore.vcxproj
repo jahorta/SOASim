@@ -168,6 +168,7 @@
     <ClInclude Include="Core\Input\InputPlanFmt.h" />
     <ClInclude Include="Core\Shims\StateBufferShim.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="Phases\RNGSeedDeltaMap.h" />
     <ClInclude Include="Runner\Breakpoints\BattleBreakpoints.h" />
     <ClInclude Include="Runner\Breakpoints\BPCore.h" />
     <ClInclude Include="Runner\Breakpoints\OverworldBreakpoints.h" />
@@ -187,6 +188,8 @@
     <ClInclude Include="Utils\DeltaColorizer.h" />
     <ClInclude Include="Utils\EnsureSys.h" />
     <ClInclude Include="Utils\Log.h" />
+    <ClInclude Include="Utils\MultiProgress.h" />
+    <ClInclude Include="Utils\ProgressBar.h" />
     <ClInclude Include="Utils\SafeEnv.h" />
     <ClInclude Include="Utils\ThreadName.h" />
   </ItemGroup>
@@ -1042,6 +1045,7 @@
     <ClCompile Include="Core\Input\GCPadOverride.cpp" />
     <ClCompile Include="Core\Input\InputPlanFmt.cpp" />
     <ClCompile Include="Core\Shims\StateBufferShim.cpp" />
+    <ClCompile Include="Phases\RNGSeedDeltaMap.cpp" />
     <ClCompile Include="Runner\Breakpoints\BattleBreakpoints.cpp" />
     <ClCompile Include="Runner\Breakpoints\OverworldBreakpoints.cpp" />
     <ClCompile Include="Runner\Breakpoints\PreBattleBreakpoints.cpp" />
@@ -1053,6 +1057,8 @@
     <ClCompile Include="SimCore.cpp" />
     <ClCompile Include="Utils\EnsureSys.cpp" />
     <ClCompile Include="Utils\Log.cpp" />
+    <ClCompile Include="Utils\MultiProgress.cpp" />
+    <ClCompile Include="Utils\ProgressBar.cpp" />
     <ClCompile Include="Utils\SafeEnv.cpp" />
   </ItemGroup>
   <ItemGroup>
