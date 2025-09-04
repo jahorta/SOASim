@@ -35,17 +35,12 @@ namespace simcore {
 		uint32_t ready_error() const { return ready_error_.load(); }
 		HANDLE process_handle() const { return hProcess; }
 
-		// NEW: gating helpers
 		bool try_acquire_slot() {
 			bool expected = false;
 			return busy_.compare_exchange_strong(expected, true, std::memory_order_acq_rel);
 		}
 		void release_slot() { busy_.store(false, std::memory_order_release); }
 		bool has_slot() const { return !busy_.load(std::memory_order_acquire); }
-
-		void close_stdin();
-		bool wait(DWORD ms) const;
-		void terminate();
 
 	private:
 		void reader_thread();

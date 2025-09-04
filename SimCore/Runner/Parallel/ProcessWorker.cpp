@@ -170,16 +170,4 @@ namespace simcore {
         if (hThread) { CloseHandle(hThread); hThread = NULL; }
         if (hProcess) { CloseHandle(hProcess); hProcess = NULL; }
     }
-
-    void ProcessWorker::close_stdin() {
-        if (hChildStd_IN_Wr) { CloseHandle(hChildStd_IN_Wr); hChildStd_IN_Wr = nullptr; }
-    }
-    bool ProcessWorker::wait(DWORD ms) const {
-        if (!hProcess) return true;
-        return WaitForSingleObject(hProcess, ms) == WAIT_OBJECT_0;
-    }
-    void ProcessWorker::terminate() {
-        if (hProcess) TerminateProcess(hProcess, 0);
-    }
-
 } // namespace simcore

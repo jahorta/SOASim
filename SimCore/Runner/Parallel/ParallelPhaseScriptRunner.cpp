@@ -245,23 +245,15 @@ namespace simcore {
     void ParallelPhaseScriptRunner::stop()
     {
         if (stop_.exchange(true)) return;
-        if (jobs_) jobs_->close();  // stop feeding new work
-
-        for (auto& w : workers_) {                  // graceful signal
+        jobs_->close();
+        for (auto& w : workers_) {
             if (w->running.exchange(false)) {
-                if (w->proc) w->proc->close_stdin();// EOF -> worker exits its ReadFile loop
+                if (w->proc) w->proc->stop();
             }
         }
-
-        constexpr DWORD kWaitMs = 3000;
-        for (auto& w : workers_) {                  // wait then hard kill if needed
-            if (w->proc && !w->proc->wait(kWaitMs))
-            {
-                w->proc->terminate(); (void)w->proc->wait(1000);
-            }
+        for (auto& w : workers_) {
+            if (w->th.joinable()) w->th.join();
         }
-
-        for (auto& w : workers_) if (w->th.joinable()) w->th.join();
     }
 
 } // namespace simcore
