@@ -56,9 +56,7 @@ namespace simcore {
 
     ParallelPhaseScriptRunner::~ParallelPhaseScriptRunner() { stop(); }
 
-    bool ParallelPhaseScriptRunner::start(const BootPlan& boot,
-        const PSInit& init,
-        const PhaseScript& program)
+    bool ParallelPhaseScriptRunner::start(const BootPlan& boot)
     {
         if (epoch_.load() != 0) return false;
         
@@ -80,10 +78,9 @@ namespace simcore {
             ps.worker_id = w->id;
             ps.exe_path = workerExe;
             ps.iso_path = boot.iso_path;
-            ps.savestate_path = init.savestate_path;
             ps.qt_base_dir = boot.boot.dolphin_qt_base.string();
             ps.user_dir = (boot.boot.user_dir / ("runner-" + std::to_string(w->id)) / "User").string();
-            ps.timeout_ms = init.default_timeout_ms;
+            ps.vm_control = true;
 
             if (!w->proc->start(ps, out_.get())) {
                 SCLOGE("[Runner %zu] failed to launch SimCoreWorker process", w->id);
@@ -201,6 +198,36 @@ namespace simcore {
         }
 
         return true; // at least one worker is ready; others will join as they become ready
+    }
+
+    bool ParallelPhaseScriptRunner::set_program(uint8_t init_kind, uint8_t main_kind, const PSInit& init)
+    {
+        size_t ok = 0;
+        for (auto& w : workers_) {
+            if (!w->running.load()) continue;
+            if (w->proc->ctl_set_program(init_kind, main_kind, init)) ++ok;
+        }
+        return ok > 0;
+    }
+
+    bool ParallelPhaseScriptRunner::run_init_once()
+    {
+        size_t ok = 0;
+        for (auto& w : workers_) {
+            if (!w->running.load()) continue;
+            if (w->proc->ctl_run_init_once()) ++ok;
+        }
+        return ok > 0;
+    }
+
+    bool ParallelPhaseScriptRunner::activate_main()
+    {
+        size_t ok = 0;
+        for (auto& w : workers_) {
+            if (!w->running.load()) continue;
+            if (w->proc->ctl_activate_main()) ++ok;
+        }
+        return ok > 0;
     }
 
     uint64_t ParallelPhaseScriptRunner::reconfigure(const PSInit& init, const PhaseScript& program)

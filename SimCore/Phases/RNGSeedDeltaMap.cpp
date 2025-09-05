@@ -9,6 +9,7 @@
 #include "../Utils/Log.h"
 #include "../Runner/Script/PhaseScriptVM.h"                // PSJob/PSResult
 #include "../Runner/Script/Programs/SeedProbeScript.h"     // MakeSeedProbeProgram
+#include "../Runner/IPC/Wire.h"
 #include "../Utils/MultiProgress.h"
 
 using simcore::utils::MultiProgress;
@@ -77,7 +78,28 @@ namespace simcore {
 
     RandSeedProbeResult RunRngSeedDeltaMap(ParallelPhaseScriptRunner& runner, const RngSeedDeltaArgs& args)
     {
-        ensure_started(runner, args.boot, args.savestate_path, args.run_timeout_ms);
+        
+        // New control-mode startup
+        if (!runner.start_workers_control(args.boot)) {
+            SCLOGE("Failed to boot workers (control mode).");
+            return {}; // or propagate error
+        }
+
+        PSInit init{};
+        init.savestate_path = args.savestate_path;      // keep using your existing savestate for this phase
+        init.default_timeout_ms = args.run_timeout_ms;
+
+        // No special INIT program for seed probe; main program is SeedProbe
+        if (!runner.set_program(/*init_kind=*/PK_None, /*main_kind=*/PK_SeedProbe, init)) {
+            SCLOGE("Failed to set program on workers.");
+            return {};
+        }
+
+        // No init-once step for seed probe; go straight to main
+        if (!runner.activate_main()) {
+            SCLOGE("Failed to activate main program.");
+            return {};
+        }
 
         RandSeedProbeResult out{};
 

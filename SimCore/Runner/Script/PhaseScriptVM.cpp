@@ -36,18 +36,20 @@ namespace simcore {
 
         SCLOGD("[VM] init begin sav=%s timeout=%u", init.savestate_path.c_str(), init.default_timeout_ms);
 
-        // 0) Disarm previous set (if any), so we can change canonical keys safely
+        // Disarm any previously armed set (enables program swapping)
         if (armed_ && !armed_pcs_.empty()) {
             host_.disarmPcBreakpoints(armed_pcs_);
             armed_pcs_.clear();
             armed_ = false;
         }
 
-        // 1) Load the initial savestate for this program
-        if (!host_.loadSavestate(init_.savestate_path.c_str()))
-            return false;
+        // Optional savestate (allow empty path for boot-based phases)
+        if (!init_.savestate_path.empty()) {
+            if (!host_.loadSavestate(init_.savestate_path.c_str()))
+                return false;
+        }
 
-        // 2) Update phase keys and arm once
+        // Update canonical BP keys and arm once
         phase_.name = "ScriptPhase";
         phase_.canonical_bp_keys = prog_.canonical_bp_keys;
         phase_.allowed_predicates.clear();
@@ -55,10 +57,10 @@ namespace simcore {
         SCLOGD("[VM] attach bp count=%zu", program.canonical_bp_keys.size());
         arm_bps_once();
 
-        // 3) Snapshot for per-job resets
-        bool snapshot_success = save_snapshot();
-        if (snapshot_success) SCLOGD("[VM] init ok");
-        return snapshot_success;
+        // Capture a snapshot to use as the per-job baseline
+        const bool snapshot_ok = save_snapshot();
+        if (snapshot_ok) SCLOGD("[VM] init ok");
+        return snapshot_ok;
     }
 
     PSResult PhaseScriptVM::run(const PSJob& job)

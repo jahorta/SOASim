@@ -32,10 +32,9 @@ namespace simcore {
             << " --worker"
             << " --id " << p.worker_id
             << " --iso \"" << p.iso_path << "\""
-            << " --savestate \"" << p.savestate_path << "\""
             << " --qtbase \"" << p.qt_base_dir << "\""
             << " --userdir \"" << p.user_dir << "\""
-            << " --timeout " << std::dec << p.timeout_ms;
+            << " --vmctrl";
 
         PROCESS_INFORMATION pi{};
         std::string cmdline = cmd.str();
@@ -77,6 +76,39 @@ namespace simcore {
         reader_ = std::thread(&ProcessWorker::reader_thread, this);
 
         return true;
+    }
+
+    bool ProcessWorker::ctl_set_program(uint8_t init_kind, uint8_t main_kind, const PSInit& init) {
+        simcore::WireSetProgram sp{};
+        sp.tag = simcore::MSG_SET_PROGRAM;
+        sp.init_kind = init_kind;
+        sp.main_kind = main_kind;
+        sp.timeout_ms = init.default_timeout_ms;
+        memset(sp.savestate_path, 0, sizeof(sp.savestate_path));
+        if (!init.savestate_path.empty())
+            strncpy(sp.savestate_path, init.savestate_path.c_str(), sizeof(sp.savestate_path) - 1);
+
+        if (!write_all(hChildStd_IN_Wr, &sp, sizeof(sp))) return false;
+
+        simcore::WireAck ack{};
+        if (!read_all(hChildStd_OUT_Rd, &ack, sizeof(ack))) return false;
+        return (ack.tag == simcore::MSG_ACK && ack.ok == 1 && ack.code == 'S');
+    }
+
+    bool ProcessWorker::ctl_run_init_once() {
+        const uint32_t tag = simcore::MSG_RUN_INIT_ONCE;
+        if (!write_all(hChildStd_IN_Wr, &tag, sizeof(tag))) return false;
+        simcore::WireAck ack{};
+        if (!read_all(hChildStd_OUT_Rd, &ack, sizeof(ack))) return false;
+        return (ack.tag == simcore::MSG_ACK && ack.ok == 1 && ack.code == 'I');
+    }
+
+    bool ProcessWorker::ctl_activate_main() {
+        const uint32_t tag = simcore::MSG_ACTIVATE_MAIN;
+        if (!write_all(hChildStd_IN_Wr, &tag, sizeof(tag))) return false;
+        simcore::WireAck ack{};
+        if (!read_all(hChildStd_OUT_Rd, &ack, sizeof(ack))) return false;
+        return (ack.tag == simcore::MSG_ACK && ack.ok == 1 && ack.code == 'A');
     }
 
     static bool write_all(HANDLE h, const void* p, size_t n) {

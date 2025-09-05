@@ -24,13 +24,17 @@ namespace simcore {
         ParallelPhaseScriptRunner(size_t workers);
         ~ParallelPhaseScriptRunner();
 
-        bool start(const BootPlan& boot, const PSInit& init, const PhaseScript& program);     // sets epoch=1
+        bool start(const BootPlan& boot);     // sets epoch=1
         uint64_t reconfigure(const PSInit& init, const PhaseScript& program); // epoch++
 
         uint64_t submit(const PSJob& job); // enqueues with current epoch, returns job_id
         bool try_get_result(PRResult& out);
         PRStatus status() const;
         void stop();
+
+        bool set_program(uint8_t init_kind, uint8_t main_kind, const PSInit&);  // MSG_SET_PROGRAM to all
+        bool run_init_once();                                                   // MSG_RUN_INIT_ONCE to all
+        bool activate_main();                                                   // MSG_ACTIVATE_MAIN to all
 
     private:
         struct CmdJob { uint64_t job_id; uint64_t epoch; PSJob job; };

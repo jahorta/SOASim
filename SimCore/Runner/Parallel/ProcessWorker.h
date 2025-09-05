@@ -15,10 +15,9 @@ namespace simcore {
 		size_t worker_id{ 0 };
 		std::string exe_path;     // path to SimCoreSandbox.exe
 		std::string iso_path;
-		std::string savestate_path;
 		std::string qt_base_dir;
 		std::string user_dir;     // unique per worker
-		uint32_t timeout_ms{ 10000 };
+		bool vm_control{ false };
 	};
 
 	class ProcessWorker {
@@ -29,6 +28,10 @@ namespace simcore {
 		bool start(ProcStartParams& p, TSQueue<PRResult>* out_queue);
 		bool send_job(uint64_t job_id, uint64_t epoch, const GCInputFrame& f);
 		void stop();
+
+		bool ctl_set_program(uint8_t init_kind, uint8_t main_kind, const PSInit& init);
+		bool ctl_run_init_once();
+		bool ctl_activate_main();
 
 		bool is_ready()  const { return ready_received_.load() && ready_ok_.load(); }
 		bool is_failed() const { return ready_received_.load() && !ready_ok_.load(); }

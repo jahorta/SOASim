@@ -64,6 +64,10 @@ static bool read_all(HANDLE h, void* p, size_t n) {
     return true;
 }
 
+static bool read_tag(HANDLE h, uint32_t& tag) {
+    return read_all(h, &tag, sizeof(tag));
+}
+
 int main(int argc, char** argv)
 {
     // args:
@@ -76,10 +80,8 @@ int main(int argc, char** argv)
         std::string k = argv[i];
         if (k == "--id") worker_id = parse_u32(argv_next(i, argc, argv));
         else if (k == "--iso") iso = argv_next(i, argc, argv);
-        else if (k == "--savestate") sav = argv_next(i, argc, argv);
         else if (k == "--qtbase") qtbase = argv_next(i, argc, argv);
         else if (k == "--userdir") userdir = argv_next(i, argc, argv);
-        else if (k == "--timeout") timeout_ms = parse_u32(argv_next(i, argc, argv));
     }
 
     set_this_thread_name_utf8((std::string("WorkerMain-") + std::to_string(worker_id)).c_str());
@@ -147,71 +149,118 @@ int main(int argc, char** argv)
 
     host.ConfigurePortsStandardPadP1();
 
+    // ----- New control-mode only -----
     BreakpointMap bpmap = battle_rng_probe::defaults();
-
-    PhaseScript program = MakeSeedProbeProgram(timeout_ms);
-
-    PSInit init{};
-    init.savestate_path = sav;
-    init.default_timeout_ms = timeout_ms;
-
-    SCLOGD("[Worker %zu] VM.init(sav=%s, default_timeout=%u) begin; bp_count=%zu",
-        worker_id, init.savestate_path.c_str(), init.default_timeout_ms, bpmap.addrs.size());
     PhaseScriptVM vm(host, bpmap);
-    if (!vm.init(init, program)) {
-        WireReady wr{}; wr.tag = MSG_READY; wr.ok = 0; wr.error = WERR_VMInit;
-        (void)write_all(hOut, &wr, sizeof(wr));
-        SCLOGE("[Worker %zu] VM init failed", worker_id);
-        return WERR_VMInit;
-    }
-    SCLOGD("[Worker %zu] VM.init ok", worker_id);
 
-    WireReady wrdy{}; wrdy.tag = MSG_READY; wrdy.ok = 1;
-    if (!write_all(hOut, &wrdy, sizeof(wrdy))) {
-        SCLOGE("[Worker %zu] failed to write READY", worker_id);
-        return WorkerExitCode::SEND_READY_FAILED;
+    // Advertise "NoProgram" at startup
+    {
+        WireReady wrdy{}; wrdy.tag = MSG_READY; wrdy.ok = 1; wrdy.state = WSTATE_NoProgram; wrdy.error = WERR_None;
+        if (!write_all(hOut, &wrdy, sizeof(wrdy))) {
+            SCLOGE("[Worker %zu] failed to write READY(NoProgram)", worker_id);
+            return SEND_READY_FAILED;
+        }
+        SCLOGD("[Worker %zu] READY(NoProgram) sent", worker_id);
     }
-    SCLOGE("[Worker %zu] READY sent", worker_id);
 
-    std::ios::sync_with_stdio(false);
-    std::cin.tie(nullptr);
+    PhaseScript init_prog{};
+    PhaseScript main_prog{};
+    PSInit psinit{};            // savestate_path may be empty now
+    psinit.default_timeout_ms = timeout_ms;
+    bool main_active = false;
+
+    auto build_prog = [&](uint8_t kind)->PhaseScript {
+        switch (kind) {
+        case PK_SeedProbe:
+            return MakeSeedProbeProgram(psinit.default_timeout_ms); // existing builder (unchanged)
+        case PK_TasMovie:
+            return PhaseScript{}; // placeholder; fill in when we add TAS movie ops
+        default:
+            return PhaseScript{};
+        }
+        };
 
     for (;;) {
-        WireJob wj{};
-        if (!read_all(hIn, &wj, sizeof(wj))) break;  // EOF/closed pipe -> exit
-        if (wj.tag != MSG_JOB) continue;
+        uint32_t tag = 0;
+        if (!read_tag(hIn, tag)) break;
 
-        GCInputFrame f{};
-        f.main_x = wj.main_x; f.main_y = wj.main_y;
-        f.c_x = wj.c_x; f.c_y = wj.c_y;
-        f.trig_l = wj.trig_l; f.trig_r = wj.trig_r;
-        f.buttons = wj.buttons;
+        if (tag == MSG_SET_PROGRAM) {
+            WireSetProgram sp{}; sp.tag = tag;
+            if (!read_all(hIn, reinterpret_cast<uint8_t*>(&sp) + sizeof(sp.tag),
+                sizeof(sp) - sizeof(sp.tag))) break;
 
-        PSJob job{ f };
-        SCLOGD("[Worker %zu] job recv id=%u epoch=%u", worker_id, wj.job_id, wj.epoch);
-        auto R = vm.run(job);
-        SCLOGD("[Worker %zu] run done id=%u epoch=%u ok=%d last_pc=%08X ctx_keys=%zu",
-            worker_id, wj.job_id, wj.epoch, R.ok ? 1 : 0, R.last_hit_pc, R.ctx.size());
+            psinit.default_timeout_ms = sp.timeout_ms;
+            psinit.savestate_path = sp.savestate_path;
 
-        WireResult wr{};
-        wr.tag = MSG_RESULT;
-        wr.job_id = wj.job_id;
-        wr.epoch = wj.epoch;
-        wr.ok = R.ok ? 1 : 0;
-        wr.last_pc = R.last_hit_pc;
-        auto it = R.ctx.find("seed");
-        if (it == R.ctx.end()) {
-            SCLOGD("[Worker %zu] id=%u epoch=%u seed: <missing>", worker_id, wj.job_id, wj.epoch);
+            init_prog = build_prog(sp.init_kind);
+            main_prog = build_prog(sp.main_kind);
+            main_active = false;
+
+            WireAck ack{}; ack.tag = MSG_ACK; ack.ok = 1; ack.code = 'S';
+            (void)write_all(hOut, &ack, sizeof(ack));
+            SCLOGD("[Worker %zu] SET_PROGRAM ok (init=%u main=%u, sav='%s', to=%u)",
+                worker_id, sp.init_kind, sp.main_kind, psinit.savestate_path.c_str(), psinit.default_timeout_ms);
         }
-        else if (auto p = std::get_if<uint32_t>(&it->second)) {
-            SCLOGD("[Worker %zu] id=%u epoch=%u seed=%08X", worker_id, wj.job_id, wj.epoch, *p);
-            wr.seed = *p;
+        else if (tag == MSG_RUN_INIT_ONCE) {
+            if (!init_prog.ops.empty()) {
+                if (!vm.init(psinit, init_prog)) {
+                    WireAck ack{}; ack.tag = MSG_ACK; ack.ok = 0; ack.code = 'I';
+                    (void)write_all(hOut, &ack, sizeof(ack));
+                    SCLOGE("[Worker %zu] VM init failed for INIT", worker_id);
+                    continue;
+                }
+                (void)vm.run(PSJob{}); // single-shot
+            }
+            WireAck ack{}; ack.tag = MSG_ACK; ack.ok = 1; ack.code = 'I';
+            (void)write_all(hOut, &ack, sizeof(ack));
+            SCLOGD("[Worker %zu] RUN_INIT_ONCE ok", worker_id);
+        }
+        else if (tag == MSG_ACTIVATE_MAIN) {
+            if (!vm.init(psinit, main_prog)) {
+                WireAck ack{}; ack.tag = MSG_ACK; ack.ok = 0; ack.code = 'A';
+                (void)write_all(hOut, &ack, sizeof(ack));
+                SCLOGE("[Worker %zu] VM init failed for MAIN", worker_id);
+                continue;
+            }
+            main_active = true;
+            WireAck ack{}; ack.tag = MSG_ACK; ack.ok = 1; ack.code = 'A';
+            (void)write_all(hOut, &ack, sizeof(ack));
+            SCLOGD("[Worker %zu] ACTIVATE_MAIN ok", worker_id);
+        }
+        else if (tag == MSG_JOB) {
+            WireJob wj{}; wj.tag = tag;
+            if (!read_all(hIn, reinterpret_cast<uint8_t*>(&wj) + sizeof(wj.tag),
+                sizeof(wj) - sizeof(wj.tag))) break;
+
+            WireResult wr{}; wr.tag = MSG_RESULT; wr.job_id = wj.job_id; wr.epoch = wj.epoch;
+
+            if (!main_active) {
+                wr.ok = 0; wr.last_pc = 0; wr.seed = 0;
+                (void)write_all(hOut, &wr, sizeof(wr));
+                SCLOGD("[Worker %zu] JOB before ACTIVATE_MAIN -> NoProgram", worker_id);
+                continue;
+            }
+
+            GCInputFrame f{};
+            f.main_x = wj.main_x; f.main_y = wj.main_y;
+            f.c_x = wj.c_x;       f.c_y = wj.c_y;
+            f.trig_l = wj.trig_l; f.trig_r = wj.trig_r;
+            f.buttons = wj.buttons;
+
+            auto R = vm.run(PSJob{ f });
+            wr.ok = R.ok ? 1 : 0;
+            wr.last_pc = R.last_hit_pc;
+            wr.seed = 0;
+            if (auto it = R.ctx.find("seed"); it != R.ctx.end()) {
+                if (auto p = std::get_if<uint32_t>(&it->second)) wr.seed = *p;
+            }
+
+            (void)write_all(hOut, &wr, sizeof(wr));
         }
         else {
-            SCLOGD("[Worker %zu] id=%u epoch=%u seed: <present but not u32>", worker_id, wj.job_id, wj.epoch);
+            SCLOGD("[Worker %zu] unknown tag=%u (closing)", worker_id, tag);
+            break;
         }
-
-        if (!write_all(hOut, &wr, sizeof(wr))) break;
     }
 
     return WERR_None;
