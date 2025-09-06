@@ -14,6 +14,7 @@
 #include "Runner/Breakpoints/BPCore.h"
 #include "Runner/Script/PhaseScriptVM.h"
 #include "Runner/Script/Programs/SeedProbeScript.h"
+#include "Runner/Script/Programs/TasMovieScript.h"
 #include "Runner/Parallel/ParallelPhaseScriptRunner.h"
 #include "Runner/IPC/Wire.h"
 #include "Runner/Breakpoints/PreBattleBreakpoints.h"
@@ -169,12 +170,22 @@ int main(int argc, char** argv)
     psinit.default_timeout_ms = timeout_ms;
     bool main_active = false;
 
+    //auto build_init = [&](uint8_t kind)->PSInit {
+    //    switch (kind) {
+    //    case PK_TasMovie:
+    //        return MakeTasInitProgram(psinit.savestate_path, psinit.default_timeout_ms); // placeholder; fill in when we add TAS movie ops
+    //    default:
+    //        return PSInit{};
+    //    }
+    //    };
+
+
     auto build_prog = [&](uint8_t kind)->PhaseScript {
         switch (kind) {
         case PK_SeedProbe:
             return MakeSeedProbeProgram(psinit.default_timeout_ms); // existing builder (unchanged)
-        case PK_TasMovie:
-            return PhaseScript{}; // placeholder; fill in when we add TAS movie ops
+        //case PK_TasMovie:
+        //    return MakeTasMainProgram(psinit); // placeholder; fill in when we add TAS movie ops
         default:
             return PhaseScript{};
         }
