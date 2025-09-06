@@ -1,7 +1,8 @@
 // Script/TasMovieScript.h
 #pragma once
 #include <string>
-#include "PhaseScriptVM.h"
+#include <vector>
+#include "../PhaseScriptVM.h"
 
 namespace simcore::script {
 
