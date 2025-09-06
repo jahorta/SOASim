@@ -67,6 +67,8 @@ namespace simcore {
     RandSeedProbeResult RunRngSeedDeltaMap(ParallelPhaseScriptRunner& runner, const RngSeedDeltaArgs& args)
     {
         
+        SCLOGI("[seedmap] Starting workers ...");
+        
         // New control-mode startup
         if (!runner.start(args.boot)) {
             SCLOGE("Failed to boot workers (control mode).");
@@ -77,17 +79,23 @@ namespace simcore {
         init.savestate_path = args.savestate_path;      // keep using your existing savestate for this phase
         init.default_timeout_ms = args.run_timeout_ms;
 
+        SCLOGI("[seedmap] Setting program ...");
+
         // No special INIT program for seed probe; main program is SeedProbe
         if (!runner.set_program(/*init_kind=*/PK_None, /*main_kind=*/PK_SeedProbe, init)) {
             SCLOGE("Failed to set program on workers.");
             return {};
         }
 
+        SCLOGI("[seedmap] Activating program ...");
+
         // No init-once step for seed probe; go straight to main
         if (!runner.activate_main()) {
             SCLOGE("Failed to activate main program.");
             return {};
         }
+
+        SCLOGI("[seedmap] Building Jobs ...");
 
         RandSeedProbeResult out{};
 
@@ -122,6 +130,9 @@ namespace simcore {
             }
             return 0;
             };
+
+
+        SCLOGI("[seedmap] Sending Jobs ...");
 
         for (auto& [fam, inputs] : batches) {
             

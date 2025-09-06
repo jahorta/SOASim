@@ -72,6 +72,8 @@ namespace simcore {
         base = (pos == std::string::npos) ? "." : base.substr(0, pos);
         std::string workerExe = base + "\\SimCoreWorker.exe";
 
+        SCLOGI("[runner] Starting workers...");
+
         size_t launched = 0;
         for (auto& w : workers_) {
             ProcStartParams ps{};
