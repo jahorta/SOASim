@@ -46,7 +46,7 @@
 
 
 using namespace std::chrono_literals;
-using namespace std;
+using namespace std::chrono;
 namespace fs = std::filesystem;
 
 namespace simcore {
@@ -294,6 +294,57 @@ namespace simcore {
         return true;
     }
 
+    bool DolphinWrapper::startMoviePlayback(const std::string& dtm_path)
+    {
+        SCLOGI("[Movie] PLAY {}", dtm_path);
+        bool ok = false;
+        auto& movie = m_system->GetMovie();
+        runOnCpuThread([&] {
+            ok = movie.PlayInput(dtm_path, new std::optional<std::string>{});
+            }, true);
+        return ok;
+    }
+
+    bool DolphinWrapper::endMoviePlaybackBlocking(uint32_t timeout_ms)
+    {
+        SCLOGI("[Movie] STOP (request)");
+        auto& movie = m_system->GetMovie();
+        runOnCpuThread([&] {
+            movie.EndPlayInput(false);
+            }, true);
+
+        const auto deadline = steady_clock::now() + milliseconds(timeout_ms);
+        while (movie.IsPlayingInput() && steady_clock::now() < deadline)
+            std::this_thread::sleep_for(milliseconds(10));
+
+        const bool stopped = !movie.IsPlayingInput();
+        SCLOGI("[Movie] STOP {}", stopped ? "ok" : "timeout");
+        return stopped;
+    }
+
+    bool DolphinWrapper::setGCMemoryCardA(const std::string& raw_path)
+    {
+        // We avoid Dolphin source changes: copy the provided RAW to the
+        // standard per-region filenames so the current game will pick it up.
+        // MemoryCardA.<REG>.raw is the path Dolphin expects for “Memory Card” mode.
+        // (Documented widely in user guides/bug threads.) 
+        // USA/JAP/PAL cover GC regions.
+        namespace fs = std::filesystem;
+        try {
+            const fs::path gc_dir = fs::path(m_user_dir) / "GC";
+            fs::create_directories(gc_dir);
+            const char* names[] = { "MemoryCardA.USA.raw","MemoryCardA.JAP.raw","MemoryCardA.PAL.raw" };
+            for (auto* n : names) {
+                fs::copy_file(raw_path, gc_dir / n, fs::copy_options::overwrite_existing);
+            }
+            SCLOGI("[MemCard] Copied RAW to {}", gc_dir.string());
+            return true;
+        }
+        catch (...) {
+            return false;
+        }
+    }
+
     void DolphinWrapper::setUserDirectory(const std::string& abs_path)
     {
         const fs::path p = fs::absolute(abs_path);
@@ -371,9 +422,9 @@ namespace simcore {
         return interlaced ? (fields / 2) : fields;
     }
 
-    static inline void write_all(const fs::path& p, const string& s) {
+    static inline void write_all(const fs::path& p, const std::string& s) {
         fs::create_directories(p.parent_path());
-        ofstream ofs(p, ios::binary | ios::trunc);
+        std::ofstream ofs(p, std::ios::binary | std::ios::trunc);
         ofs.write(s.data(), (std::streamsize)s.size());
     }
 

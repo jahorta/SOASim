@@ -107,6 +107,10 @@ namespace simcore {
         void silenceStdOutInfo();
         void restoreStdOutInfo();
 
+        bool startMoviePlayback(const std::string& dtm_path);
+        bool endMoviePlaybackBlocking(uint32_t timeout_ms = 4000);
+        bool setGCMemoryCardA(const std::string& raw_path);
+
 
     private:
 
