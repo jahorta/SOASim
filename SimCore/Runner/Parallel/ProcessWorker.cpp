@@ -111,44 +111,46 @@ namespace simcore {
     }
 
     bool ProcessWorker::ctl_set_program(uint8_t init_kind, uint8_t main_kind, const PSInit& init) {
-        simcore::WireSetProgram sp{};
-        sp.tag = simcore::MSG_SET_PROGRAM;
+        WireSetProgram sp{};
+        sp.tag = MSG_SET_PROGRAM;
         sp.init_kind = init_kind;
         sp.main_kind = main_kind;
         sp.timeout_ms = init.default_timeout_ms;
 
-        // Always zero, then copy safely if provided
         std::memset(sp.savestate_path, 0, sizeof(sp.savestate_path));
         if (!init.savestate_path.empty()) {
-            const bool ok = copy_cstr_nt(sp.savestate_path, init.savestate_path);
-            if (!ok) {
-                // optional: log this so we can spot bad inputs quickly
-                SCLOGW("[worker %zu] savestate_path truncated to %zu bytes",
-                    id_, sizeof(sp.savestate_path) - 1);
+            if (!copy_cstr_nt(sp.savestate_path, init.savestate_path)) {
+                SCLOGW("[worker %zu] savestate_path truncated", id_);
             }
         }
 
-        if (!write_all(hChildStd_IN_Wr, &sp, sizeof(sp))) return false;
-
-        simcore::WireAck ack{};
-        if (!read_all(hChildStd_OUT_Rd, &ack, sizeof(ack))) return false;
-        return (ack.tag == simcore::MSG_ACK && ack.ok == 1 && ack.code == 'S');
+        ack_.request('S');
+        if (!write_all(hChildStd_IN_Wr, &sp, sizeof(sp))) {
+            ack_.cancel_all();
+            return false;
+        }
+        // wait for MSG_ACK(code='S') by reader_thread
+        return ack_.wait_for(init.default_timeout_ms ? init.default_timeout_ms : 10000);
     }
 
     bool ProcessWorker::ctl_run_init_once() {
-        const uint32_t tag = simcore::MSG_RUN_INIT_ONCE;
-        if (!write_all(hChildStd_IN_Wr, &tag, sizeof(tag))) return false;
-        simcore::WireAck ack{};
-        if (!read_all(hChildStd_OUT_Rd, &ack, sizeof(ack))) return false;
-        return (ack.tag == simcore::MSG_ACK && ack.ok == 1 && ack.code == 'I');
+        const uint32_t tag = MSG_RUN_INIT_ONCE;
+        ack_.request('I');
+        if (!write_all(hChildStd_IN_Wr, &tag, sizeof(tag))) {
+            ack_.cancel_all();
+            return false;
+        }
+        return ack_.wait_for(10000);
     }
 
     bool ProcessWorker::ctl_activate_main() {
-        const uint32_t tag = simcore::MSG_ACTIVATE_MAIN;
-        if (!write_all(hChildStd_IN_Wr, &tag, sizeof(tag))) return false;
-        simcore::WireAck ack{};
-        if (!read_all(hChildStd_OUT_Rd, &ack, sizeof(ack))) return false;
-        return (ack.tag == simcore::MSG_ACK && ack.ok == 1 && ack.code == 'A');
+        const uint32_t tag = MSG_ACTIVATE_MAIN;
+        ack_.request('A');
+        if (!write_all(hChildStd_IN_Wr, &tag, sizeof(tag))) {
+            ack_.cancel_all();
+            return false;
+        }
+        return ack_.wait_for(10000);
     }
 
     bool ProcessWorker::send_job(uint64_t job_id, uint64_t epoch, const GCInputFrame& f)
@@ -164,6 +166,18 @@ namespace simcore {
         return true;
     }
 
+    bool ProcessWorker::wait_ready(uint32_t timeout_ms)
+    {
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_ms ? timeout_ms : 10000);
+        while (std::chrono::steady_clock::now() < deadline) {
+            if (ready_received_.load()) {
+                return ready_ok_.load();
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        return false;
+    }
+
     void ProcessWorker::reader_thread()
     {
         set_this_thread_name_utf8((std::string("WorkerReader-") + std::to_string(id_)).c_str());
@@ -174,13 +188,20 @@ namespace simcore {
             if (!ReadFile(hChildStd_OUT_Rd, &tag, 1, &got, NULL) || got == 0) break;
 
             if (tag == MSG_READY) {
-                WireReady wrdy{};
-                wrdy.tag = tag;
+                WireReady wrdy{}; wrdy.tag = tag;
                 if (!read_all(hChildStd_OUT_Rd, reinterpret_cast<char*>(&wrdy) + 1, sizeof(wrdy) - 1)) break;
                 ready_ok_.store(wrdy.ok != 0);
                 ready_error_.store(wrdy.error);
                 ready_received_.store(true);
-                // If failed, we can let the child exit naturally; parent will stop() it on start() failure
+                continue;
+            }
+
+            if (tag == MSG_ACK) {
+                WireAck ack{};
+                ack.tag = tag;
+                if (!read_all(hChildStd_OUT_Rd, reinterpret_cast<char*>(&ack) + 1, sizeof(ack) - 1)) break;
+                // Route to waiter by code
+                ack_.fulfill(static_cast<char>(ack.code), ack.ok != 0);
                 continue;
             }
 
@@ -206,6 +227,8 @@ namespace simcore {
             // ignore unknown tags
         }
 
+        // Ensure any waiters are released
+        ack_.cancel_all();
         release_slot();
         running_.store(false);
     }
@@ -213,11 +236,11 @@ namespace simcore {
     void ProcessWorker::stop()
     {
         if (!running_.exchange(false)) return;
-        // Closing stdin signals EOF to worker loop
         if (hChildStd_IN_Wr) { CloseHandle(hChildStd_IN_Wr); hChildStd_IN_Wr = NULL; }
         if (reader_.joinable()) reader_.join();
         if (hChildStd_OUT_Rd) { CloseHandle(hChildStd_OUT_Rd); hChildStd_OUT_Rd = NULL; }
         if (hThread) { CloseHandle(hThread); hThread = NULL; }
         if (hProcess) { CloseHandle(hProcess); hProcess = NULL; }
+        ack_.cancel_all();
     }
 } // namespace simcore

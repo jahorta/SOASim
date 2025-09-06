@@ -1,6 +1,9 @@
 #pragma once
 #include <string>
 #include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <chrono>
 #include <windows.h>
 #include "../../Core/Input/InputPlan.h"
 #include "../Script/PhaseScriptVM.h"  // for PSResult
@@ -18,6 +21,47 @@ namespace simcore {
 		std::string qt_base_dir;
 		std::string user_dir;     // unique per worker
 		bool vm_control{ false };
+	};
+
+	struct AckWait
+	{
+		std::mutex m;
+		std::condition_variable cv;
+		bool pending = false;
+		char expect_code = 0;  // 'S','I','A'
+		bool have = false;
+		bool ok = false;
+		void request(char code) {
+			std::lock_guard<std::mutex> lk(m);
+			expect_code = code;
+			pending = true;
+			have = false;
+			ok = false;
+		}
+		bool wait_for(uint32_t timeout_ms) {
+			std::unique_lock<std::mutex> lk(m);
+			if (!pending) return false;
+			const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_ms ? timeout_ms : 30000);
+			cv.wait_until(lk, deadline, [&] { return have == true; });
+			bool r = have && ok;
+			pending = false;
+			return r;
+		}
+		void fulfill(char code, bool ok_flag) {
+			std::lock_guard<std::mutex> lk(m);
+			if (pending && code == expect_code) {
+				ok = ok_flag;
+				have = true;
+				cv.notify_all();
+			}
+		}
+		void cancel_all() {
+			std::lock_guard<std::mutex> lk(m);
+			pending = false;
+			have = true;
+			ok = false;
+			cv.notify_all();
+		}
 	};
 
 	class ProcessWorker {
@@ -45,6 +89,8 @@ namespace simcore {
 		void release_slot() { busy_.store(false, std::memory_order_release); }
 		bool has_slot() const { return !busy_.load(std::memory_order_acquire); }
 
+		bool wait_ready(uint32_t timeout_ms);
+
 	private:
 		void reader_thread();
 
@@ -63,6 +109,8 @@ namespace simcore {
 		std::atomic<bool> ready_received_{ false }; // we saw MSG_READY
 		std::atomic<bool> ready_ok_{ false };       // MSG_READY.ok
 		std::atomic<uint32_t> ready_error_{ 0 };    // MSG_READY.error
+
+		AckWait ack_;
 	};
 
 } // namespace simcore
