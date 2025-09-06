@@ -219,7 +219,6 @@ int main(int argc, char** argv)
             psinit.default_timeout_ms = sp.timeout_ms;
             psinit.savestate_path = sp.savestate_path;
 
-            init_prog = build_prog(sp.init_kind);
             main_prog = build_prog(sp.main_kind);
             main_active = false;
 
