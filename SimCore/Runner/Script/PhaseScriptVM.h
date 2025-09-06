@@ -17,16 +17,25 @@ namespace simcore {
 
 	// ----- Small, reusable ops -----
 	enum class PSOpCode : uint8_t {
-		ARM_PHASE_BPS_ONCE,     // arm canonical BPs once
-		LOAD_SNAPSHOT,          // restore pre-captured buffer
-		CAPTURE_SNAPSHOT,       // capture current state to buffer
-		APPLY_INPUT,            // payload: GCInputFrame
-		STEP_FRAMES,            // payload: uint32_t n
-		RUN_UNTIL_BP,           // payload: uint32_t timeout_ms; writes last_hit_pc
-		READ_U8, READ_U16, READ_U32, READ_F32, READ_F64,  // payload: {addr, dstKey}
-		SET_TIMEOUT,            // payload: uint32_t timeout_ms (overrides default run timeout)
-		EMIT_RESULT,            // payload: dstKey (copy value into VM.result)
+		ARM_PHASE_BPS_ONCE,         // arm canonical BPs once
+		LOAD_SNAPSHOT,              // restore pre-captured buffer
+		CAPTURE_SNAPSHOT,           // capture current state to buffer
+		APPLY_INPUT,                // payload: GCInputFrame
+		STEP_FRAMES,                // payload: uint32_t n
+		RUN_UNTIL_BP,               // payload: uint32_t timeout_ms; writes last_hit_pc
+		READ_U8,                    // payload: {addr, dstKey}
+		READ_U16,                   // payload: {addr, dstKey}
+		READ_U32,                   // payload: {addr, dstKey}
+		READ_F32,                   // payload: {addr, dstKey}
+		READ_F64,                   // payload: {addr, dstKey}
+		SET_TIMEOUT,                // payload: uint32_t timeout_ms (overrides default run timeout)
+		EMIT_RESULT,                // payload: dstKey (copy value into VM.result)
 
+		GC_SLOT_A_SET,              // a_path.path
+		MOVIE_PLAY,                 // a_path.path
+		MOVIE_STOP,                 // no args
+		SAVE_SAVESTATE,             // a_path.path
+		REQUIRE_DISC_GAMEID         // a_id6.id[6]
 	};
 
 	static std::string get_psop_name(PSOpCode op);
@@ -35,6 +44,9 @@ namespace simcore {
 	struct PSArg_Step { uint32_t n; };
 	struct PSArg_Timeout { uint32_t ms; };
 	struct PSArg_Emit { std::string key; };
+	struct PSArg_Path { std::string path; };
+	struct PSArg_ID6 { char id[6]{}; };
+
 
 	using PSValue = std::variant<uint8_t, uint16_t, uint32_t, float, double>;
 	using PSContext = std::unordered_map<std::string, PSValue>;
@@ -47,7 +59,16 @@ namespace simcore {
 		PSArg_Step    step{};
 		PSArg_Timeout to{};
 		PSArg_Emit    em{};
+		PSArg_Path    a_path{};
+		PSArg_ID6     a_id6{};
 	};
+
+	inline PSOp OpGcSlotASet(const std::string& p) { PSOp o; o.code = PSOpCode::GC_SLOT_A_SET; o.a_path.path = p; return o; }
+	inline PSOp OpMoviePlay(const std::string& p) { PSOp o; o.code = PSOpCode::MOVIE_PLAY;   o.a_path.path = p; return o; }
+	inline PSOp OpMovieStop() { PSOp o; o.code = PSOpCode::MOVIE_STOP;  return o; }
+	inline PSOp OpSaveSavestate(const std::string& p) { PSOp o; o.code = PSOpCode::SAVE_SAVESTATE; o.a_path.path = p; return o; }
+	inline PSOp OpRequireDiscID6(const char id6[6]) { PSOp o; o.code = PSOpCode::REQUIRE_DISC_GAMEID; memcpy(o.a_id6.id, id6, 6); return o; }
+
 
 	struct PhaseScript {
 		std::vector<BPKey> canonical_bp_keys;   // armed once

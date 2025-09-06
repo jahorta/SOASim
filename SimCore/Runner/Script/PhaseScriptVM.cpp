@@ -134,6 +134,33 @@ namespace simcore {
                 R.ctx[op.em.key] = ctx[op.em.key]; // copy selected value to result
                 break;
             }
+            case PSOpCode::GC_SLOT_A_SET: {
+                SCLOGD("[VM] GC_SLOT_A_SET %s", op.a_path.path.c_str());
+                if (!host_.setGCMemoryCardA(op.a_path.path)) return R;
+                break;
+            }
+            case PSOpCode::MOVIE_PLAY: {
+                SCLOGI("[VM] MOVIE_PLAY %s", op.a_path.path.c_str());
+                if (!host_.startMoviePlayback(op.a_path.path)) return R;
+                break;
+            }
+            case PSOpCode::MOVIE_STOP: {
+                SCLOGI("[VM] MOVIE_STOP");
+                if (!host_.endMoviePlaybackBlocking()) return R;
+                break;
+            }
+            case PSOpCode::SAVE_SAVESTATE: {
+                SCLOGI("[VM] SAVE_SAVESTATE %s", op.a_path.path.c_str());
+                if (!host_.saveSavestateBlocking(op.a_path.path)) return R;
+                break;
+            }
+            case PSOpCode::REQUIRE_DISC_GAMEID: {
+                auto di = host_.getDiscInfo();
+                const bool ok = (di.has_value() && di->game_id.size() >= 6 &&
+                    memcmp(di->game_id.data(), op.a_id6.id, 6) == 0);
+                if (!ok) return R;
+                break;
+            }
             }
         }
 
