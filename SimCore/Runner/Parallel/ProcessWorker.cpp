@@ -78,15 +78,55 @@ namespace simcore {
         return true;
     }
 
+    static bool write_all(HANDLE h, const void* p, size_t n) {
+        const BYTE* b = static_cast<const BYTE*>(p);
+        DWORD w = 0;
+        while (n) {
+            if (!WriteFile(h, b, (DWORD)std::min(n, (size_t)0x7FFFFFFF), &w, NULL)) return false;
+            if (w == 0) return false;
+            b += w; n -= w;
+        }
+        return true;
+    }
+
+    static bool read_all(HANDLE h, void* p, size_t n) {
+        BYTE* b = static_cast<BYTE*>(p);
+        DWORD r = 0;
+        while (n) {
+            if (!ReadFile(h, b, (DWORD)std::min(n, (size_t)0x7FFFFFFF), &r, NULL)) return false;
+            if (r == 0) return false;
+            b += r; n -= r;
+        }
+        return true;
+    }
+
+    template <size_t N>
+    static inline bool copy_cstr_nt(char(&dst)[N], std::string_view src)
+    {
+        static_assert(N > 0, "dst must have space for NUL");
+        const size_t n = (src.size() < (N - 1)) ? src.size() : (N - 1);
+        if (n) std::memcpy(dst, src.data(), n);
+        dst[n] = '\0';
+        return n == src.size(); // true if not truncated
+    }
+
     bool ProcessWorker::ctl_set_program(uint8_t init_kind, uint8_t main_kind, const PSInit& init) {
         simcore::WireSetProgram sp{};
         sp.tag = simcore::MSG_SET_PROGRAM;
         sp.init_kind = init_kind;
         sp.main_kind = main_kind;
         sp.timeout_ms = init.default_timeout_ms;
-        memset(sp.savestate_path, 0, sizeof(sp.savestate_path));
-        if (!init.savestate_path.empty())
-            strncpy(sp.savestate_path, init.savestate_path.c_str(), sizeof(sp.savestate_path) - 1);
+
+        // Always zero, then copy safely if provided
+        std::memset(sp.savestate_path, 0, sizeof(sp.savestate_path));
+        if (!init.savestate_path.empty()) {
+            const bool ok = copy_cstr_nt(sp.savestate_path, init.savestate_path);
+            if (!ok) {
+                // optional: log this so we can spot bad inputs quickly
+                SCLOGW("[worker %zu] savestate_path truncated to %zu bytes",
+                    id_, sizeof(sp.savestate_path) - 1);
+            }
+        }
 
         if (!write_all(hChildStd_IN_Wr, &sp, sizeof(sp))) return false;
 
@@ -109,28 +149,6 @@ namespace simcore {
         simcore::WireAck ack{};
         if (!read_all(hChildStd_OUT_Rd, &ack, sizeof(ack))) return false;
         return (ack.tag == simcore::MSG_ACK && ack.ok == 1 && ack.code == 'A');
-    }
-
-    static bool write_all(HANDLE h, const void* p, size_t n) {
-        const BYTE* b = static_cast<const BYTE*>(p);
-        DWORD w = 0;
-        while (n) {
-            if (!WriteFile(h, b, (DWORD)std::min(n, (size_t)0x7FFFFFFF), &w, NULL)) return false;
-            if (w == 0) return false;
-            b += w; n -= w;
-        }
-        return true;
-    }
-
-    static bool read_all(HANDLE h, void* p, size_t n) {
-        BYTE* b = static_cast<BYTE*>(p);
-        DWORD r = 0;
-        while (n) {
-            if (!ReadFile(h, b, (DWORD)std::min(n, (size_t)0x7FFFFFFF), &r, NULL)) return false;
-            if (r == 0) return false;
-            b += r; n -= r;
-        }
-        return true;
     }
 
     bool ProcessWorker::send_job(uint64_t job_id, uint64_t epoch, const GCInputFrame& f)
