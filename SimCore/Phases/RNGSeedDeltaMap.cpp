@@ -59,18 +59,6 @@ namespace simcore {
         return (long long)(int32_t)a - (long long)(int32_t)b;
     }
 
-    static void ensure_started(ParallelPhaseScriptRunner& runner, const BootPlan& boot,
-        const std::string& savestate_path, uint32_t timeout_ms)
-    {
-        auto st = runner.status();
-        const bool need_start = (st.running_workers == 0);
-        if (need_start) {
-            PSInit init{}; init.savestate_path = savestate_path; init.default_timeout_ms = timeout_ms;
-            PhaseScript prog = MakeSeedProbeProgram(timeout_ms);
-            runner.start(boot, init, prog);
-        }
-    }
-
     static std::string make_label(const char* title, uint8_t x, uint8_t y) {
         char buf[64]; std::snprintf(buf, sizeof(buf), "%s(%02X,%02X)", title, int(x), int(y));
         return std::string(buf);
@@ -80,7 +68,7 @@ namespace simcore {
     {
         
         // New control-mode startup
-        if (!runner.start_workers_control(args.boot)) {
+        if (!runner.start(args.boot)) {
             SCLOGE("Failed to boot workers (control mode).");
             return {}; // or propagate error
         }
