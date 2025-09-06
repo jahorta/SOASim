@@ -147,7 +147,6 @@ namespace sandbox {
     void run_rng_seed_probe_menu(AppState& g)
     {
         // defaults
-        const uint32_t rng_addr = 0x803469A8u;
         simcore::RngSeedDeltaArgs a{};
         a.savestate_path = g.default_savestate;
         a.samples_per_axis = 8;
@@ -193,15 +192,15 @@ namespace sandbox {
                 }
                 if (!ensure_sys_from_base_or_warn(g.qt_base_dir)) continue;
 
-                // Program (same as your seed probe flow): 1-frame input -> run_until_bp -> read RNG -> emit. :contentReference[oaicite:6]{index=6}
+                // Program (same as your seed probe flow): 1-frame input -> run_until_bp -> read RNG -> emit.
                 simcore::PhaseScript program = simcore::MakeSeedProbeProgram(a.run_timeout_ms);
 
-                // VM init: initial savestate + default timeout. :contentReference[oaicite:7]{index=7}
+                // VM init: initial savestate + default timeout.
                 simcore::PSInit psinit{};
                 psinit.savestate_path = a.savestate_path;
                 psinit.default_timeout_ms = a.run_timeout_ms;
 
-                // Boot plan: use your Boot module; keep ISO and portable base fixed for the lifetime of the pool. :contentReference[oaicite:8]{index=8}
+                // Boot plan: use your Boot module; keep ISO and portable base fixed for the lifetime of the pool.
                 simcore::BootPlan boot = make_boot_plan(g);
 
                 // Runner
@@ -210,9 +209,8 @@ namespace sandbox {
                 // Seed-probe job args
                 simcore::RngSeedDeltaArgs args = a;
                 args.boot = boot;
-
-                // Kick the run (your existing pipeline continues from here; we just wrapped it).
-                // The rest of your display/log helpers remain available in SeedProbe.*. :contentReference[oaicite:9]{index=9} :contentReference[oaicite:10]{index=10}
+                
+                // Display results
                 auto result = RunRngSeedDeltaMap(runner, args);
                 sandbox::log_probe_summary(result);
                 sandbox::print_family_grid(result, simcore::SeedFamily::Main, a.samples_per_axis, "Main Stick");

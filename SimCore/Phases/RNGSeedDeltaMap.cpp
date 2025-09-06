@@ -111,6 +111,9 @@ namespace simcore {
         specs.push_back({ "CStick",  (uint64_t)args.samples_per_axis * args.samples_per_axis });
         specs.push_back({ "Triggers",(uint64_t)args.samples_per_axis * args.samples_per_axis });
 
+
+        SCLOGI("[seedmap] Sending Jobs ...");
+
         MultiProgress::Options mpopt;
         mpopt.use_stdout = true;
         mpopt.use_vt = true;
@@ -130,9 +133,6 @@ namespace simcore {
             }
             return 0;
             };
-
-
-        SCLOGI("[seedmap] Sending Jobs ...");
 
         for (auto& [fam, inputs] : batches) {
             
