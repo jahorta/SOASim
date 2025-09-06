@@ -133,7 +133,7 @@ namespace simcore {
 
         for (int i = 0; i < 50 && Core::IsRunning(*m_system); ++i) {
             Core::HostDispatchJobs(*m_system);
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            std::this_thread::sleep_until(steady_clock::now() + milliseconds(1));
         }
 
         Core::Shutdown(*m_system);
@@ -175,7 +175,7 @@ namespace simcore {
 
         auto deadline = std::chrono::steady_clock::now() + 20s;
         while (!Core::IsRunning(*m_system) && std::chrono::steady_clock::now() < deadline)
-            std::this_thread::sleep_for(1ms);
+            std::this_thread::sleep_until(steady_clock::now() + milliseconds(1));
 
         return Core::IsRunning(*m_system);
     }
@@ -197,7 +197,7 @@ namespace simcore {
 
         auto deadline = std::chrono::steady_clock::now() + 5s;
         while (!done && std::chrono::steady_clock::now() < deadline)
-            std::this_thread::sleep_for(1ms);
+            std::this_thread::sleep_until(steady_clock::now() + milliseconds(1));
 
         const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now() - start).count();
@@ -324,7 +324,7 @@ namespace simcore {
 
         const auto deadline = steady_clock::now() + milliseconds(timeout_ms);
         while (movie.IsPlayingInput() && steady_clock::now() < deadline)
-            std::this_thread::sleep_for(milliseconds(10));
+            std::this_thread::sleep_until(steady_clock::now() + milliseconds(10));
 
         const bool stopped = !movie.IsPlayingInput();
         SCLOGI("[Movie] STOP {}", stopped ? "ok" : "timeout");
@@ -767,7 +767,7 @@ namespace simcore {
         while (std::chrono::steady_clock::now() < deadline) {
             if (Core::GetState(*m_system) == Core::State::Paused) 
                 break;
-            std::this_thread::sleep_for(std::chrono::milliseconds(poll_rate_ms));
+            std::this_thread::sleep_until(steady_clock::now() + milliseconds(poll_rate_ms));
         }
         
 
