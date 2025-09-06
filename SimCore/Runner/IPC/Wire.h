@@ -37,7 +37,7 @@ namespace simcore {
     enum : uint8_t {
         PK_None = 0,
         PK_SeedProbe = 1,
-        PK_TasMovie = 2
+        PK_TasMovie = 2,
     };
 
     struct WireReady {
