@@ -45,6 +45,7 @@ namespace simcore {
 
         bool loadGame(const std::string& iso_path);
         bool loadSavestate(const std::string& state_path);
+        bool saveSavestateBlocking(const std::string& state_path);
         bool saveStateToBuffer(Common::UniqueBuffer<u8>& buffer);
         bool loadStateFromBuffer(Common::UniqueBuffer<u8>& buffer);
 

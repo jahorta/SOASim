@@ -271,6 +271,17 @@ namespace simcore {
         }
     }
 
+    bool DolphinWrapper::saveSavestateBlocking(const std::string& path)
+    {
+        if (!Core::IsRunning(*m_system)) return false;
+        bool ok = false;
+        Core::RunAsCPUThread(*m_system, [&] {
+            ok = State::SaveAs(*m_system, path);
+            }, true);
+        SCLOGI("[State] SaveAs %s -> %s", path.c_str(), ok ? "ok" : "fail");
+        return ok;
+    }
+
     bool DolphinWrapper::saveStateToBuffer(Common::UniqueBuffer<u8>& buffer)
     {
         State::SaveToBuffer(*m_system, buffer);
