@@ -184,7 +184,9 @@
     <ClInclude Include="Runner\Predicates\PredicateCatalog.h" />
     <ClInclude Include="Runner\Script\PhaseScriptVM.h" />
     <ClInclude Include="Runner\Script\Programs\SeedProbeScript.h" />
+    <ClInclude Include="Runner\Script\Programs\TasMovieScript.h" />
     <ClInclude Include="Runner\SOAConstants.h" />
+    <ClInclude Include="Tas\DtmFile.h" />
     <ClInclude Include="Utils\DeltaColorizer.h" />
     <ClInclude Include="Utils\EnsureSys.h" />
     <ClInclude Include="Utils\Log.h" />
@@ -1055,6 +1057,7 @@
     <ClCompile Include="Runner\Predicates\PredicateCatalog.cpp" />
     <ClCompile Include="Runner\Script\PhaseScriptVM.cpp" />
     <ClCompile Include="SimCore.cpp" />
+    <ClCompile Include="Tas\DtmFile.cpp" />
     <ClCompile Include="Utils\EnsureSys.cpp" />
     <ClCompile Include="Utils\Log.cpp" />
     <ClCompile Include="Utils\MultiProgress.cpp" />

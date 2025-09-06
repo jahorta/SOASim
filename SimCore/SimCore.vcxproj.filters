@@ -34,6 +34,9 @@
     <Filter Include="Phases">
       <UniqueIdentifier>{eb879b3c-e922-4ee8-a291-4569a8483ab3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="IO">
+      <UniqueIdentifier>{3323c09c-2ff3-43bc-a6ae-4d4bb181334e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -134,6 +137,12 @@
     </ClInclude>
     <ClInclude Include="Phases\RNGSeedDeltaMap.h">
       <Filter>Phases</Filter>
+    </ClInclude>
+    <ClInclude Include="Tas\DtmFile.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="Runner\Script\Programs\TasMovieScript.h">
+      <Filter>RunnerPrograms</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -838,6 +847,9 @@
     </ClCompile>
     <ClCompile Include="Phases\RNGSeedDeltaMap.cpp">
       <Filter>Phases</Filter>
+    </ClCompile>
+    <ClCompile Include="Tas\DtmFile.cpp">
+      <Filter>IO</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
