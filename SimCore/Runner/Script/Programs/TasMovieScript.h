@@ -4,17 +4,9 @@
 #include <vector>
 #include "../PhaseScriptVM.h"
 
-namespace simcore::script {
+namespace simcore {
 
-    inline PSInit make_tas_init_program(const std::string& savestate_path, uint32_t default_timeout_ms)
-    {
-        PSInit init{};
-        init.savestate_path = savestate_path;
-        init.default_timeout_ms = default_timeout_ms;
-        return init;
-    }
-
-    inline PhaseScript make_tas_main_program(const std::string& dtm_path,
+    inline PhaseScript MakeTasMainProgram(const std::string& dtm_path,
         const char require_id6[6],
         uint32_t run_until_ms,
         const std::string& save_state_path,
@@ -31,5 +23,5 @@ namespace simcore::script {
         return p;
     }
 
-} // namespace simcore::script
+} // namespace simcore
 
