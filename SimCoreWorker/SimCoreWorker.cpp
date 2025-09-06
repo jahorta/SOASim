@@ -47,8 +47,16 @@ static bool write_all(HANDLE h, const void* p, size_t n) {
     const BYTE* b = static_cast<const BYTE*>(p);
     DWORD w = 0;
     while (n) {
-        if (!WriteFile(h, b, (DWORD)std::min(n, (size_t)0x7FFFFFFF), &w, NULL)) return false;
-        if (w == 0) return false;
+        if (!WriteFile(h, b, (DWORD)std::min(n, (size_t)0x7FFFFFFF), &w, NULL)) 
+        {
+            SCLOGE("[write] Failed to write");
+            return false;
+        }
+        if (w == 0) 
+        {
+            SCLOGE("[write] Zero bytes written");
+            return false;
+        }
         b += w; n -= w;
     }
     return true;
@@ -58,8 +66,16 @@ static bool read_all(HANDLE h, void* p, size_t n) {
     BYTE* b = static_cast<BYTE*>(p);
     DWORD r = 0;
     while (n) {
-        if (!ReadFile(h, b, (DWORD)std::min(n, (size_t)0x7FFFFFFF), &r, NULL)) return false;
-        if (r == 0) return false;
+        if (!ReadFile(h, b, (DWORD)std::min(n, (size_t)0x7FFFFFFF), &r, NULL)) 
+        {
+            SCLOGE("[read] Failed to read");
+            return false;
+        }
+        if (r == 0) 
+        {
+            SCLOGE("[read] Zero bytes read");
+            return false;
+        }
         b += r; n -= r;
     }
     return true;
