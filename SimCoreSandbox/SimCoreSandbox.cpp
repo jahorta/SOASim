@@ -1,6 +1,4 @@
-// SimCoreSandbox.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
+// SimCoreSandbox.cpp : REPL menu for SimCoreSandbox
 #define NOMINMAX
 #include <cstdint>
 #include <cstdio>
@@ -13,7 +11,6 @@
 #include <thread>
 #include <filesystem>
 #include <algorithm>
-
 #include <fstream>
 #include <iostream>
 #include <limits>
@@ -22,83 +19,63 @@
 #include "Core/Input/InputPlan.h"
 #include "Runner/Breakpoints/BPCore.h"
 #include "Runner/Breakpoints/PreBattleBreakpoints.h"
-#include "Runner/Parallel/ParallelPhaseScriptRunner.h"
-#include "Runner/Script/Programs/SeedProbeScript.h"
+#include "SandboxConfig.h"
+#include "MenuConfig.h"
 #include "SeedProbe.h"
-#include "prompt_path.cpp"
-#include <Utils/EnsureSys.h>
-#include <Phases/RNGSeedDeltaMap.h>
+//#include "TASMoviePlayer.h"
+#include "utils.h"
 
 using namespace simcore;
 
-int main(int argc, char** argv) {
-    auto iso = prompt_path("ISO path: ", true, true, std::string("D:\\SoATAS\\SkiesofArcadiaLegends(USA).gcm"));
-    auto sav = prompt_path("Savestate path: ", true, true, std::string("D:\\SoATAS\\dolphin-2506a-x64\\User\\StateSaves\\GEAE8P.s04"));
-
+// ------------------------- helpers ---------------------------
+static void init_logging(AppState& g )
+{
     char exePath[MAX_PATH]{};
     GetModuleFileNameA(NULL, exePath, MAX_PATH);
-    std::string base = exePath;
-    auto pos = base.find_last_of("\\/");
-    base = (pos == std::string::npos) ? "." : base.substr(0, pos);
-
+    g.exe_dir = fs::path(exePath).parent_path();
     log::Logger::get().set_levels(log::Level::Info, log::Level::Debug);
-    log::Logger::get().open_file((std::filesystem::path(base) / "sandbox.log").string().c_str(), false);
+    log::Logger::get().open_file((g.exe_dir / "sandbox.log").string().c_str(), false);
     SCLOGI("[sandbox] Starting...");
-
-    const std::string iso_path = iso.string();
-    const std::string savestate_path = sav.string();
-    const std::string qt_base_dir = R"(D:\SoATAS\dolphin-2506a-x64)";
-    const uint32_t   rng_addr = 0x803469A8u;
-    const uint32_t   timeout_ms = 10000u;
-
-    // CONSTANTS FOR CONTROL!!!!!
-    const int    N = 8;
-    const size_t workers = 10;
-    const int    min_value = 0x30;
-    const int    max_value = 0xCF;
+}
 
 
-    if (!EnsureSysBesideExe(qt_base_dir)) {
-        SCLOGE("EnsureSysBesideExe failed. Expected Sys under sandbox / worker exe directory.");
-        return 1;
+// ------------------------- REPL menu -----------------------------------------
+static void menu_loop(AppState& g)
+{
+    for (;;) {
+        std::cout << "\n=== SOASim Sandbox ===\n";
+        std::cout << "1) Configure paths (ISO, Dolphin portable base, default savestate)\n";
+        std::cout << "2) Run RNGSeedDeltaMap probe\n";
+        // std::cout << "3) TAS Movie -> BP -> Savestate (scaffold)\n";
+        std::cout << "q) Quit\n";
+        std::cout << "> ";
+
+        std::string choice;
+        if (!std::getline(std::cin, choice)) break;
+        if (choice == "q" || choice == "Q") break;
+        if (choice == "1") menu_configure_paths(g);
+        else if (choice == "2") sandbox::run_rng_seed_probe_menu(g);
+        /*else if (choice == "3") sandbox::menu_tas_movie(g);*/
+        else {
+            std::cout << "Unknown option.\n";
+        }
+    }
+}
+
+int main(int, char**)
+{
+    AppState g{};
+    char exePath[MAX_PATH]{};
+    GetModuleFileNameA(NULL, exePath, MAX_PATH);
+    g.exe_dir = std::filesystem::path(exePath).parent_path();
+
+    const auto ini_path = g.exe_dir / "sandbox.ini";
+    if (load_appstate_ini(g, ini_path)) {
+        std::cout << "[cfg] loaded " << ini_path.string() << "\n";
     }
 
-    // PhaseScript: apply 1 frame input -> run until BP -> read RNG -> emit "seed".
-    PhaseScript program = MakeSeedProbeProgram(timeout_ms);
-
-    // VM init: initial savestate + default timeout.
-    PSInit psinit{};
-    psinit.savestate_path = savestate_path;
-    psinit.default_timeout_ms = timeout_ms;
-
-    // Boot plan: use your Boot module; keep ISO and portable base fixed for the lifetime of the pool.
-    BootPlan boot{};
-    boot.boot.user_dir = (std::filesystem::path(base) / ".work" / "runner").string(); // runner will derive per-thread dirs if needed
-    boot.boot.dolphin_qt_base = qt_base_dir;
-    boot.boot.force_resync_from_base = true;
-    boot.boot.save_config_on_success = true;
-    boot.iso_path = iso_path;
-
-    // Runner
-    ParallelPhaseScriptRunner runner(workers);
-    RngSeedDeltaArgs args{};
-    args.boot = boot;
-    args.savestate_path = savestate_path;
-    args.samples_per_axis = N;
-    args.min_value = 0;
-    args.max_value = 255;
-    args.cap_trigger_top = true;
-    args.run_timeout_ms = 10000;
-
-    auto result = RunRngSeedDeltaMap(runner, args);
-
-    // visualize however you like
-    // e.g., print grids like your existing helpers
-
-    sandbox::print_family_grid(result, SeedFamily::Main, args.samples_per_axis, "JStick ");
-    sandbox::print_family_grid(result, SeedFamily::CStick, args.samples_per_axis, "CStick ");
-    sandbox::print_family_grid(result, SeedFamily::Triggers, args.samples_per_axis, "Triggers ");
-
-    runner.stop();
+    init_logging(g);
+    menu_loop(g);
+    save_appstate_ini(g, ini_path);
     return 0;
-    }
+}

@@ -18,10 +18,22 @@
     <ClCompile Include="SimCoreSandbox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="prompt_path.cpp">
+    <ClCompile Include="SeedProbe.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SeedProbe.cpp">
+    <ClCompile Include="utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TASMoviePlayer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SandboxAppState.h">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MenuConfig.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SandboxConfig.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -29,7 +41,16 @@
     <ClInclude Include="SeedProbe.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SeedProbe2.h">
+    <ClInclude Include="TASMoviePlayer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MenuConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SandboxConfig.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

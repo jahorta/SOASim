@@ -146,9 +146,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="prompt_path.cpp" />
+    <ClCompile Include="MenuConfig.cpp" />
+    <ClCompile Include="SandboxAppState.h" />
+    <ClCompile Include="SandboxConfig.cpp" />
     <ClCompile Include="SeedProbe.cpp" />
     <ClCompile Include="SimCoreSandbox.cpp" />
+    <ClCompile Include="TASMoviePlayer.cpp" />
+    <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SimCore\SimCore.vcxproj">
@@ -156,8 +160,11 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="MenuConfig.h" />
+    <ClInclude Include="SandboxConfig.h" />
     <ClInclude Include="SeedProbe.h" />
-    <ClInclude Include="SeedProbe2.h" />
+    <ClInclude Include="TASMoviePlayer.h" />
+    <ClInclude Include="utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

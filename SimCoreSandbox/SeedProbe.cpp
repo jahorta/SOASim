@@ -1,11 +1,18 @@
+#define NOMINMAX
+
 #include "SeedProbe.h"
 #include <cmath>
 #include <cstdio>
 #include <sstream>
 #include <algorithm>
+#include <iostream>
+
+#include "utils.h"
 
 #include <Utils/Log.h>
 #include <Utils/DeltaColorizer.h>
+#include "Runner/Script/PhaseScriptVM.h"
+#include "Runner/Script/Programs/SeedProbeScript.h"
 
 namespace sandbox {
 
@@ -137,4 +144,95 @@ namespace sandbox {
         return lines;
     }
 
-} // namespace simcore
+    void run_rng_seed_probe_menu(AppState& g)
+    {
+        // defaults
+        const uint32_t rng_addr = 0x803469A8u;
+        simcore::RngSeedDeltaArgs a{};
+        a.savestate_path = g.default_savestate;
+        a.samples_per_axis = 8;
+        a.min_value = 0x00;
+        a.max_value = 0xFF;
+        a.cap_trigger_top = true;
+        a.run_timeout_ms = 10000;
+
+        for (;;)
+        {
+            std::cout << "\n--- RNGSeedDeltaMap ---\n";
+            std::cout << "ISO:              " << (g.iso_path.empty() ? "<unset>" : g.iso_path) << "\n";
+            std::cout << "Dolphin base:     " << (g.qt_base_dir.empty() ? "<unset>" : g.qt_base_dir) << "\n";
+            std::cout << "Workers:          " << g.workers << "\n";
+            std::cout << "Savestate:        " << (a.savestate_path.empty() ? "<unset>" : a.savestate_path) << "\n";
+            std::cout << "samples_per_axis: " << a.samples_per_axis << "\n";
+            std::cout << "min_value:        0x" << std::hex << std::uppercase << a.min_value << std::dec << " (" << a.min_value << ")\n";
+            std::cout << "max_value:        0x" << std::hex << std::uppercase << a.max_value << std::dec << " (" << a.max_value << ")\n";
+            std::cout << "cap_trigger_top:  " << (a.cap_trigger_top ? "true" : "false") << "\n";
+            std::cout << "run_timeout_ms:   " << a.run_timeout_ms << "\n";
+            std::cout << "\n"
+                << "1) Set savestate path\n"
+                << "2) Set samples_per_axis\n"
+                << "3) Set min_value\n"
+                << "4) Set max_value\n"
+                << "5) Toggle cap_trigger_top\n"
+                << "6) Set run_timeout_ms\n"
+                << "r) Run\n"
+                << "b) Back\n> ";
+            std::string c; if (!std::getline(std::cin, c)) return;
+
+            if (c == "1") a.savestate_path = prompt_path("Savestate path: ", true, true, a.savestate_path).string();
+            else if (c == "2") { std::cout << "samples_per_axis: "; std::string s; std::getline(std::cin, s); if (!s.empty()) a.samples_per_axis = std::max(1, std::stoi(s)); }
+            else if (c == "3") { std::cout << "min_value (0..255): "; std::string s; std::getline(std::cin, s); if (!s.empty()) a.min_value = std::clamp(std::stoi(s), 0, 255); }
+            else if (c == "4") { std::cout << "max_value (0..255): "; std::string s; std::getline(std::cin, s); if (!s.empty()) a.max_value = std::clamp(std::stoi(s), 0, 255); }
+            else if (c == "5") a.cap_trigger_top = !a.cap_trigger_top;
+            else if (c == "6") { std::cout << "timeout (ms): "; std::string s; std::getline(std::cin, s); if (!s.empty()) a.run_timeout_ms = std::max(1, std::stoi(s)); }
+            else if (c == "r" || c == "R")
+            {
+                if (g.iso_path.empty() || g.qt_base_dir.empty() || a.savestate_path.empty()) {
+                    std::cout << "Please set ISO, Dolphin base, and savestate first.\n";
+                    continue;
+                }
+                if (!ensure_sys_from_base_or_warn(g.qt_base_dir)) continue;
+
+                // Program (same as your seed probe flow): 1-frame input -> run_until_bp -> read RNG -> emit. :contentReference[oaicite:6]{index=6}
+                simcore::PhaseScript program = simcore::MakeSeedProbeProgram(a.run_timeout_ms);
+
+                // VM init: initial savestate + default timeout. :contentReference[oaicite:7]{index=7}
+                simcore::PSInit psinit{};
+                psinit.savestate_path = a.savestate_path;
+                psinit.default_timeout_ms = a.run_timeout_ms;
+
+                // Boot plan: use your Boot module; keep ISO and portable base fixed for the lifetime of the pool. :contentReference[oaicite:8]{index=8}
+                simcore::BootPlan boot = make_boot_plan(g);
+
+                // Runner
+                simcore::ParallelPhaseScriptRunner runner(g.workers);
+
+                // Seed-probe job args
+                simcore::RngSeedDeltaArgs args = a;
+                args.boot = boot;
+
+                // Kick the run (your existing pipeline continues from here; we just wrapped it).
+                // The rest of your display/log helpers remain available in SeedProbe.*. :contentReference[oaicite:9]{index=9} :contentReference[oaicite:10]{index=10}
+                auto result = RunRngSeedDeltaMap(runner, args);
+                sandbox::log_probe_summary(result);
+                sandbox::print_family_grid(result, simcore::SeedFamily::Main, a.samples_per_axis, "Main Stick");
+                sandbox::print_family_grid(result, simcore::SeedFamily::CStick, a.samples_per_axis, "C Stick");
+                sandbox::print_family_grid(result, simcore::SeedFamily::Triggers, a.samples_per_axis, "Triggers");
+
+                // Optionally dump CSV
+                auto out_csv = prompt_path("CSV output path (blank to skip): ", /*require_exists*/false, /*allow_empty*/true, "").string();
+                if (!out_csv.empty()) {
+                    std::ofstream ofs(out_csv, std::ios::binary | std::ios::trunc);
+                    for (const auto& line : sandbox::to_csv_lines(result)) ofs << line << "\n";
+                    SCLOGI("[SeedProbe] wrote CSV: %s", out_csv.c_str());
+                }
+
+                runner.stop();
+            }
+            else if (c == "b" || c == "B") {
+                return;
+            }
+        }
+    }
+
+} // namespace sandbox
