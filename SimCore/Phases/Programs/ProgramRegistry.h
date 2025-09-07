@@ -7,7 +7,7 @@ namespace simcore::programs {
 
     // Returns a fixed main program for the given ProgramKind.
     // The program must use only *_FROM(key) ops and read all dynamic values from context keys.
-    PhaseScript build_main_program(uint8_t program_kind, uint32_t default_timeout_ms);
+    PhaseScript build_main_program(uint8_t program_kind);
 
     // Decodes payload bytes into a PSContext for the active ProgramKind.
     // Returns true on success and fills out_ctx.

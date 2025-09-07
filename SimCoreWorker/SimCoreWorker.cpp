@@ -188,10 +188,6 @@ int main(int argc, char** argv)
     bool main_active = false;
     uint8_t active_pk;
 
-    auto build_prog = [&](uint8_t kind)->PhaseScript {
-        return simcore::programs::build_main_program(kind, psinit.default_timeout_ms);
-        };
-
     for (;;) {
         uint32_t tag = 0;
         if (!read_tag(hIn, tag)) break;
@@ -206,7 +202,7 @@ int main(int argc, char** argv)
 
             active_pk = sp.main_kind;
 
-            main_prog = build_prog(sp.main_kind);
+            main_prog = simcore::programs::build_main_program(active_pk);
             main_active = false;
 
             WireAck ack{}; ack.tag = MSG_ACK; ack.ok = 1; ack.code = 'S';

@@ -11,8 +11,7 @@
 
 #include <Utils/Log.h>
 #include <Utils/DeltaColorizer.h>
-#include "Runner/Script/PhaseScriptVM.h"
-#include "Runner/Script/Programs/SeedProbeScript.h"
+#include "Phases/RNGSeedDeltaMap.h"
 
 namespace sandbox {
 
@@ -191,14 +190,6 @@ namespace sandbox {
                     continue;
                 }
                 if (!ensure_sys_from_base_or_warn(g.qt_base_dir)) continue;
-
-                // Program (same as your seed probe flow): 1-frame input -> run_until_bp -> read RNG -> emit.
-                simcore::PhaseScript program = simcore::MakeSeedProbeProgram(a.run_timeout_ms);
-
-                // VM init: initial savestate + default timeout.
-                simcore::PSInit psinit{};
-                psinit.savestate_path = a.savestate_path;
-                psinit.default_timeout_ms = a.run_timeout_ms;
 
                 // Boot plan: use your Boot module; keep ISO and portable base fixed for the lifetime of the pool.
                 simcore::BootPlan boot = make_boot_plan(g);

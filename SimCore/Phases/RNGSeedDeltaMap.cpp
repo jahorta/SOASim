@@ -143,14 +143,20 @@ namespace simcore {
             std::vector<PSJob> jobs;
             jobs.reserve(inputs.size());
 
-            // We’ll keep a lookup from job_id -> GCInputFrame for labeling later
+            // We'll keep a lookup from job_id -> GCInputFrame for labeling later
             std::unordered_map<uint64_t, GCInputFrame> lookup;
             lookup.reserve(inputs.size());
 
             for (const auto& f : inputs) {
+                simcore::seedprobe::EncodeSpec spec{};
+                spec.frame = f;
+                spec.run_ms = args.run_timeout_ms; // per-job timeout using VMCoreKeys (optional: rely on PSInit otherwise)
+                spec.vi_stall_ms = 0;                   // you can set a small stall window if you like (e.g., 500–2000ms)
+
                 PSJob j{};
-                seedprobe::encode_payload(f, j.payload);   // payload-first design
-                const uint64_t id = runner.submit(j);      // single generic submit path
+                simcore::seedprobe::encode_payload(spec, j.payload);
+
+                const uint64_t id = runner.submit(j);
                 lookup.emplace(id, f);
             }
 
@@ -165,7 +171,7 @@ namespace simcore {
                     // Seed comes back in the ProcessWorker reader under key "seed"
                     // (see ProcessWorker::reader_thread MSG_RESULT handling) :contentReference[oaicite:1]{index=1}
                     std::optional<uint32_t> seed;
-                    if (auto it = r.ps.ctx.find("seed"); it != r.ps.ctx.end()) {
+                    if (auto it = r.ps.ctx.find(simcore::seedprobe::K_RNG_SEED); it != r.ps.ctx.end()) {
                         if (auto p = std::get_if<uint32_t>(&it->second)) seed = *p;
                     }
 

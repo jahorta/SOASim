@@ -7,7 +7,7 @@
 
 namespace simcore::programs {
 
-    PhaseScript build_main_program(uint8_t program_kind, uint32_t /*default_timeout_ms*/)
+    PhaseScript build_main_program(uint8_t program_kind)
     {
         switch (program_kind) {
         case PK_SeedProbe:

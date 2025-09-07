@@ -82,7 +82,6 @@ static void sandbox::menu_tas_movie(AppState g)
             fs::create_directories(out_dir);
             for (uint32_t rtc = rtc_start; rtc <= rtc_end; ++rtc) {
                 simcore::PSJob j{};
-                j.input = simcore::GCInputFrame{};     // placeholder; actual movie ops ignore input
                 const uint64_t id = runner.submit(j);  // enqueues with current epoch                                   :contentReference[oaicite:12]{index=12}
                 char namebuf[64];
                 std::snprintf(namebuf, sizeof(namebuf), "movie_%u.sav", rtc);

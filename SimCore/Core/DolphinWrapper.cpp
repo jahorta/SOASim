@@ -729,7 +729,7 @@ namespace simcore {
 
     uint32_t DolphinWrapper::pickPollIntervalMs(uint32_t timeout_ms)
     {
-        pickPollIntervalMsForTimeLeft(timeout_ms, timeout_ms);
+        return pickPollIntervalMsForTimeLeft(timeout_ms, timeout_ms);
     }
 
     uint32_t DolphinWrapper::pickPollIntervalMsForTimeLeft(uint32_t timeout_ms, uint32_t time_left_ms)

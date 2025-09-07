@@ -57,6 +57,12 @@ namespace simcore::tas_movie {
         init.savestate_path = ""; // start from boot or whatever your phase expects
         init.default_timeout_ms = 600000; // a large cap; per-job SET_TIMEOUT_FROM will override
 
+        // Boot workers (control mode)
+        if (!runner.start(args.boot)) {
+            SCLOGE("[tas] start() failed");
+            return br;
+        }
+
         if (!runner.set_program(/*init_kind=*/PK_None, /*main_kind=*/PK_TasMovie, init)) {
             SCLOGE("[tas] set_program failed");
             return br;
@@ -79,19 +85,22 @@ namespace simcore::tas_movie {
             fs::create_directories(args.out_sav_dir);
             fs::path sav_path = fs::path(args.out_sav_dir) / (fs::path(*dtm_out).stem().string() + ".sav");
 
-            // Build payload (populate id6 & run_ms from dtm header)
-            auto payload_opt = tas_movie::build_from_file(*dtm_out, sav_path.string(), args.vi_stall_ms, args.save_on_fail);
-            if (!payload_opt.has_value()) {
-                SCLOGW("[tas] skip delta %d: payload build failed", d);
+            // Build payload: let the worker/decoder read DTM to derive run_ms, id6, etc.
+            simcore::tasmovie::EncodeSpec spec{};
+            spec.dtm_path = *dtm_out;
+            spec.save_dir = args.out_sav_dir;   // directory only; worker derives <stem>.sav
+            spec.run_ms = 0;                  // 0 => derive from DTM header
+            spec.vi_stall_ms = args.vi_stall_ms;   // stall window for VI watchdog
+            spec.save_on_fail = args.save_on_fail;
+
+            std::vector<uint8_t> blob;
+            if (!simcore::tasmovie::encode_payload(spec, blob)) {
+                SCLOGW("[tas] skip delta %d: payload encode failed", d);
                 continue;
             }
-            const auto payload = *payload_opt;
-            const auto blob = tas_movie::serialize(payload);
 
             PSJob job{};
-            job.payload = blob;         // <-- payload-only job
-            // If your worker expects some ctx priming beyond payload, you can also seed it here:
-            // job.ctx[tas_movie::K_RUN_MS] = payload.run_ms; etc. (optional: worker usually fills VM context)
+            job.payload = std::move(blob);
 
             const uint64_t jid = runner.submit(job);
 
