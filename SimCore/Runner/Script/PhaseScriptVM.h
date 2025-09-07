@@ -41,7 +41,6 @@ namespace simcore {
 	struct PSArg_Read { uint32_t addr; std::string dst_key; };
 	struct PSArg_Step { uint32_t n; };
 	struct PSArg_Timeout { uint32_t ms; };
-	struct PSArg_Emit { std::string key; };
 	struct PSArg_Path { std::string path; };
 	struct PSArg_ID6 { char id[6]{}; };
 	struct PSArg_Key { std::string key; };
@@ -55,7 +54,6 @@ namespace simcore {
 		PSArg_Read    rd{};
 		PSArg_Step    step{};
 		PSArg_Timeout to{};
-		PSArg_Emit    em{};
 		PSArg_Key     a_key{};
 	};
 

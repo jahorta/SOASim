@@ -180,8 +180,8 @@ namespace simcore {
 
             case PSOpCode::EMIT_RESULT:
             {
-                SCLOGD("[VM] EMIT_RESULT %s=%08X", op.em.key.c_str(), ctx[op.em.key]);
-                R.ctx[op.em.key] = ctx[op.em.key]; // copy selected value to result
+                SCLOGD("[VM] EMIT_RESULT %s=%08X", op.a_key.key.c_str(), ctx[op.a_key.key]);
+                R.ctx[op.a_key.key] = ctx[op.a_key.key]; // copy selected value to result
                 break;
             }
             case PSOpCode::APPLY_INPUT_FROM: {
