@@ -212,11 +212,11 @@ namespace sandbox {
                 
                 // Display results
                 auto result = RunRngSeedDeltaMap(runner, args);
-                sandbox::log_probe_summary(result);
                 sandbox::print_family_grid(result, simcore::SeedFamily::Main, a.samples_per_axis, "Main Stick");
                 sandbox::print_family_grid(result, simcore::SeedFamily::CStick, a.samples_per_axis, "C Stick");
                 sandbox::print_family_grid(result, simcore::SeedFamily::Triggers, a.samples_per_axis, "Triggers");
 
+                if (prompt_bool("Print log summary with all results here? (Y/N)")) sandbox::log_probe_summary(result);
                 // Optionally dump CSV
                 auto out_csv = prompt_path("CSV output path (blank to skip): ", /*require_exists*/false, /*allow_empty*/true, "").string();
                 if (!out_csv.empty()) {
