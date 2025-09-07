@@ -22,3 +22,5 @@
 /SimCoreWorker/x64/Debug
 /SimCoreSandbox/RngSeedOutput.csv
 /SimCoreSandbox/SimCoreSandbox.zip
+/bin/x64/Release
+/SimCoreWorker/x64/Release
