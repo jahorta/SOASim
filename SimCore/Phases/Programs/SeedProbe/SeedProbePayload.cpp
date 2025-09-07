@@ -5,6 +5,7 @@
 #include "../../../Runner/IPC/Wire.h"      // PK_SeedProbe
 #include "../../../Runner/Script/VMCoreKeys.h"    
 #include "../../../Runner/Script/PhaseScriptVM.h" // simcore::vmcore::<common keys>
+#include "SeedProbeScript.h"
 
 namespace simcore::seedprobe {
 
@@ -60,7 +61,7 @@ namespace simcore::seedprobe {
         off += sizeof(GCInputFrame);
 
         // Set the input frame for the script's APPLY_INPUT_FROM(...)
-        out_ctx[INPUT_KEY] = frame;
+        out_ctx[K_INPUT] = frame;
 
         // Populate standardized core knobs if provided
         if (run_ms != 0) {

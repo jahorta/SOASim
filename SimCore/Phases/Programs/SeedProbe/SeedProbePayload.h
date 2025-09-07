@@ -8,8 +8,6 @@
 namespace simcore::seedprobe {
 
 	// Program-local inputs that remain specific to SeedProbe
-	inline constexpr const char* INPUT_KEY = "seed.gc.input"; // GCInputFrame
-	inline constexpr const char* RNG_SEED_KEY = "seed";          // value emitted by your reader
 
 	// On-wire layout (little-endian), fixed-size first:
 	//
@@ -31,7 +29,7 @@ namespace simcore::seedprobe {
 	bool encode_payload(const EncodeSpec& spec, std::vector<uint8_t>& out);
 
 	// Worker-side: parse payload -> populate ctx with:
-	//   - INPUT_KEY  -> GCInputFrame
+	//   - K_INPUT  -> GCInputFrame
 	//   - core.input.run_ms / core.input.vi_stall_ms (if nonzero)
 	bool decode_payload(const std::vector<uint8_t>& in, PSContext& out_ctx);
 
