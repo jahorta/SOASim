@@ -131,7 +131,7 @@ namespace simcore {
                     }
 
                     // Send one job. Slot stays held until reader_thread() sees the result.
-                    if (!w->proc->send_job(j.job_id, j.epoch, j.job.input)) {
+                    if (!w->proc->send_job(j.job_id, j.epoch, j.job)) {
                         // send failed -> slot was released inside send_job(); mark this worker failed
                         SCLOGE("[Runner %zu] send_job failed (worker pipe)", w->id);
                         break;

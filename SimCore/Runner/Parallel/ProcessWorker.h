@@ -70,7 +70,7 @@ namespace simcore {
 		~ProcessWorker();
 
 		bool start(ProcStartParams& p, TSQueue<PRResult>* out_queue);
-		bool send_job(uint64_t job_id, uint64_t epoch, const GCInputFrame& f);
+		bool send_job(uint64_t job_id, uint64_t epoch, const PSJob& job);
 		void stop();
 
 		bool ctl_set_program(uint8_t init_kind, uint8_t main_kind, const PSInit& init);

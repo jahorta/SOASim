@@ -100,6 +100,23 @@ namespace simcore {
         return true;
     }
 
+    static bool write_job_envelope(HANDLE h,
+        uint64_t job_id,
+        uint64_t epoch,
+        const std::vector<uint8_t>& payload)
+    {
+        WireJobHeader hdr{};
+        hdr.tag = MSG_JOB;
+        hdr.job_id = job_id;
+        hdr.epoch = static_cast<uint32_t>(epoch);
+        hdr.payload_len = static_cast<uint32_t>(payload.size());
+        if (!write_all(h, &hdr, sizeof(hdr))) return false;
+        if (hdr.payload_len) {
+            if (!write_all(h, payload.data(), payload.size())) return false;
+        }
+        return true;
+    }
+
     template <size_t N>
     static inline bool copy_cstr_nt(char(&dst)[N], std::string_view src)
     {
@@ -153,12 +170,12 @@ namespace simcore {
         return ack_.wait_for(10000);
     }
 
-    bool ProcessWorker::send_job(uint64_t job_id, uint64_t epoch, const GCInputFrame& f)
+    bool ProcessWorker::send_job(uint64_t job_id, uint64_t epoch, const PSJob& job)
     {
         if (!running_.load()) return false;
 
-        WireJob wj = make_wire_job(job_id, epoch, f);
-        if (!write_all(hChildStd_IN_Wr, &wj, sizeof(wj))) 
+        // PSJob now owns the already-encoded payload bytes (first byte == PK_*)
+        if (!write_job_envelope(hChildStd_IN_Wr, job_id, epoch, job.payload))
         {
             release_slot();
             return false;
