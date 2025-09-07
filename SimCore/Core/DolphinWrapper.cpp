@@ -723,28 +723,143 @@ namespace simcore {
 
     DolphinWrapper::RunUntilHitResult DolphinWrapper::runUntilBreakpointBlocking(uint32_t timeout_ms)
     {
-        auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_ms);
-        auto& armed = armed_singleton().pcs;
+        // Preserve legacy behavior but now through the flexible watchdog loop with no extra checks.
+        return runUntilBreakpointFlexible(timeout_ms, 0, false);
+    }
 
-        SCLOGD("[DW/run] until_bp start timeout_ms=%u armed=%zu state=%d",
-            timeout_ms, armed.size(), (int)Core::GetState(*m_system));
+    uint32_t DolphinWrapper::pickPollIntervalMs(uint32_t timeout_ms)
+    {
+        pickPollIntervalMsForTimeLeft(timeout_ms, timeout_ms);
+    }
+
+    uint32_t DolphinWrapper::pickPollIntervalMsForTimeLeft(uint32_t timeout_ms, uint32_t time_left_ms)
+    {
+        // Monotonic tiers: tighten as we get closer to the deadline.
+        // You can tweak these in one place and both VM and wrapper will follow.
+        (void)timeout_ms; // reserved for future policy that also considers absolute scale
+        if (time_left_ms >= 5u * 60u * 1000u) return 500u;  // >= 5 minutes
+        if (time_left_ms >= 60u * 1000u)      return 250u;  // 1–5 minutes
+        if (time_left_ms >= 10u * 1000u)      return 100u;  // 10–60 seconds
+        if (time_left_ms >= 2000u)            return 50u;   // 2–10 seconds
+        return 20u;                                         // < 2 seconds
+    }
+
+    DolphinWrapper::RunUntilHitResult
+        DolphinWrapper::runUntilBreakpointFlexible(uint32_t timeout_ms,
+            uint32_t vi_stall_ms,
+            bool watch_movie,
+            uint32_t poll_ms)
+    {
+        using std::chrono::steady_clock;
+        using std::chrono::milliseconds;
+
+        const auto start = steady_clock::now();
+        const auto deadline_initial = start + milliseconds(timeout_ms);
+
+        auto deadline = deadline_initial;
+        auto& movie = m_system->GetMovie();
+        const bool had_movie = watch_movie && movie.IsPlayingInput();
+
+        // VI stall tracking baseline
+        resetViCounterBaseline();
+        uint64_t last_vi = getViFieldCountApprox();
+        auto last_vi_change = steady_clock::now();
+
+        // Ensure we begin in Running so time can advance (unless already paused by a BP before entry)
+        if (Core::GetState(*m_system) != Core::State::Paused)
+            Core::SetState(*m_system, Core::State::Running);
 
         size_t polls = 0;
-        while (std::chrono::steady_clock::now() < deadline)
+        while (true)
         {
-            Core::SetState(*m_system, Core::State::Running);
-            if (waitForPausedCoreState(5000)) {
+            const auto now = steady_clock::now();
+            if (now >= deadline) {
+                // TIMEOUT: enforce postcondition (Paused) then return
+                Core::SetState(*m_system, Core::State::Paused);
+                SCLOGD("[DW/run] TIMEOUT polls=%zu pc=%08X", polls, getPC());
+                return { false, 0u, "timeout" };
+            }
+
+            const auto st = Core::GetState(*m_system);
+            if (st == Core::State::Paused)
+            {
+                // 1) Breakpoint takes precedence when paused
                 const uint32_t pc = getPC();
-                if (contains_pc(armed, pc)) {
-                    SCLOGD("[DW/run] until_bp HIT pc=%08X polls=%zu", pc, polls);
+                if (contains_pc(armed_singleton().pcs, pc)) {
+                    // HIT: core is already Paused by the BP; leave paused and return
+                    SCLOGD("[DW/run] HIT pc=%08X polls=%zu", pc, polls);
                     return { true, pc, "breakpoint" };
                 }
+
+                // 2) If movie EOM caused the pause (pause-on-EOM enabled), detect and return without resuming
+                if (had_movie && !movie.IsPlayingInput()) {
+                    Core::SetState(*m_system, Core::State::Paused); // ensure postcondition
+                    SCLOGD("[DW/run] MOVIE_ENDED (paused) polls=%zu pc=%08X", polls, getPC());
+                    return { false, 0u, "movie_ended" };
+                }
+
+                // 3) Otherwise resume to continue progress
+                Core::SetState(*m_system, Core::State::Running);
             }
-            if ((polls++ & 0x3F) == 0) // every 64 polls
-                SCLOGD("[DW/run] until_bp poll=%zu state=%d pc=%08X", polls, (int)Core::GetState(*m_system), getPC());
+            else // Running
+            {
+                // EOM detection while running
+                if (had_movie && !movie.IsPlayingInput()) {
+                    Core::SetState(*m_system, Core::State::Paused); // ensure postcondition
+                    SCLOGD("[DW/run] MOVIE_ENDED polls=%zu pc=%08X", polls, getPC());
+                    return { false, 0u, "movie_ended" };
+                }
+
+                // VI-stall detection
+                if (vi_stall_ms > 0) {
+                    const uint64_t vi_now = getViFieldCountApprox();
+                    if (vi_now != last_vi) {
+                        last_vi = vi_now;
+                        last_vi_change = now;
+                    }
+                    else {
+                        const auto since_ms = std::chrono::duration_cast<milliseconds>(now - last_vi_change).count();
+                        if (since_ms >= vi_stall_ms) {
+                            Core::SetState(*m_system, Core::State::Paused); // ensure postcondition
+                            SCLOGD("[DW/run] VI_STALLED polls=%zu pc=%08X", polls, getPC());
+                            return { false, 0u, "vi_stalled" };
+                        }
+                    }
+                }
+            }
+
+            if ((polls++ & 0x3F) == 0) {
+                SCLOGD("[DW/run] poll=%zu state=%d pc=%08X movie=%d vi=%llu",
+                    polls, (int)Core::GetState(*m_system), getPC(),
+                    movie.IsPlayingInput() ? 1 : 0,
+                    (unsigned long long)getViFieldCountApprox());
+            }
+
+            // Dynamic poll interval based on *time remaining* (single-sourced policy)
+            uint32_t dyn_poll = poll_ms;
+            if (dyn_poll == 0) {
+                const auto left_ms = (uint32_t)std::chrono::duration_cast<milliseconds>(deadline - now).count();
+                dyn_poll = DolphinWrapper::pickPollIntervalMsForTimeLeft(timeout_ms, left_ms);
+            }
+
+            // Stall guard: keep polling frequent enough to detect within the configured stall window
+            if (vi_stall_ms > 0) {
+                const uint32_t guard = std::max<uint32_t>(1u, vi_stall_ms / 2u);
+                if (dyn_poll > guard) dyn_poll = guard;
+            }
+
+            // Do not oversleep past the deadline
+            const auto left_ms_now = (uint32_t)std::chrono::duration_cast<milliseconds>(deadline - steady_clock::now()).count();
+            const uint32_t sleep_ms = (left_ms_now > dyn_poll) ? dyn_poll : std::max<uint32_t>(1u, left_ms_now);
+
+            std::this_thread::sleep_for(milliseconds(sleep_ms));
         }
-        SCLOGD("[DW/run] until_bp TIMEOUT polls=%zu last_pc=%08X", polls, getPC());
-        return { false, 0u, "timeout" };
+    }
+
+    bool DolphinWrapper::isMoviePlaying() const
+    {
+        auto& movie = m_system->GetMovie();
+        return movie.IsPlayingInput();
     }
 
     void DolphinWrapper::silenceStdOutInfo()

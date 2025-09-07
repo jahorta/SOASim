@@ -104,6 +104,16 @@ namespace simcore {
         bool disarmPcBreakpoints(const std::vector<uint32_t>& pcs);
         void clearAllPcBreakpoints();
         RunUntilHitResult runUntilBreakpointBlocking(uint32_t timeout_ms = 5000);
+        RunUntilHitResult runUntilBreakpointFlexible(uint32_t timeout_ms,
+            uint32_t vi_stall_ms = 0,
+            bool watch_movie = true,
+            uint32_t poll_ms = 0);
+
+        uint32_t pickPollIntervalMs(uint32_t timeout_ms);
+        static uint32_t pickPollIntervalMsForTimeLeft(uint32_t timeout_ms, uint32_t time_left_ms);
+
+        // Convenience: query whether a DTM is currently being played back.
+        bool isMoviePlaying() const;
 
         void silenceStdOutInfo();
         void restoreStdOutInfo();
