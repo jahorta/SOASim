@@ -8,7 +8,8 @@
 
 #include "../Utils/Log.h"
 #include "../Runner/Script/PhaseScriptVM.h"                // PSJob/PSResult
-#include "../Runner/Script/Programs/SeedProbeScript.h"     // MakeSeedProbeProgram
+#include "Programs/SeedProbe/SeedProbeScript.h"     // MakeSeedProbeProgram
+#include "Programs/SeedProbe/SeedProbePayload.h"
 #include "../Runner/IPC/Wire.h"
 #include "../Utils/MultiProgress.h"
 
@@ -137,41 +138,47 @@ namespace simcore {
         for (auto& [fam, inputs] : batches) {
             
             const size_t fi = family_index(fam);
-            
-            std::vector<PSJob> jobs; jobs.reserve(inputs.size());
-            for (auto& f : inputs) jobs.emplace_back(PSJob{ f });
 
+            // Prepare jobs
+            std::vector<PSJob> jobs;
+            jobs.reserve(inputs.size());
+
+            // We’ll keep a lookup from job_id -> GCInputFrame for labeling later
             std::unordered_map<uint64_t, GCInputFrame> lookup;
-            lookup.reserve(jobs.size());
+            lookup.reserve(inputs.size());
 
-            for (const auto& j : jobs) {
-                const uint64_t id = runner.submit(j);
-                lookup.emplace(id, j.input);
+            for (const auto& f : inputs) {
+                PSJob j{};
+                seedprobe::encode_payload(f, j.payload);   // payload-first design
+                const uint64_t id = runner.submit(j);      // single generic submit path
+                lookup.emplace(id, f);
             }
 
-            size_t done = 0, total = jobs.size();
+            // Drain results for this batch
+            size_t done = 0, total = inputs.size();
             while (done < total) {
                 PRResult r{};
                 if (runner.try_get_result(r)) {
                     ++done;
-
                     mp.tick(fi);
 
+                    // Seed comes back in the ProcessWorker reader under key "seed"
+                    // (see ProcessWorker::reader_thread MSG_RESULT handling) :contentReference[oaicite:1]{index=1}
                     std::optional<uint32_t> seed;
-                    auto it = r.ps.ctx.find("seed");
-                    if (it != r.ps.ctx.end()) {
+                    if (auto it = r.ps.ctx.find("seed"); it != r.ps.ctx.end()) {
                         if (auto p = std::get_if<uint32_t>(&it->second)) seed = *p;
                     }
 
-                    if (fam == SeedFamily::Neutral && seed.has_value())
-                        out.base_seed = seed.value();
+                    if (fam == SeedFamily::Neutral && seed.has_value()) {
+                        out.base_seed = *seed;
+                    }
 
                     if (seed.has_value()) {
                         const auto& in = lookup.find(r.job_id)->second;
                         float vx = 0.f, vy = 0.f;
                         const char* title = "";
                         switch (fam) {
-                        case SeedFamily::Main:     vx = in.main_x;  vy = in.main_y;  title = "JStick";   break;
+                        case SeedFamily::Main:     vx = in.main_x;   vy = in.main_y;   title = "JStick";   break;
                         case SeedFamily::CStick:   vx = in.c_x;      vy = in.c_y;      title = "CStick";   break;
                         case SeedFamily::Triggers: vx = in.trig_l;   vy = in.trig_r;   title = "Triggers"; break;
                         case SeedFamily::Neutral:  vx = 0;           vy = 0;           title = "Neutral";  break;
@@ -179,15 +186,15 @@ namespace simcore {
 
                         out.entries.push_back(RandSeedEntry{
                             args.samples_per_axis, fam, vx, vy,
-                            seed.value(),
-                            signed_delta(seed.value(), out.base_seed),
+                            *seed,
+                            signed_delta(*seed, out.base_seed),
                             r.ps.ok,
                             make_label(title, uint8_t(vx), uint8_t(vy))
                             });
 
                         SCLOGT("[Result] job=%llu worker=%zu accepted=%d ok=%d pc=%08X seed=0x%08X",
                             (unsigned long long)r.job_id, r.worker_id,
-                            int(r.accepted), int(r.ps.ok), r.ps.last_hit_pc, seed.value());
+                            int(r.accepted), int(r.ps.ok), r.ps.last_hit_pc, *seed);
                     }
                 }
                 else {

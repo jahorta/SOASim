@@ -40,23 +40,19 @@ namespace simcore {
         PK_TasMovie = 2,
     };
 
+    // Payload used for TAS jobs (paths are NUL-terminated, Windows MAX_PATH safe)
+    struct TasJobPayload {
+        char dtm_path[260];
+        char save_dir[260];
+        uint32_t run_until_ms;
+    };
+
     struct WireReady {
         uint32_t tag;   // MSG_READY
         uint8_t  ok;    // 1=ok
         uint8_t  state; // WSTATE_*
         uint16_t _pad;
         uint32_t error; // WERR_*
-    };
-
-    struct WireJob {
-        uint32_t tag;      // MSG_JOB
-        uint64_t job_id;
-        uint32_t epoch;
-        uint16_t buttons;
-        uint8_t  main_x, main_y;
-        uint8_t  c_x, c_y;
-        uint8_t  trig_l, trig_r;
-        uint8_t  _pad0;
     };
 
     struct WireResult {
@@ -85,13 +81,11 @@ namespace simcore {
         uint16_t _pad0;
     };
 
-    // Helpers
-    inline WireJob make_wire_job(uint64_t id, uint64_t epoch, const simcore::GCInputFrame& f) {
-	    WireJob w{};
-	    w.tag = MSG_JOB; w.job_id = id; w.epoch = epoch;
-	    w.main_x = f.main_x; w.main_y = f.main_y; w.c_x = f.c_x; w.c_y = f.c_y;
-	    w.trig_l = f.trig_l; w.trig_r = f.trig_r; w.buttons = f.buttons;
-	    return w;
-    }
+    struct WireJobHeader {
+        uint32_t tag;      // MSG_JOB
+        uint64_t job_id;
+        uint32_t epoch;
+        uint32_t payload_len;  // number of bytes that follow immediately
+    };
 
 } // namespace simcore

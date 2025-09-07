@@ -16,25 +16,24 @@ namespace simcore {
 
 	// ----- Small, reusable ops -----
 	enum class PSOpCode : uint8_t {
-		ARM_PHASE_BPS_ONCE,         // arm canonical BPs once
-		LOAD_SNAPSHOT,              // restore pre-captured buffer
-		CAPTURE_SNAPSHOT,           // capture current state to buffer
-		APPLY_INPUT,                // payload: GCInputFrame
-		STEP_FRAMES,                // payload: uint32_t n
-		RUN_UNTIL_BP,               // payload: uint32_t timeout_ms; writes last_hit_pc
-		READ_U8,                    // payload: {addr, dstKey}
-		READ_U16,                   // payload: {addr, dstKey}
-		READ_U32,                   // payload: {addr, dstKey}
-		READ_F32,                   // payload: {addr, dstKey}
-		READ_F64,                   // payload: {addr, dstKey}
-		SET_TIMEOUT,                // payload: uint32_t timeout_ms (overrides default run timeout)
-		EMIT_RESULT,                // payload: dstKey (copy value into VM.result)
+		ARM_PHASE_BPS_ONCE,
+		LOAD_SNAPSHOT,
+		CAPTURE_SNAPSHOT,
 
-		GC_SLOT_A_SET,              // a_path.path
-		MOVIE_PLAY,                 // a_path.path
-		MOVIE_STOP,                 // no args
-		SAVE_SAVESTATE,             // a_path.path
-		REQUIRE_DISC_GAMEID         // a_id6.id[6]
+		APPLY_INPUT_FROM,       // key -> GCInputFrame
+		STEP_FRAMES,            // literal step count ok to keep
+		RUN_UNTIL_BP,           // uses current timeout
+
+		READ_U8, READ_U16, READ_U32, READ_F32, READ_F64,
+
+		SET_TIMEOUT_FROM,       // key -> uint32
+		EMIT_RESULT,            // literal: which key to emit
+
+		GC_SLOT_A_SET_FROM,     // key -> path
+		MOVIE_PLAY_FROM,        // key -> path
+		MOVIE_STOP,
+		SAVE_SAVESTATE_FROM,    // key -> path
+		REQUIRE_DISC_GAMEID_FROM// key -> 6-char string
 	};
 
 	static std::string get_psop_name(PSOpCode op);
@@ -45,28 +44,29 @@ namespace simcore {
 	struct PSArg_Emit { std::string key; };
 	struct PSArg_Path { std::string path; };
 	struct PSArg_ID6 { char id[6]{}; };
+	struct PSArg_Key { std::string key; };
 
-
-	using PSValue = std::variant<uint8_t, uint16_t, uint32_t, float, double>;
+	using PSValue = std::variant<uint8_t, uint16_t, uint32_t, float, double, std::string, GCInputFrame>;
 	using PSContext = std::unordered_map<std::string, PSValue>;
 
 	struct PSOp {
 		PSOpCode code{};
 		// Only one of these will be used depending on `code`
-		std::optional<GCInputFrame> input;
 		PSArg_Read    rd{};
 		PSArg_Step    step{};
 		PSArg_Timeout to{};
 		PSArg_Emit    em{};
-		PSArg_Path    a_path{};
-		PSArg_ID6     a_id6{};
+		PSArg_Key     a_key{};
 	};
 
-	inline PSOp OpGcSlotASet(const std::string& p) { PSOp o; o.code = PSOpCode::GC_SLOT_A_SET; o.a_path.path = p; return o; }
-	inline PSOp OpMoviePlay(const std::string& p) { PSOp o; o.code = PSOpCode::MOVIE_PLAY;   o.a_path.path = p; return o; }
+	inline PSOp OpGcSlotASet(const std::string& p) { PSOp o; o.code = PSOpCode::GC_SLOT_A_SET_FROM; o.a_key.key = p; return o; }
+	inline PSOp OpApplyInputFrom(const std::string& key) { PSOp o; o.code = PSOpCode::APPLY_INPUT_FROM;     o.a_key.key = key; return o; }
+	inline PSOp OpSetTimeoutFrom(const std::string& key) { PSOp o; o.code = PSOpCode::SET_TIMEOUT_FROM;     o.a_key.key = key; return o; }
+	inline PSOp OpMoviePlayFrom(const std::string& key) { PSOp o; o.code = PSOpCode::MOVIE_PLAY_FROM;      o.a_key.key = key; return o; }
 	inline PSOp OpMovieStop() { PSOp o; o.code = PSOpCode::MOVIE_STOP;  return o; }
-	inline PSOp OpSaveSavestate(const std::string& p) { PSOp o; o.code = PSOpCode::SAVE_SAVESTATE; o.a_path.path = p; return o; }
-	inline PSOp OpRequireDiscID6(const char id6[6]) { PSOp o; o.code = PSOpCode::REQUIRE_DISC_GAMEID; memcpy(o.a_id6.id, id6, 6); return o; }
+	inline PSOp OpSaveSavestateFrom(const std::string& key) { PSOp o; o.code = PSOpCode::SAVE_SAVESTATE_FROM;  o.a_key.key = key; return o; }
+	inline PSOp OpRequireDiscID6From(const std::string& key) { PSOp o; o.code = PSOpCode::REQUIRE_DISC_GAMEID_FROM; o.a_key.key = key; return o; }
+	inline PSOp OpEmitResult(const std::string& key) { PSOp o; o.code = PSOpCode::EMIT_RESULT; o.a_key.key = key; return o; }
 
 
 	struct PhaseScript {
@@ -80,8 +80,8 @@ namespace simcore {
 	};
 
 	struct PSJob {
-		// Arbitrary scratch to feed into the script (e.g., the one-frame input)
-		GCInputFrame input;                // used by APPLY_INPUT if present
+		std::vector<uint8_t> payload;
+		PSContext ctx;
 	};
 
 	struct PSResult {

@@ -28,14 +28,17 @@
     <Filter Include="RunnerPrograms">
       <UniqueIdentifier>{0e246091-c186-4944-9970-fea7e83d3784}</UniqueIdentifier>
     </Filter>
-    <Filter Include="RunnerParallel">
-      <UniqueIdentifier>{b647e348-4ca8-4ad9-b705-221011c4a2ab}</UniqueIdentifier>
+    <Filter Include="IO">
+      <UniqueIdentifier>{3323c09c-2ff3-43bc-a6ae-4d4bb181334e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Runner\VM">
+      <UniqueIdentifier>{1ade13ea-176c-4287-8a73-b2ec1bb22622}</UniqueIdentifier>
     </Filter>
     <Filter Include="Phases">
       <UniqueIdentifier>{eb879b3c-e922-4ee8-a291-4569a8483ab3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="IO">
-      <UniqueIdentifier>{3323c09c-2ff3-43bc-a6ae-4d4bb181334e}</UniqueIdentifier>
+    <Filter Include="Runner\Parallel">
+      <UniqueIdentifier>{b647e348-4ca8-4ad9-b705-221011c4a2ab}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -99,26 +102,20 @@
     <ClInclude Include="Runner\JobRunner.h">
       <Filter>Runner</Filter>
     </ClInclude>
-    <ClInclude Include="Runner\Script\PhaseScriptVM.h">
-      <Filter>RunnerPrograms</Filter>
-    </ClInclude>
-    <ClInclude Include="Runner\Script\Programs\SeedProbeScript.h">
-      <Filter>RunnerPrograms</Filter>
-    </ClInclude>
     <ClInclude Include="Runner\Parallel\ParallelPhaseScriptRunner.h">
-      <Filter>RunnerParallel</Filter>
+      <Filter>Runner\Parallel</Filter>
     </ClInclude>
     <ClInclude Include="Runner\Parallel\TSQueue.h">
-      <Filter>RunnerParallel</Filter>
+      <Filter>Runner\Parallel</Filter>
     </ClInclude>
     <ClInclude Include="Runner\Parallel\ProcessWorker.h">
-      <Filter>RunnerParallel</Filter>
+      <Filter>Runner\Parallel</Filter>
     </ClInclude>
     <ClInclude Include="Runner\Parallel\PRTypes.h">
-      <Filter>RunnerParallel</Filter>
+      <Filter>Runner\Parallel</Filter>
     </ClInclude>
     <ClInclude Include="Runner\IPC\Wire.h">
-      <Filter>RunnerParallel</Filter>
+      <Filter>Runner\Parallel</Filter>
     </ClInclude>
     <ClInclude Include="Utils\ThreadName.h">
       <Filter>Utils</Filter>
@@ -141,8 +138,29 @@
     <ClInclude Include="Tas\DtmFile.h">
       <Filter>IO</Filter>
     </ClInclude>
-    <ClInclude Include="Runner\Script\Programs\TasMovieScript.h">
+    <ClInclude Include="Phases\Programs\ProgramRegistry.h">
       <Filter>RunnerPrograms</Filter>
+    </ClInclude>
+    <ClInclude Include="Phases\Programs\SeedProbe\SeedProbePayload.h">
+      <Filter>RunnerPrograms</Filter>
+    </ClInclude>
+    <ClInclude Include="Phases\Programs\SeedProbe\SeedProbeScript.h">
+      <Filter>RunnerPrograms</Filter>
+    </ClInclude>
+    <ClInclude Include="Phases\Programs\PlayTasMovie\TasMoviePayload.h">
+      <Filter>RunnerPrograms</Filter>
+    </ClInclude>
+    <ClInclude Include="Phases\Programs\PlayTasMovie\TasMovieScript.h">
+      <Filter>RunnerPrograms</Filter>
+    </ClInclude>
+    <ClInclude Include="Phases\FirstBattleGenerator.h">
+      <Filter>Phases</Filter>
+    </ClInclude>
+    <ClInclude Include="Runner\Script\PhaseScriptVM.h">
+      <Filter>Runner\VM</Filter>
+    </ClInclude>
+    <ClInclude Include="Runner\Script\VMCoreKeys.h">
+      <Filter>Runner\VM</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -824,14 +842,11 @@
     <ClCompile Include="Runner\PhaseEngine.cpp">
       <Filter>Runner</Filter>
     </ClCompile>
-    <ClCompile Include="Runner\Script\PhaseScriptVM.cpp">
-      <Filter>RunnerPrograms</Filter>
-    </ClCompile>
     <ClCompile Include="Runner\Parallel\ParallelPhaseScriptRunner.cpp">
-      <Filter>RunnerParallel</Filter>
+      <Filter>Runner\Parallel</Filter>
     </ClCompile>
     <ClCompile Include="Runner\Parallel\ProcessWorker.cpp">
-      <Filter>RunnerParallel</Filter>
+      <Filter>Runner\Parallel</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dolphin-2506a\Source\Core\Core\HW\DSPHLE\UCodes\UCodes.cpp">
       <Filter>DolphinSource</Filter>
@@ -850,6 +865,21 @@
     </ClCompile>
     <ClCompile Include="Tas\DtmFile.cpp">
       <Filter>IO</Filter>
+    </ClCompile>
+    <ClCompile Include="Phases\Programs\ProgramRegistry.cpp">
+      <Filter>RunnerPrograms</Filter>
+    </ClCompile>
+    <ClCompile Include="Phases\Programs\SeedProbe\SeedProbePayload.cpp">
+      <Filter>RunnerPrograms</Filter>
+    </ClCompile>
+    <ClCompile Include="Phases\Programs\PlayTasMovie\TasMoviePayload.cpp">
+      <Filter>RunnerPrograms</Filter>
+    </ClCompile>
+    <ClCompile Include="Phases\FirstBattleGenerator.cpp">
+      <Filter>Phases</Filter>
+    </ClCompile>
+    <ClCompile Include="Runner\Script\PhaseScriptVM.cpp">
+      <Filter>Runner\VM</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -1,6 +1,8 @@
 #include "PhaseScriptVM.h"
 #include <algorithm>
 
+#include "VMCoreKeys.h"
+
 namespace simcore {
 
     PhaseScriptVM::PhaseScriptVM(simcore::DolphinWrapper& host, const BreakpointMap& bpmap)
@@ -66,7 +68,7 @@ namespace simcore {
     PSResult PhaseScriptVM::run(const PSJob& job)
     {
         PSResult R{};
-        PSContext ctx;
+        PSContext ctx = job.ctx;
         uint32_t timeout_ms = init_.default_timeout_ms;
 
         // Always start by restoring the pre-captured snapshot for each job
@@ -79,13 +81,6 @@ namespace simcore {
             case PSOpCode::LOAD_SNAPSHOT: { if (!load_snapshot()) return R; break; }
             case PSOpCode::CAPTURE_SNAPSHOT: { if (!save_snapshot()) return R; break; }
 
-            case PSOpCode::APPLY_INPUT: {
-                const GCInputFrame& f = op.input.has_value() ? op.input.value() : job.input;
-                host_.setInput(f);
-
-                break;
-            }
-
             case PSOpCode::STEP_FRAMES: {
                 SCLOGD("[VM] phase=run_inputs begin frames=%zu", op.step.n);
                 for (uint32_t i = 0; i < op.step.n; ++i) host_.stepOneFrameBlocking();
@@ -94,14 +89,73 @@ namespace simcore {
             }
 
             case PSOpCode::RUN_UNTIL_BP: {
-                SCLOGD("[VM] phase=run_until_bp begin armed=%zu", armed_pcs_.size());
-                auto rr = host_.runUntilBreakpointBlocking(op.to.ms ? op.to.ms : timeout_ms);
+                using vmcore::K_RUN_MS;
+                using vmcore::K_VI_STALL_MS;
+                using vmcore::K_RUN_OUTCOME_CODE;
+                using vmcore::K_RUN_ELAPSED_MS;
+                using vmcore::K_RUN_HIT_PC;
+                using vmcore::K_METRICS_VI_LAST;
+                using vmcore::K_METRICS_POLL_MS;
+                using vmcore::RunToBpOutcome;
 
-                SCLOGD("[VM] phase=run_until_bp end result=%s pc=%08X", rr.hit ? "ok" : "fail", rr.pc);
-                if (!rr.hit) 
-                {
-                    SCLOGD("[VM] timeout waiting for bp; last_pc=%08X", rr.pc);
-                    return R; // timeout -> not ok
+                // 1) Resolve timeout and VI-stall settings
+                //    - Default from VM init
+                //    - If your script previously executed SET_TIMEOUT(_FROM), that should have updated
+                //      a local 'timeout_ms' variable in this run() scope; if not, we fall back to ctx.
+                uint32_t timeout_ms = init_.default_timeout_ms;
+
+                // If your VM tracks a per-run timeout variable (e.g., mutated by SET_TIMEOUT_FROM),
+                // prefer it here. If not present in your codebase, this line is harmless to keep:
+                // (no-op unless you have such a variable).
+                // timeout_ms = timeout_ms; // placeholder; keep your existing behavior
+
+                // As a generic fallback, accept a per-job timeout from context if provided.
+                // (TAS payload writes "tas.run_ms"; other programs can introduce their own SET_TIMEOUT op.)
+                if (auto it = ctx.find(K_RUN_MS); it != ctx.end()) {
+                    if (auto p = std::get_if<uint32_t>(&it->second)) timeout_ms = *p;
+                }
+                if (op.to.ms) timeout_ms = op.to.ms; // legacy literal override still honored
+
+                uint32_t vi_stall_ms = 0;
+                if (auto it = ctx.find(K_VI_STALL_MS); it != ctx.end()) {
+                    if (auto p = std::get_if<uint32_t>(&it->second)) vi_stall_ms = *p;
+                }
+
+                // 2) Choose a poll cadence (VM emits the value it actually asked the wrapper to use)
+                const uint32_t poll_ms = host_.pickPollIntervalMs(timeout_ms);
+
+                // 3) Call into the flexible wrapper; it will treat watch_movie=true as a no-op if no movie is playing
+                const bool watch_movie = true;
+
+                auto t0 = std::chrono::steady_clock::now();
+                auto rr = host_.runUntilBreakpointFlexible(timeout_ms, vi_stall_ms, watch_movie, poll_ms);
+                auto t1 = std::chrono::steady_clock::now();
+                const uint32_t elapsed_ms = (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
+
+                // 4) Map wrapper result -> canonical outcome enum
+                RunToBpOutcome outcome = RunToBpOutcome::Unknown;
+                if (rr.hit) {
+                    outcome = RunToBpOutcome::Hit;
+                }
+                else if (rr.reason) {
+                    if (std::strcmp(rr.reason, "timeout") == 0) outcome = RunToBpOutcome::Timeout;
+                    else if (std::strcmp(rr.reason, "vi_stalled") == 0) outcome = RunToBpOutcome::ViStalled;
+                    else if (std::strcmp(rr.reason, "movie_ended") == 0) outcome = RunToBpOutcome::MovieEnded;
+                    else outcome = RunToBpOutcome::Unknown;
+                }
+
+                // 5) Emit standardized, program-agnostic keys
+                R.ctx[K_RUN_OUTCOME_CODE] = static_cast<uint32_t>(outcome);
+                R.ctx[K_RUN_ELAPSED_MS] = elapsed_ms;
+                R.ctx[K_RUN_HIT_PC] = rr.hit ? rr.pc : 0u;
+
+                // Optional telemetry (present for observability)
+                R.ctx[K_METRICS_VI_LAST] = (uint32_t)(host_.getViFieldCountApprox() & 0xFFFFFFFFull);
+                R.ctx[K_METRICS_POLL_MS] = poll_ms;
+
+                // Preserve existing success semantics
+                if (!rr.hit) {
+                    return R; // ok remains false; last_hit_pc left as-is (0)
                 }
                 R.last_hit_pc = rr.pc;
                 break;
@@ -124,40 +178,68 @@ namespace simcore {
             case PSOpCode::READ_F32: { float    v{}; if (!read_f32(op.rd.addr, v)) return R; ctx[op.rd.dst_key] = v; break; }
             case PSOpCode::READ_F64: { double   v{}; if (!read_f64(op.rd.addr, v)) return R; ctx[op.rd.dst_key] = v; break; }
 
-            case PSOpCode::SET_TIMEOUT:
-                timeout_ms = op.to.ms ? op.to.ms : init_.default_timeout_ms;
-                break;
-
             case PSOpCode::EMIT_RESULT:
             {
                 SCLOGD("[VM] EMIT_RESULT %s=%08X", op.em.key.c_str(), ctx[op.em.key]);
                 R.ctx[op.em.key] = ctx[op.em.key]; // copy selected value to result
                 break;
             }
-            case PSOpCode::GC_SLOT_A_SET: {
-                SCLOGD("[VM] GC_SLOT_A_SET %s", op.a_path.path.c_str());
-                if (!host_.setGCMemoryCardA(op.a_path.path)) return R;
+            case PSOpCode::APPLY_INPUT_FROM: {
+                auto it = ctx.find(op.a_key.key);
+                if (it == ctx.end()) return R;
+                if (auto p = std::get_if<GCInputFrame>(&it->second)) {
+                    host_.setInput(*p);
+                }
+                else {
+                    return R;
+                }
                 break;
             }
-            case PSOpCode::MOVIE_PLAY: {
-                SCLOGI("[VM] MOVIE_PLAY %s", op.a_path.path.c_str());
-                if (!host_.startMoviePlayback(op.a_path.path)) return R;
+
+            case PSOpCode::SET_TIMEOUT_FROM: {
+                auto it = ctx.find(op.a_key.key);
+                if (it == ctx.end()) return R;
+                if (auto p = std::get_if<uint32_t>(&it->second)) timeout_ms = *p;
+                else return R;
                 break;
             }
-            case PSOpCode::MOVIE_STOP: {
-                SCLOGI("[VM] MOVIE_STOP");
-                if (!host_.endMoviePlaybackBlocking()) return R;
+
+            case PSOpCode::MOVIE_PLAY_FROM: {
+                auto it = ctx.find(op.a_key.key);
+                if (it == ctx.end()) return R;
+                if (auto p = std::get_if<std::string>(&it->second)) {
+                    if (!host_.startMoviePlayback(*p)) return R;
+                }
+                else return R;
                 break;
             }
-            case PSOpCode::SAVE_SAVESTATE: {
-                SCLOGI("[VM] SAVE_SAVESTATE %s", op.a_path.path.c_str());
-                if (!host_.saveSavestateBlocking(op.a_path.path)) return R;
+
+            case PSOpCode::SAVE_SAVESTATE_FROM: {
+                auto it = ctx.find(op.a_key.key);
+                if (it == ctx.end()) return R;
+                if (auto p = std::get_if<std::string>(&it->second)) {
+                    if (!host_.saveSavestateBlocking(*p)) return R;
+                }
+                else return R;
                 break;
             }
-            case PSOpCode::REQUIRE_DISC_GAMEID: {
+
+            case PSOpCode::REQUIRE_DISC_GAMEID_FROM: {
+                auto it = ctx.find(op.a_key.key);
+                if (it == ctx.end()) return R;
+                const char* id6 = nullptr;
+                std::string tmp;
+                if (auto ps = std::get_if<std::string>(&it->second)) {
+                    tmp = *ps;
+                    if (tmp.size() < 6) return R;
+                    id6 = tmp.c_str();
+                }
+                else {
+                    return R;
+                }
                 auto di = host_.getDiscInfo();
                 const bool ok = (di.has_value() && di->game_id.size() >= 6 &&
-                    memcmp(di->game_id.data(), op.a_id6.id, 6) == 0);
+                    std::memcmp(di->game_id.data(), id6, 6) == 0);
                 if (!ok) return R;
                 break;
             }
@@ -177,7 +259,7 @@ namespace simcore {
             return { "Load Snapshot" };
         case PSOpCode::CAPTURE_SNAPSHOT:
             return { "Capture Snapshot" };
-        case PSOpCode::APPLY_INPUT:
+        case PSOpCode::APPLY_INPUT_FROM:
             return { "Apply Input" };
         case PSOpCode::STEP_FRAMES:
             return { "Step Frames" };
@@ -193,10 +275,18 @@ namespace simcore {
             return { "Read float" };
         case PSOpCode::READ_F64:
             return { "Read double" };
-        case PSOpCode::SET_TIMEOUT:
+        case PSOpCode::SET_TIMEOUT_FROM:
             return { "Set timeout" };
         case PSOpCode::EMIT_RESULT:
             return { "Emit result" };
+        case PSOpCode::MOVIE_PLAY_FROM:
+            return { "Play TAS Movie" };
+        case PSOpCode::MOVIE_STOP:
+            return { "Stop TAS Movie" };
+        case PSOpCode::SAVE_SAVESTATE_FROM:
+            return { "Save Savestate" };
+        case PSOpCode::REQUIRE_DISC_GAMEID_FROM:
+            return { "Set timeout" };
         default:
             return { "Unknown Code" };
         }

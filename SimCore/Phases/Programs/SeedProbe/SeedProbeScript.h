@@ -1,10 +1,14 @@
 #pragma once
-#include "../PhaseScriptVM.h"
-#include "../../SOAConstants.h"
-#include "../../Breakpoints/PreBattleBreakpoints.h"
+#include "../../../Runner/Script/PhaseScriptVM.h"
+#include "../../../Runner/Script/VMCoreKeys.h"
+#include "../../../Runner/SOAConstants.h"
+#include "../../../Runner/Breakpoints/PreBattleBreakpoints.h"
 
-namespace simcore {
+namespace simcore::seedprobe {
 
+    static constexpr std::string INPUT_KEY = "seed.input";
+    static constexpr std::string RNG_SEED_KEY = "seed.seed";
+    
     // Build a small program for “apply 1 frame input, then run-until-bp, then read RNG”
     inline PhaseScript MakeSeedProbeProgram(uint32_t run_timeout_ms)
     {
@@ -17,24 +21,22 @@ namespace simcore {
         ps.ops.push_back({ PSOpCode::LOAD_SNAPSHOT });
 
         // Apply the job's one-frame input
-        {
-            PSOp op{}; op.code = PSOpCode::APPLY_INPUT; ps.ops.push_back(op);
-        }
+        ps.ops.push_back(OpApplyInputFrom(INPUT_KEY));
 
         // Run until a phase BP (the VM does not filter by key here; you’ll check pc in the caller if needed)
-        {
-            PSOp op{}; op.code = PSOpCode::RUN_UNTIL_BP; op.to = { run_timeout_ms }; ps.ops.push_back(op);
-        }
+        ps.ops.push_back({ PSOpCode::RUN_UNTIL_BP });
 
         // Read RNG value and expose as "seed"
         {
-            PSOp op{}; op.code = PSOpCode::READ_U32; op.rd = { SOA::ADDR::RNG_SEED, "seed" }; ps.ops.push_back(op);
+            PSOp op{}; op.code = PSOpCode::READ_U32; op.rd = { SOA::ADDR::RNG_SEED, RNG_SEED_KEY }; ps.ops.push_back(op);
         }
         {
-            PSOp op{}; op.code = PSOpCode::EMIT_RESULT; op.em = { "seed" }; ps.ops.push_back(op);
+            PSOp op{}; op.code = PSOpCode::EMIT_RESULT; op.em = { RNG_SEED_KEY }; ps.ops.push_back(op);
         }
 
         return ps;
     }
+
+    
 
 } // namespace simcore

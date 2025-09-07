@@ -13,8 +13,7 @@
 #include "Core/DolphinWrapper.h"
 #include "Runner/Breakpoints/BPCore.h"
 #include "Runner/Script/PhaseScriptVM.h"
-#include "Runner/Script/Programs/SeedProbeScript.h"
-#include "Runner/Script/Programs/TasMovieScript.h"
+#include "Phases/Programs/ProgramRegistry.h"
 #include "Runner/Parallel/ParallelPhaseScriptRunner.h"
 #include "Runner/IPC/Wire.h"
 #include "Runner/Breakpoints/PreBattleBreakpoints.h"
@@ -84,6 +83,8 @@ static bool read_all(HANDLE h, void* p, size_t n) {
 static bool read_tag(HANDLE h, uint32_t& tag) {
     return read_all(h, &tag, sizeof(tag));
 }
+
+static bool read_exact(HANDLE h, void* p, size_t n) { return read_all(h, p, n); }
 
 int main(int argc, char** argv)
 {
@@ -185,26 +186,10 @@ int main(int argc, char** argv)
     PSInit psinit{};            // savestate_path may be empty now
     psinit.default_timeout_ms = timeout_ms;
     bool main_active = false;
-
-    //auto build_init = [&](uint8_t kind)->PSInit {
-    //    switch (kind) {
-    //    case PK_TasMovie:
-    //        return MakeTasInitProgram(psinit.savestate_path, psinit.default_timeout_ms); // placeholder; fill in when we add TAS movie ops
-    //    default:
-    //        return PSInit{};
-    //    }
-    //    };
-
+    uint8_t active_pk;
 
     auto build_prog = [&](uint8_t kind)->PhaseScript {
-        switch (kind) {
-        case PK_SeedProbe:
-            return MakeSeedProbeProgram(psinit.default_timeout_ms); // existing builder (unchanged)
-        //case PK_TasMovie:
-        //    return MakeTasMainProgram(psinit); // placeholder; fill in when we add TAS movie ops
-        default:
-            return PhaseScript{};
-        }
+        return simcore::programs::build_main_program(kind, psinit.default_timeout_ms);
         };
 
     for (;;) {
@@ -218,6 +203,8 @@ int main(int argc, char** argv)
 
             psinit.default_timeout_ms = sp.timeout_ms;
             psinit.savestate_path = sp.savestate_path;
+
+            active_pk = sp.main_kind;
 
             main_prog = build_prog(sp.main_kind);
             main_active = false;
@@ -254,11 +241,17 @@ int main(int argc, char** argv)
             SCLOGD("[Worker %zu] ACTIVATE_MAIN ok", worker_id);
         }
         else if (tag == MSG_JOB) {
-            WireJob wj{}; wj.tag = tag;
-            if (!read_all(hIn, reinterpret_cast<uint8_t*>(&wj) + sizeof(wj.tag),
-                sizeof(wj) - sizeof(wj.tag))) break;
+            // Read header
+            WireJobHeader jh{};
+            if (!read_all(hIn, &jh, sizeof(jh))) break;
 
-            WireResult wr{}; wr.tag = MSG_RESULT; wr.job_id = wj.job_id; wr.epoch = wj.epoch;
+            // Read payload bytes
+            std::vector<uint8_t> payload(jh.payload_len);
+            if (jh.payload_len) {
+                if (!read_all(hIn, payload.data(), payload.size())) break;
+            }
+
+            WireResult wr{}; wr.tag = MSG_RESULT; wr.job_id = jh.job_id; wr.epoch = jh.epoch;
 
             if (!main_active) {
                 wr.ok = 0; wr.last_pc = 0; wr.seed = 0;
@@ -267,20 +260,25 @@ int main(int argc, char** argv)
                 continue;
             }
 
-            GCInputFrame f{};
-            f.main_x = wj.main_x; f.main_y = wj.main_y;
-            f.c_x = wj.c_x;       f.c_y = wj.c_y;
-            f.trig_l = wj.trig_l; f.trig_r = wj.trig_r;
-            f.buttons = wj.buttons;
+            // Decode by active program via registry (worker stays ignorant of tag semantics)
+            PSJob pj{};
+            pj.payload = std::move(payload);
+            bool decode_ok = simcore::programs::decode_payload_for(/*active program kind*/ active_pk, pj.payload, pj.ctx);
+            if (!decode_ok) {
+                wr.ok = 0; wr.last_pc = 0; wr.seed = 0;
+                (void)write_all(hOut, &wr, sizeof(wr));
+                SCLOGE("[Worker %zu] payload decode failed for active program", worker_id);
+                continue;
+            }
 
-            auto R = vm.run(PSJob{ f });
+            // Run
+            auto R = vm.run(pj);
             wr.ok = R.ok ? 1 : 0;
             wr.last_pc = R.last_hit_pc;
             wr.seed = 0;
             if (auto it = R.ctx.find("seed"); it != R.ctx.end()) {
                 if (auto p = std::get_if<uint32_t>(&it->second)) wr.seed = *p;
             }
-
             (void)write_all(hOut, &wr, sizeof(wr));
         }
         else {
