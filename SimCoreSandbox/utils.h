@@ -14,3 +14,5 @@ std::string trim(std::string s);
 std::string strip_quotes(std::string s);
 
 fs::path prompt_path(const char* prompt, bool require_exists, bool allow_empty, std::string def);
+
+bool prompt_bool(const std::string& message, bool default_value = false);

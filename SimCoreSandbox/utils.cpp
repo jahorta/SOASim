@@ -64,3 +64,34 @@ fs::path prompt_path(const char* prompt, bool require_exists, bool allow_empty, 
         return p;
     }
 }
+
+bool prompt_bool(const std::string& message, bool default_value = false)
+{
+    while (true)
+    {
+        std::cout << message
+            << " [Y/n]: "
+            << std::flush;
+
+        std::string input;
+        std::getline(std::cin, input);
+
+        // Trim whitespace
+        input.erase(remove_if(input.begin(), input.end(), ::isspace), input.end());
+
+        if (input.empty())
+        {
+            return default_value; // Enter pressed -> default
+        }
+
+        // Normalize case
+        std::transform(input.begin(), input.end(), input.begin(), ::tolower);
+
+        if (input == "y" || input == "yes")
+            return true;
+        if (input == "n" || input == "no")
+            return false;
+
+        std::cout << "Please enter Y or N.\n";
+    }
+}
