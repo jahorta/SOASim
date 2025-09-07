@@ -40,6 +40,7 @@ namespace simcore::utils {
             uint64_t total = 1;
             uint64_t done = 0;
             double rate = 0.0;
+            std::chrono::steady_clock::time_point start{};
         };
 
         Options opt_{};

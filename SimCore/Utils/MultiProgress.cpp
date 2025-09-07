@@ -57,9 +57,15 @@ namespace simcore::utils {
         const auto now = std::chrono::steady_clock::now();
         const double dt = std::chrono::duration<double>(now - last_draw_).count();
         if (!force && dt < opt_.min_redraw_sec) return;
-
-        const double elapsed = std::max(1e-9, std::chrono::duration<double>(now - t0_).count());
-        for (auto& b : bars_) b.rate = double(b.done) / elapsed;
+       
+        for (auto& b : bars_) 
+        {
+            
+            if (b.done == b.total) continue;
+            if (b.done == 1) b.start = std::chrono::steady_clock::now();
+            const double elapsed = std::max(1e-9, std::chrono::duration<double>(now-b.start).count());
+            if (b.done > 1) b.rate = double(b.done) / elapsed;
+        }
 
         if (vt_ok_) {
             std::fputs("\r", stdout);
