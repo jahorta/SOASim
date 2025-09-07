@@ -239,7 +239,9 @@ int main(int argc, char** argv)
         else if (tag == MSG_JOB) {
             // Read header
             WireJobHeader jh{};
-            if (!read_all(hIn, &jh, sizeof(jh))) break;
+            if (!read_exact(hIn, &jh, sizeof(jh))) break;
+
+            if (jh.tag != tag) break;
 
             // Read payload bytes
             std::vector<uint8_t> payload(jh.payload_len);

@@ -110,6 +110,7 @@ namespace simcore {
         hdr.job_id = job_id;
         hdr.epoch = static_cast<uint32_t>(epoch);
         hdr.payload_len = static_cast<uint32_t>(payload.size());
+        if (!write_all(h, &hdr.tag, sizeof(hdr.tag))) return false;
         if (!write_all(h, &hdr, sizeof(hdr))) return false;
         if (hdr.payload_len) {
             if (!write_all(h, payload.data(), payload.size())) return false;
