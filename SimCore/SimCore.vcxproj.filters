@@ -159,7 +159,22 @@
     <ClInclude Include="Runner\Script\PhaseScriptVM.h">
       <Filter>Runner\VM</Filter>
     </ClInclude>
-    <ClInclude Include="Runner\Script\VMCoreKeys.h">
+    <ClInclude Include="Phases\Programs\PlayTasMovie\TasMovieKeys.reg.h">
+      <Filter>RunnerPrograms</Filter>
+    </ClInclude>
+    <ClInclude Include="Phases\Programs\SeedProbe\SeedProbeKeys.reg.h">
+      <Filter>RunnerPrograms</Filter>
+    </ClInclude>
+    <ClInclude Include="Runner\Script\VMCoreKeys.reg.h">
+      <Filter>Runner\VM</Filter>
+    </ClInclude>
+    <ClInclude Include="Runner\Script\KeyIds.h">
+      <Filter>Runner\VM</Filter>
+    </ClInclude>
+    <ClInclude Include="Runner\Script\KeyRegistry.h">
+      <Filter>Runner\VM</Filter>
+    </ClInclude>
+    <ClInclude Include="Runner\Script\PSContextCodec.h">
       <Filter>Runner\VM</Filter>
     </ClInclude>
   </ItemGroup>
@@ -879,6 +894,12 @@
       <Filter>Phases</Filter>
     </ClCompile>
     <ClCompile Include="Runner\Script\PhaseScriptVM.cpp">
+      <Filter>Runner\VM</Filter>
+    </ClCompile>
+    <ClCompile Include="Runner\Script\KeyRegistry.cpp">
+      <Filter>Runner\VM</Filter>
+    </ClCompile>
+    <ClCompile Include="Runner\Script\PSContextCodec.cpp">
       <Filter>Runner\VM</Filter>
     </ClCompile>
   </ItemGroup>

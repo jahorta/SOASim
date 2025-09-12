@@ -169,9 +169,11 @@
     <ClInclude Include="Core\Shims\StateBufferShim.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Phases\FirstBattleGenerator.h" />
+    <ClInclude Include="Phases\Programs\PlayTasMovie\TasMovieKeys.reg.h" />
     <ClInclude Include="Phases\Programs\PlayTasMovie\TasMoviePayload.h" />
     <ClInclude Include="Phases\Programs\PlayTasMovie\TasMovieScript.h" />
     <ClInclude Include="Phases\Programs\ProgramRegistry.h" />
+    <ClInclude Include="Phases\Programs\SeedProbe\SeedProbeKeys.reg.h" />
     <ClInclude Include="Phases\Programs\SeedProbe\SeedProbePayload.h" />
     <ClInclude Include="Phases\Programs\SeedProbe\SeedProbeScript.h" />
     <ClInclude Include="Phases\RNGSeedDeltaMap.h" />
@@ -188,8 +190,11 @@
     <ClInclude Include="Runner\Parallel\TSQueue.h" />
     <ClInclude Include="Runner\PhaseEngine.h" />
     <ClInclude Include="Runner\Predicates\PredicateCatalog.h" />
+    <ClInclude Include="Runner\Script\KeyIds.h" />
+    <ClInclude Include="Runner\Script\KeyRegistry.h" />
     <ClInclude Include="Runner\Script\PhaseScriptVM.h" />
-    <ClInclude Include="Runner\Script\VMCoreKeys.h" />
+    <ClInclude Include="Runner\Script\PSContextCodec.h" />
+    <ClInclude Include="Runner\Script\VMCoreKeys.reg.h" />
     <ClInclude Include="Runner\SOAConstants.h" />
     <ClInclude Include="Tas\DtmFile.h" />
     <ClInclude Include="Utils\DeltaColorizer.h" />
@@ -1065,7 +1070,9 @@
     <ClCompile Include="Runner\Parallel\ProcessWorker.cpp" />
     <ClCompile Include="Runner\PhaseEngine.cpp" />
     <ClCompile Include="Runner\Predicates\PredicateCatalog.cpp" />
+    <ClCompile Include="Runner\Script\KeyRegistry.cpp" />
     <ClCompile Include="Runner\Script\PhaseScriptVM.cpp" />
+    <ClCompile Include="Runner\Script\PSContextCodec.cpp" />
     <ClCompile Include="SimCore.cpp" />
     <ClCompile Include="Tas\DtmFile.cpp" />
     <ClCompile Include="Utils\EnsureSys.cpp" />
