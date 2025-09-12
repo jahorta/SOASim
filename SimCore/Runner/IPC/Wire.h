@@ -3,15 +3,13 @@
 #include <cstdint>
 #include "../../Core/Input/InputPlan.h"
 
-#pragma once
-#include <cstdint>
-
 namespace simcore {
 
     enum : uint32_t {
         MSG_READY = 0x01,
         MSG_JOB = 0x02,
         MSG_RESULT = 0x03,
+        MSG_PROGRESS = 0x04,
         // control-mode (program lifecycle):
         MSG_SET_PROGRAM = 0x10,
         MSG_RUN_INIT_ONCE = 0x11,
@@ -25,6 +23,8 @@ namespace simcore {
         WERR_BootFail = 2,
         WERR_LoadGame = 3,
         WERR_VMInit = 4,
+        WERR_WriteReady = 6,
+        // Job errors
         WERR_NoProgramLoaded = 5,
         WERR_DecodePayloadFail = 7,
         WERR_EncodePayloadFail = 8,
@@ -56,15 +56,53 @@ namespace simcore {
         uint32_t error; // WERR_*
     };
 
+#pragma pack(push, 1)
     struct WireResult {
-        uint32_t tag;   // MSG_RESULT
+        uint32_t tag;      // MSG_RESULT
         uint64_t job_id;
         uint32_t epoch;
-        uint8_t  ok;
-        uint8_t  _pad0[3];
-        uint32_t last_pc;
-        uint32_t seed;  // optional (0 if absent)
+        uint8_t  ok;       // 1=success, 0=failure (transport-level)
+        uint8_t  err;
+        uint8_t  _pad[2];  // keep 4-byte alignment for ctx_len
+        uint32_t ctx_len;  // number of bytes that follow immediately (context blob)
     };
+#pragma pack(pop)
+
+    static_assert(sizeof(WireResult) == 24, "WireResult must be 24 bytes");
+
+    // Phase codes (u32)
+    enum : uint32_t
+    {
+        PHASE_UNKNOWN = 0,
+        PHASE_RUN_INPUTS = 1,
+        PHASE_RUN_UNTIL_BP = 2,
+    };
+
+    // Status flags (u32 bitfield)
+    enum ProgressFlags : uint32_t
+    {
+        PF_WAITING_FOR_BP = 0x00000001,
+        PF_MOVIE_PLAYING = 0x00000002,
+        PF_VI_STALLED_SUSPECTED = 0x00000004,
+        PF_TIMEOUT_NEAR = 0x00000008,
+        PF_HEARTBEAT = 0x00000010,
+    };
+
+#pragma pack(push, 1)
+    struct WireProgress
+    {
+        uint32_t tag;         // = MSG_PROGRESS
+        uint64_t job_id;      // mirrors WireJobHeader::job_id
+        uint32_t epoch;       // mirrors WireJobHeader::epoch
+        uint32_t phase_code;  // 0=Unknown, 1=RunInputs, 2=RunUntilBp
+        uint32_t cur_frames;  // VI/frame approximation (numerator)
+        uint32_t total_frames;// TAS total frames if known, else 0 (unknown)
+        uint32_t elapsed_ms;  // since entry into long loop
+        uint32_t status_flags;// bitfield (see ProgressFlags)
+        uint32_t poll_ms_used;// effective poll cadence
+        char     text[64];    // short hint, UTF-8, NUL-terminated if shorter
+    };
+#pragma pack(pop)
 
     struct WireSetProgram {
         uint32_t tag;         // MSG_SET_PROGRAM
