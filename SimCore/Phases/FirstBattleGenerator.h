@@ -11,12 +11,12 @@ namespace simcore::tas_movie {
     struct ConductorArgs {
         BootPlan boot;
         std::string base_dtm;          // source DTM to clone per-RTC
-        int rtc_delta_lo{ 0 };           // inclusive (seconds)
-        int rtc_delta_hi{ 0 };           // inclusive (seconds)
-        std::string out_dtm_dir;       // where stamped .dtm files are written
-        std::string out_sav_dir;       // where .sav files are written
+        int rtc_delta_lo{ 0 };         // inclusive (seconds)
+        int rtc_delta_hi{ 0 };         // inclusive (seconds)
+        std::string out_dir;           // where stamped .dtm and .sav files are written
         uint32_t vi_stall_ms{ 2000 };
         bool save_on_fail{ true };
+        std::string gameid = "GEAE8P";
     };
 
     struct ItemResult {
@@ -36,6 +36,6 @@ namespace simcore::tas_movie {
 
     // Creates one DTM per second in [lo, hi], submits one job per DTM, and
     // waits for all results. Program PK_TasMovie must be active on the runner.
-    BatchResult RunTasMovieConductor(ParallelPhaseScriptRunner& runner, const ConductorArgs& args);
+    BatchResult RunTasMovieOnePerWorkerWithProgress(ParallelPhaseScriptRunner& runner, const ConductorArgs& args);
 
 } // namespace simcore::tas_movie

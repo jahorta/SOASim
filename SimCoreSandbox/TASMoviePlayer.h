@@ -4,6 +4,6 @@
 
 namespace sandbox {
 
-	static void menu_tas_movie(AppState g);
+	void menu_tas_movie(AppState g);
 
 }

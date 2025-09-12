@@ -10,6 +10,8 @@
 #include "Programs/PlayTasMovie/TasMovieScript.h"
 #include "../Tas/DtmFile.h"
 #include "../Runner/IPC/Wire.h"
+#include "../Utils/MultiProgress.h"
+#include "../Runner/Parallel/ParallelPhaseScriptRunner.h"
 
 namespace fs = std::filesystem;
 
@@ -47,55 +49,67 @@ namespace simcore::tas_movie {
         return out_path;
     }
 
-    BatchResult RunTasMovieConductor(ParallelPhaseScriptRunner& runner, const ConductorArgs& args)
+    static uint64_t read_vi_total(const std::string& dtm_path) {
+        simcore::tas::DtmFile df;
+        if (!df.load(dtm_path)) return 0;
+        const auto info = df.info();
+        return info.vi_count ? info.vi_count : info.input_count;
+    }
+
+    BatchResult RunTasMovieOnePerWorkerWithProgress(ParallelPhaseScriptRunner& runner,
+        const ConductorArgs& args)
     {
+        auto num_workers = runner.worker_count();
+        
         BatchResult br{};
-        if (args.rtc_delta_hi < args.rtc_delta_lo) return br;
+        if (args.rtc_delta_hi < args.rtc_delta_lo || num_workers == 0) return br;
 
-        // Ensure PK_TasMovie is configured & active.
+        // Boot & program activation (same as conductor)
         PSInit init{};
-        init.savestate_path = ""; // start from boot or whatever your phase expects
-        init.default_timeout_ms = 600000; // a large cap; per-job SET_TIMEOUT_FROM will override
+        init.savestate_path = "";
+        init.default_timeout_ms = 600000;
 
-        // Boot workers (control mode)
-        if (!runner.start(args.boot)) {
-            SCLOGE("[tas] start() failed");
-            return br;
-        }
+        if (!runner.set_program(/*init_kind=*/PK_None, /*main_kind=*/PK_TasMovie, init)) { SCLOGE("[tas] set_program failed"); return br; }
+        if (!runner.activate_main()) { SCLOGE("[tas] activate_main failed"); return br; }
 
-        if (!runner.set_program(/*init_kind=*/PK_None, /*main_kind=*/PK_TasMovie, init)) {
-            SCLOGE("[tas] set_program failed");
-            return br;
-        }
-        if (!runner.activate_main()) {
-            SCLOGE("[tas] activate_main failed");
-            return br;
-        }
+        // Build up to one job per worker using consecutive RTC deltas from [lo..hi]
+        const int span = args.rtc_delta_hi - args.rtc_delta_lo + 1;
+        const size_t jobs_to_make = static_cast<size_t>(std::min<int>(int(num_workers), span));
 
-        // Prepare and submit all jobs.
-        std::unordered_map<uint64_t, ItemResult> by_id;
+        struct JobMeta { int delta; std::string dtm; std::string sav; uint64_t vi_total; };
+        std::vector<JobMeta> all_jobs;
+
         for (int d = args.rtc_delta_lo; d <= args.rtc_delta_hi; ++d) {
-            const auto dtm_out = write_dtm_with_delta(args.base_dtm, d, args.out_dtm_dir);
-            if (!dtm_out.has_value()) {
-                SCLOGW("[tas] skip delta %d: failed to write dtm", d);
-                continue;
-            }
+            auto dtm_out = write_dtm_with_delta(args.base_dtm, d, args.out_dir);
+            if (!dtm_out) { SCLOGW("[tas] skip delta %d: DTM write failed", d); continue; }
+            fs::create_directories(args.out_dir);
+            fs::path sav_path = fs::path(args.out_dir) / (fs::path(*dtm_out).stem().string() + ".sav");
 
-            // Save path mirrors DTM name with .sav
-            fs::create_directories(args.out_sav_dir);
-            fs::path sav_path = fs::path(args.out_sav_dir) / (fs::path(*dtm_out).stem().string() + ".sav");
+            JobMeta jm{};
+            jm.delta = d;
+            jm.dtm = *dtm_out;
+            jm.sav = sav_path.string();
+            jm.vi_total = read_vi_total(jm.dtm);
+            all_jobs.push_back(std::move(jm));
+        }
 
-            // Build payload: let the worker/decoder read DTM to derive run_ms, id6, etc.
+        // Submit them; enable per-job progress in the payload
+        std::unordered_map<uint64_t, ItemResult> by_id;
+        std::unordered_map<uint64_t, uint64_t>   job_total_vi;
+        std::unordered_map<uint64_t, int>        job_delta;
+
+        for (auto& jm : all_jobs) {
             simcore::tasmovie::EncodeSpec spec{};
-            spec.dtm_path = *dtm_out;
-            spec.save_dir = args.out_sav_dir;   // directory only; worker derives <stem>.sav
-            spec.run_ms = 0;                  // 0 => derive from DTM header
-            spec.vi_stall_ms = args.vi_stall_ms;   // stall window for VI watchdog
+            spec.dtm_path = jm.dtm;
+            spec.save_dir = args.out_dir;
+            spec.run_ms = 0;
+            spec.vi_stall_ms = args.vi_stall_ms;
             spec.save_on_fail = args.save_on_fail;
+            spec.progress_enable = true; // <- per-job toggle
 
             std::vector<uint8_t> blob;
             if (!simcore::tasmovie::encode_payload(spec, blob)) {
-                SCLOGW("[tas] skip delta %d: payload encode failed", d);
+                SCLOGW("[tas] skip delta %d: payload encode failed", jm.delta);
                 continue;
             }
 
@@ -105,33 +119,94 @@ namespace simcore::tas_movie {
             const uint64_t jid = runner.submit(job);
 
             ItemResult it{};
-            it.delta_sec = d;
-            it.dtm_path = *dtm_out;
-            it.save_path = sav_path.string();
+            it.delta_sec = jm.delta;
+            it.dtm_path = jm.dtm;
+            it.save_path = jm.sav;
             it.job_id = jid;
 
             by_id.emplace(jid, std::move(it));
+            job_total_vi[jid] = (jm.vi_total ? jm.vi_total : 1);
+            job_delta[jid] = jm.delta;
+
             ++br.submitted;
         }
 
-        // Drain results.
+        // Init multiprogress bars (one per worker)
+        simcore::utils::MultiProgress mp;
+        {
+            std::vector<simcore::utils::MPBarSpec> specs;
+            for (size_t w = 0; w < num_workers; ++w)
+                specs.push_back({ "w" + std::to_string(w) + " (idle)", 1 });
+
+            simcore::utils::MultiProgress::Options mopt{};
+            mopt.use_stdout = true;
+            mopt.use_vt = true;
+            mopt.min_redraw_sec = 0.10;
+            mopt.bar_width = 40;
+
+            mp.init(specs, mopt);
+            mp.start();
+        }
+
+        // Track which job is running on each worker so we can set label/total once.
+        std::vector<uint64_t> worker_job(num_workers, 0);
+
         size_t done = 0;
         while (done < by_id.size()) {
+            // 1) Drain any results first (they are definitive)
             PRResult r{};
-            if (!runner.try_get_result(r)) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            if (runner.try_get_result(r)) {
+                auto it = by_id.find(r.job_id);
+                if (it != by_id.end()) {
+                    uint32_t last_pc{};
+                    r.ps.ctx.get<uint32_t>(keys::core::RUN_HIT_PC, last_pc);
+                    it->second.ok = r.ps.ok;
+                    it->second.last_pc = last_pc;
+                    if (r.ps.ok) ++br.succeeded;
+                }
+                // Seal the worker's bar as finished.
+                if (r.worker_id < worker_job.size()) {
+                    mp.setLabel(r.worker_id, std::string("w") + std::to_string(r.worker_id) + " done");
+                    mp.setTotal(r.worker_id, 1);
+                    mp.advanceTo(r.worker_id, 1);
+                    worker_job[r.worker_id] = 0;
+                }
+                ++done;
                 continue;
             }
-            ++done;
 
-            auto it = by_id.find(r.job_id);
-            if (it == by_id.end()) continue;
+            // 2) If no result, try to consume a progress snapshot (non-blocking).
+            //    Assumes you added try_get_progress(PRProgress&) to the runner.
+            bool saw_any_progress = false;
+            for (size_t wid = 0; wid < num_workers; ++wid)
+            {
+                PRProgress p{};
+                if (!runner.try_get_progress(wid, p)) continue; // nothing new for this worker
+                saw_any_progress = true;
 
-            it->second.ok = r.ps.ok;
-            it->second.last_pc = r.ps.last_hit_pc;
+                // If this is a different job than last time on this worker, rebind the bar.
+                if (worker_job[wid] != p.job_id && p.job_id != 0)
+                {
+                    worker_job[wid] = p.job_id;
+                    const int d = job_delta.count(p.job_id) ? job_delta[p.job_id] : 0;
+                    char lab[32]; std::snprintf(lab, sizeof(lab), "w%zu rtc%+05d", wid, d);
+                    mp.setLabel(wid, lab);
 
-            if (r.ps.ok) ++br.succeeded;
+                    mp.setTotal(wid, job_total_vi.count(p.job_id) ? job_total_vi[p.job_id] : 1);
+                    mp.advanceTo(wid, 0); // reset bar to 0 for the new job
+                }
+
+                // Advance using VI frames if available; fallback to elapsed_ms heuristic.
+                uint64_t cur = p.cur_frames ? p.cur_frames : p.elapsed_ms / 16;
+                mp.advanceTo(wid, cur);
+            }
+
+            if (!saw_any_progress) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            }
         }
+
+        mp.finish();
 
         // Move to output vector in delta order
         br.items.reserve(by_id.size());
