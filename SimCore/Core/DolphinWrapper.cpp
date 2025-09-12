@@ -354,11 +354,33 @@ namespace simcore {
         try {
             const fs::path gc_dir = fs::path(m_user_dir) / "GC";
             fs::create_directories(gc_dir);
-            const char* names[] = { "MemoryCardA.USA.raw","MemoryCardA.JAP.raw","MemoryCardA.PAL.raw" };
-            for (auto* n : names) {
-                fs::copy_file(raw_path, gc_dir / n, fs::copy_options::overwrite_existing);
+            const fs::path memcard_path = gc_dir / "MemoryCardA.USA.raw";
+
+            if (raw_path.empty())
+            {
+                if (!fs::exists(memcard_path))
+                {
+                    auto memcard = Memcard::GCMemcard::Create(
+                        memcard_path.string(),           // path
+                        CardFlashId{},                   // new card flash id
+                        16,                              // size (mbits)
+                        false,                           // is Shift-JIS
+                        0,                               // rtc bias
+                        0,                               // sram language
+                        Common::Timer::GetLocalTimeSinceJan1970() - ExpansionInterface::CEXIIPL::GC_EPOCH);
+                    memcard->Save();
+
+                    SCLOGI("[MemCard] Created RAW at %s", memcard_path.string());
+                }
             }
-            SCLOGI("[MemCard] Copied RAW to {}", gc_dir.string());
+            else 
+            {
+                fs:copy_file(raw_path, memcard_path, fs::copy_options::overwrite_existing);
+                SCLOGI("[MemCard] Copied RAW to %s", gc_dir.string());
+            }
+
+            SCLOGT("[MemCard] Setting memcard to %s", memcard_path.c_str());
+            Config::SetCurrent(Config::MAIN_MEMCARD_A_PATH, memcard_path.string());
             return true;
         }
         catch (...) {
