@@ -246,18 +246,6 @@ namespace simcore {
         return ok > 0;
     }
 
-    uint64_t ParallelPhaseScriptRunner::reconfigure(const PSInit& init, const PhaseScript& program)
-    {
-        const uint64_t e = epoch_.fetch_add(1) + 1;
-        for (auto& w : workers_) {
-            CtrlCmd c{}; 
-            c.type = CtrlType::Reconfigure; 
-            c.rc = CtrlReconfig{ e, init, program };
-            //w->ctrl->push(c);
-        }
-        return e;
-    }
-
     uint64_t ParallelPhaseScriptRunner::submit(const PSJob& job)
     {
         const uint64_t id = job_seq_.fetch_add(1) + 1;

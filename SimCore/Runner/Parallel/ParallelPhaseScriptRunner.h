@@ -25,7 +25,6 @@ namespace simcore {
         ~ParallelPhaseScriptRunner();
 
         bool start(const BootPlan& boot);     // sets epoch=1
-        uint64_t reconfigure(const PSInit& init, const PhaseScript& program); // epoch++
 
         uint64_t submit(const PSJob& job); // enqueues with current epoch, returns job_id
         bool try_get_result(PRResult& out);
