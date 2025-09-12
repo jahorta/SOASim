@@ -12,6 +12,7 @@
 #include <Utils/Log.h>
 #include <Utils/DeltaColorizer.h>
 #include "Phases/RNGSeedDeltaMap.h"
+#include "Core/Input/InputPlanFmt.h"
 
 namespace sandbox {
 
@@ -66,7 +67,7 @@ namespace sandbox {
 
     void print_family_grid(const simcore::RandSeedProbeResult& r, simcore::SeedFamily fam, int N, const char* title)
     {
-        std::vector<const simcore::RandSeedEntry*> entries;
+        std::vector<const simcore::RandSeedProbeEntry*> entries;
         entries.reserve(N * N);
         for (const auto& e : r.entries)
             if (e.family == fam)
@@ -117,7 +118,7 @@ namespace sandbox {
         SCLOGI("[SeedProbe] Summary: base=0x%08X, entries=%zu", r.base_seed, r.entries.size());
         for (const auto& e : r.entries) {
             if (!e.ok) { SCLOGI("  %-28s  hit=0  seed=--------  delta=------", e.label.c_str()); continue; }
-            SCLOGI("  %-28s  hit=1  seed=0x%08X  delta=%lld", e.label.c_str(), e.seed, e.delta);
+            SCLOGI("  %s  hit=1  seed=0x%08X  delta=%lld", e.label.c_str(), e.seed, e.delta);
         }
     }
 
@@ -136,8 +137,8 @@ namespace sandbox {
         char buf[256];
         for (const auto& e : r.entries) {
             if (!e.ok) continue;
-            std::snprintf(buf, sizeof(buf), "%s,%d,%d,0x%08X,%u,%lld",
-                fam_name(e.family), (int)e.x, (int)e.y, e.seed, e.seed, e.delta);
+            std::snprintf(buf, sizeof(buf), "%s,%02X,%02X,0x%08X,%u,%lld",
+                fam_name(e.family), e.x, e.y, e.seed, e.seed, e.delta);
             lines.emplace_back(buf);
         }
         return lines;
@@ -149,10 +150,11 @@ namespace sandbox {
         simcore::RngSeedDeltaArgs a{};
         a.savestate_path = g.default_savestate;
         a.samples_per_axis = 8;
-        a.min_value = 0x00;
-        a.max_value = 0xFF;
+        a.min_value = 0x30;
+        a.max_value = 0xCF;
         a.cap_trigger_top = true;
-        a.run_timeout_ms = 10000;
+
+        bool find_combos = false;
 
         for (;;)
         {
@@ -166,6 +168,8 @@ namespace sandbox {
             std::cout << "max_value:        0x" << std::hex << std::uppercase << a.max_value << std::dec << " (" << a.max_value << ")\n";
             std::cout << "cap_trigger_top:  " << (a.cap_trigger_top ? "true" : "false") << "\n";
             std::cout << "run_timeout_ms:   " << a.run_timeout_ms << "\n";
+            std::cout << "combos_attempts_per_target: " << a.combos_attempts_per_target << "\n";
+            std::cout << "combos_sampler_tries: " << a.combos_sampler_tries << "\n";
             std::cout << "\n"
                 << "1) Set savestate path\n"
                 << "2) Set samples_per_axis\n"
@@ -173,6 +177,8 @@ namespace sandbox {
                 << "4) Set max_value\n"
                 << "5) Toggle cap_trigger_top\n"
                 << "6) Set run_timeout_ms\n"
+                << "7) Set combos_attempts_per_target\n"
+                << "8) Set combos_sampler_tries\n"
                 << "r) Run\n"
                 << "b) Back\n> ";
             std::string c; if (!std::getline(std::cin, c)) return;
@@ -183,6 +189,8 @@ namespace sandbox {
             else if (c == "4") { std::cout << "max_value (0..255): "; std::string s; std::getline(std::cin, s); if (!s.empty()) a.max_value = std::clamp(std::stoi(s), 0, 255); }
             else if (c == "5") a.cap_trigger_top = !a.cap_trigger_top;
             else if (c == "6") { std::cout << "timeout (ms): "; std::string s; std::getline(std::cin, s); if (!s.empty()) a.run_timeout_ms = std::max(1, std::stoi(s)); }
+            else if (c == "7") { std::cout << "combos_attempts_per_target: "; std::string s; std::getline(std::cin, s); if (!s.empty()) a.combos_attempts_per_target = std::max(1, std::stoi(s)); }
+            else if (c == "8") { std::cout << "combos_sampler_tries: "; std::string s; std::getline(std::cin, s); if (!s.empty()) a.combos_sampler_tries = std::max(1, std::stoi(s)); }
             else if (c == "r" || c == "R")
             {
                 if (g.iso_path.empty() || g.qt_base_dir.empty() || a.savestate_path.empty()) {
@@ -191,29 +199,50 @@ namespace sandbox {
                 }
                 if (!ensure_sys_from_base_or_warn(g.qt_base_dir)) continue;
 
+                // Runner
+                simcore::ParallelPhaseScriptRunner runner(g.workers);
+
                 // Boot plan: use your Boot module; keep ISO and portable base fixed for the lifetime of the pool.
                 simcore::BootPlan boot = make_boot_plan(g);
 
-                // Runner
-                simcore::ParallelPhaseScriptRunner runner(g.workers);
+                // Start runners
+                if (!runner.start(boot)) {
+                    SCLOGE("Failed to boot workers.");
+                    exit(1); // or propagate error
+                }
 
                 // Seed-probe job args
                 simcore::RngSeedDeltaArgs args = a;
                 args.boot = boot;
                 
                 // Display results
-                auto result = RunRngSeedDeltaMap(runner, args);
-                sandbox::print_family_grid(result, simcore::SeedFamily::Main, a.samples_per_axis, "Main Stick");
-                sandbox::print_family_grid(result, simcore::SeedFamily::CStick, a.samples_per_axis, "C Stick");
-                sandbox::print_family_grid(result, simcore::SeedFamily::Triggers, a.samples_per_axis, "Triggers");
+                auto seed_delta_grid = RunRngSeedDeltaMap(runner, args);
 
-                if (prompt_bool("Print log summary with all results here? (Y/N)")) sandbox::log_probe_summary(result);
+                if (prompt_bool("Print delta grids?"))
+                {
+                    sandbox::print_family_grid(seed_delta_grid, simcore::SeedFamily::Main, a.samples_per_axis, "Main Stick");
+                    sandbox::print_family_grid(seed_delta_grid, simcore::SeedFamily::CStick, a.samples_per_axis, "C Stick");
+                    sandbox::print_family_grid(seed_delta_grid, simcore::SeedFamily::Triggers, a.samples_per_axis, "Triggers");
+                }
+
+                if (prompt_bool("Print log summary with all results?")) sandbox::log_probe_summary(seed_delta_grid);
                 // Optionally dump CSV
+                
                 auto out_csv = prompt_path("CSV output path (blank to skip): ", /*require_exists*/false, /*allow_empty*/true, "").string();
                 if (!out_csv.empty()) {
                     std::ofstream ofs(out_csv, std::ios::binary | std::ios::trunc);
-                    for (const auto& line : sandbox::to_csv_lines(result)) ofs << line << "\n";
+                    for (const auto& line : sandbox::to_csv_lines(seed_delta_grid)) ofs << line << "\n";
                     SCLOGI("[SeedProbe] wrote CSV: %s", out_csv.c_str());
+                }
+
+                if (prompt_bool("Find complete set of unique deltas?")) {
+                    runner.increment_epoch();
+                    runner.reset_job_ids();
+
+                    auto unique_seeds = RunFindSeedDeltaCombos(runner, args, seed_delta_grid);
+                    for (auto s : unique_seeds.entries) {
+                        SCLOGI("Found delta=%d using %s", s.delta, simcore::DescribeFrame(s.input).c_str());
+                    }
                 }
 
                 runner.stop();
