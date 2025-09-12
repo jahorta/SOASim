@@ -75,6 +75,9 @@ namespace simcore {
         std::atomic<bool> stop_{ false };
         std::atomic<uint64_t> job_seq_{ 0 };
         std::atomic<uint64_t> epoch_{ 0 };
+
+        std::unordered_map<size_t, PRProgress> last_progress_;
+        mutable std::mutex progress_m_;
     };
 
 } // namespace simcore
