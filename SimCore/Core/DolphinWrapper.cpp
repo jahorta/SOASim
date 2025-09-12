@@ -319,11 +319,20 @@ namespace simcore {
 
     bool DolphinWrapper::endMoviePlaybackBlocking(uint32_t timeout_ms)
     {
+        
         SCLOGI("[Movie] STOP (request)");
         auto& movie = m_system->GetMovie();
+        
+        if (Core::GetState(*m_system) == Core::State::Paused) {
+            movie.EndPlayInput(false);
+            movie.SetReadOnly(false);
+        }
+        else {
         runOnCpuThread([&] {
             movie.EndPlayInput(false);
+                movie.SetReadOnly(false);
             }, true);
+        }
 
         const auto deadline = steady_clock::now() + milliseconds(timeout_ms);
         while (movie.IsPlayingInput() && steady_clock::now() < deadline)
