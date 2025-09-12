@@ -251,8 +251,8 @@ namespace SOA {
 		"Frock",
 		"Frock"
 	};
+}
 
-	namespace ADDR {
+namespace SOA::ADDR {
 		const uint32_t RNG_SEED = 0x803469A8;
-	}
 }
