@@ -893,6 +893,12 @@ namespace simcore {
 
         SCLOGT("Turning off background input.");
         Config::SetCurrent(Config::MAIN_INPUT_BACKGROUND_INPUT, false);
+
+        //SCLOGT("Turning off alerts.");
+        //Config::SetCurrent(Config::MAIN_);
+
+        SCLOGT("Ensuring memorycard exists");
+        setGCMemoryCardA("");
     }
 
 } // namespace simcore
