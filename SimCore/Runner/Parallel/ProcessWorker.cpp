@@ -2,6 +2,8 @@
 #include "../IPC/Wire.h"
 #include <sstream>
 #include "../../Utils/ThreadName.h"
+#include "../Script/KeyRegistry.h"
+#include "../Script/PSContextCodec.h"
 
 namespace simcore {
 
@@ -239,6 +241,41 @@ namespace simcore {
                 r.ps.last_hit_pc = wr.last_pc;
                 r.ps.ctx["seed"] = wr.seed;
                 out_->push(std::move(r));
+                continue;
+            }
+
+            if (tag == MSG_PROGRESS)
+            {
+                WireProgress wp{}; wp.tag = tag;
+
+                // We already consumed 1 byte; read the remaining 103 bytes
+                if (!read_all(hChildStd_OUT_Rd, reinterpret_cast<char*>(&wp) + 1, sizeof(wp) - 1))
+                {
+                    running_.store(false);
+                    break;
+                }
+
+                PRProgress p{};
+                p.worker_id = id_;
+                p.job_id = wp.job_id;
+                p.epoch = wp.epoch;
+                p.phase_code = wp.phase_code;
+                p.cur_frames = wp.cur_frames;
+                p.total_frames = wp.total_frames;
+                p.elapsed_ms = wp.elapsed_ms;
+                p.flags = wp.status_flags;
+                p.poll_ms = wp.poll_ms_used;
+                p.text.assign(wp.text, strnlen(wp.text, sizeof(wp.text)));
+
+                {
+                    std::lock_guard<std::mutex> lk(progress_m_);
+                    last_progress_ = p;
+                    have_progress_ = true;
+                }
+
+                if (progress_out_)
+                    progress_out_->push(std::move(p));
+
                 continue;
             }
 

@@ -91,6 +91,16 @@ namespace simcore {
 
 		bool wait_ready(uint32_t timeout_ms);
 
+		void set_progress_queue(TSQueue<PRProgress>* q) { progress_out_ = q; }
+
+		bool try_get_last_progress(PRProgress& out) const
+		{
+			std::lock_guard<std::mutex> lk(progress_m_);
+			if (!have_progress_) return false;
+			out = last_progress_;
+			return true;
+		}
+
 	private:
 		void reader_thread();
 
@@ -111,6 +121,12 @@ namespace simcore {
 		std::atomic<uint32_t> ready_error_{ 0 };    // MSG_READY.error
 
 		AckWait ack_;
+
+		// Progress storage (per worker, last only)
+		mutable std::mutex progress_m_;
+		PRProgress last_progress_{};
+		bool have_progress_{ false };
+		TSQueue<PRProgress>* progress_out_{ nullptr };
 	};
 
 } // namespace simcore

@@ -48,6 +48,20 @@ namespace simcore {
             auto w = std::make_unique<Worker>();
             w->id = i;
             w->proc = std::make_unique<ProcessWorker>();
+
+            auto pq = new TSQueue<PRProgress>();
+            w->proc->set_progress_queue(pq);
+
+            // Spawn a thread to drain progress and update last_progress_
+            std::thread([this, pq, wid = w->id] {
+                PRProgress p;
+                while (pq->pop_wait(p)) {
+                    std::lock_guard<std::mutex> lk(progress_m_);
+                    last_progress_[wid] = std::move(p);
+                }
+                delete pq;
+                }).detach();
+
             w->jobs = jobs_.get();
             w->out = out_.get();
             workers_.push_back(std::move(w));

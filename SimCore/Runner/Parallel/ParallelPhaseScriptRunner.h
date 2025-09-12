@@ -36,6 +36,15 @@ namespace simcore {
         bool run_init_once();                                                   // MSG_RUN_INIT_ONCE to all
         bool activate_main();                                                   // MSG_ACTIVATE_MAIN to all
 
+
+        bool try_get_progress(size_t worker_id, PRProgress& out) const {
+            std::lock_guard<std::mutex> lk(progress_m_);
+            auto it = last_progress_.find(worker_id);
+            if (it == last_progress_.end()) return false;
+            out = it->second;
+            return true;
+        }
+
     private:
         struct CmdJob { uint64_t job_id; uint64_t epoch; PSJob job; };
         enum class CtrlType { Start, Reconfigure, Shutdown };
