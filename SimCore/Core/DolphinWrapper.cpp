@@ -7,6 +7,7 @@
 #include <fstream>
 #include "../Utils/SafeEnv.h"
 #include "../Utils/Log.h"
+#include "../Runner/IPC/Wire.h"
 
 // Dolphin headers (adjust paths to your tree)
 #include "Core/Boot/Boot.h"
@@ -30,6 +31,9 @@
 #include "Core/HW/GCPad.h"       // Pad::Initialize/Shutdown
 #include "Core/HW/GCKeyboard.h"  // Keyboard::Initialize/Shutdown
 #include "Core/HW/VideoInterface.h"
+#include "Core/HW/GCMemcard/GCMemcard.h"
+#include "Core/HW/Sram.h"
+#include "Core/HW/EXI/EXI_DeviceIPL.h"
 
 #include "DiscIO/Enums.h"
 #include "DiscIO/VolumeDisc.h"
@@ -739,7 +743,8 @@ namespace simcore {
         DolphinWrapper::runUntilBreakpointFlexible(uint32_t timeout_ms,
             uint32_t vi_stall_ms,
             bool watch_movie,
-            uint32_t poll_ms)
+            uint32_t poll_ms,
+            ProgressSink sink)
     {
         using std::chrono::steady_clock;
         using std::chrono::milliseconds;
@@ -755,6 +760,9 @@ namespace simcore {
         resetViCounterBaseline();
         uint64_t last_vi = getViFieldCountApprox();
         auto last_vi_change = steady_clock::now();
+
+        const ProgressSink& emit = sink ? sink : m_progress_sink; // toggle: null = no progress
+        auto last_emit = steady_clock::time_point{};
 
         // Ensure we begin in Running so time can advance (unless already paused by a BP before entry)
         if (Core::GetState(*m_system) != Core::State::Paused)
@@ -816,6 +824,45 @@ namespace simcore {
                             return { false, 0u, "vi_stalled" };
                         }
                     }
+                }
+            }
+
+            if (emit)
+            {
+                const auto now2 = steady_clock::now();
+                const bool time_ok = (!last_emit.time_since_epoch().count()) ||
+                    (now2 - last_emit) >= milliseconds(std::max<uint32_t>(100u, poll_ms ? poll_ms : 0u));
+
+                if (time_ok || ((polls & 0x3F) == 0)) // also piggyback on your 64-poll trace cadence
+                {
+                    uint32_t flags = 0;
+                    flags |= PF_WAITING_FOR_BP;
+                    if (watch_movie && movie.IsPlayingInput()) flags |= PF_MOVIE_PLAYING;
+
+                    // Warn if near timeout
+                    const auto left_ms_now2 = (uint32_t)std::chrono::duration_cast<milliseconds>(deadline - now2).count();
+                    if (left_ms_now2 <= std::max<uint32_t>(2000u, timeout_ms / 10u))
+                        flags |= PF_TIMEOUT_NEAR;
+
+                    // VI stall early warning (if configured)
+                    if (vi_stall_ms > 0)
+                    {
+                        const uint64_t vi_now = getViFieldCountApprox();
+                        if (vi_now == last_vi)
+                        {
+                            const auto since_ms = (uint32_t)std::chrono::duration_cast<milliseconds>(now2 - last_vi_change).count();
+                            if (since_ms >= (vi_stall_ms / 2u))
+                                flags |= PF_VI_STALLED_SUSPECTED;
+                        }
+                    }
+
+                    const uint32_t cur_frames = (uint32_t)getFrameCountApprox(false);
+                    const uint32_t total_frames = 0; // if TAS-known, you can pass it via member/context later
+                    const uint32_t elapsed_ms = (uint32_t)std::chrono::duration_cast<milliseconds>(now2 - start).count();
+                    const char* msg = (flags & PF_MOVIE_PLAYING) ? "playing" : "waiting on bp";
+
+                    emit(cur_frames, total_frames, elapsed_ms, flags, msg);
+                    last_emit = now2;
                 }
             }
 

@@ -101,11 +101,22 @@ namespace simcore {
         bool armPcBreakpoints(const std::vector<uint32_t>& pcs);
         bool disarmPcBreakpoints(const std::vector<uint32_t>& pcs);
         void clearAllPcBreakpoints();
+
+        using ProgressSink = std::function<void(uint32_t cur_frames,
+            uint32_t total_frames,
+            uint32_t elapsed_ms,
+            uint32_t flags,
+            const char* text)>;
+
+        ProgressSink getProgressSink() const { return m_progress_sink; }
+        void setProgressSink(ProgressSink s) { m_progress_sink = std::move(s); }
+
         RunUntilHitResult runUntilBreakpointBlocking(uint32_t timeout_ms = 5000);
         RunUntilHitResult runUntilBreakpointFlexible(uint32_t timeout_ms,
             uint32_t vi_stall_ms = 0,
             bool watch_movie = true,
-            uint32_t poll_ms = 0);
+            uint32_t poll_ms = 0,
+            ProgressSink sink = nullptr);
 
         uint32_t pickPollIntervalMs(uint32_t timeout_ms);
         static uint32_t pickPollIntervalMsForTimeLeft(uint32_t timeout_ms, uint32_t time_left_ms);
@@ -145,6 +156,7 @@ namespace simcore {
         bool m_imported_from_qt = false;
         void sterilizeConfigs();
 
+        ProgressSink m_progress_sink{};
     };
 
 } // namespace simcore
