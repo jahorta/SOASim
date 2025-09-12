@@ -13,6 +13,8 @@
 #include "Core/DolphinWrapper.h"
 #include "Runner/Breakpoints/BPCore.h"
 #include "Runner/Script/PhaseScriptVM.h"
+#include "Runner/Script/PSContextCodec.h"
+#include "Runner/Script/KeyRegistry.h"
 #include "Phases/Programs/ProgramRegistry.h"
 #include "Runner/Parallel/ParallelPhaseScriptRunner.h"
 #include "Runner/IPC/Wire.h"
@@ -37,7 +39,7 @@ static uint32_t parse_u32(const char* s) {
 }
 static const char* argv_next(int& i, int argc, char** argv) { return (i + 1 < argc) ? argv[++i] : ""; }
 
-static enum WorkerExitCode : uint8_t {
+enum WorkerExitCode : uint8_t {
     INVALID_HANDLES = 100,
     SEND_READY_FAILED
 };
@@ -249,10 +251,11 @@ int main(int argc, char** argv)
                 if (!read_all(hIn, payload.data(), payload.size())) break;
             }
 
-            WireResult wr{}; wr.tag = MSG_RESULT; wr.job_id = jh.job_id; wr.epoch = jh.epoch;
+            WireResult wr{}; wr.tag = MSG_RESULT; wr.job_id = jh.job_id; wr.epoch = jh.epoch; wr.err = WERR_None;
 
             if (!main_active) {
-                wr.ok = 0; wr.last_pc = 0; wr.seed = 0;
+                wr.ok = 0;
+                wr.err = WERR_NoProgramLoaded;
                 (void)write_all(hOut, &wr, sizeof(wr));
                 SCLOGD("[Worker %zu] JOB before ACTIVATE_MAIN -> NoProgram", worker_id);
                 continue;
@@ -263,21 +266,58 @@ int main(int argc, char** argv)
             pj.payload = std::move(payload);
             bool decode_ok = simcore::programs::decode_payload_for(/*active program kind*/ active_pk, pj.payload, pj.ctx);
             if (!decode_ok) {
-                wr.ok = 0; wr.last_pc = 0; wr.seed = 0;
+                wr.ok = 0;
+                wr.err = WERR_DecodePayloadFail;
                 (void)write_all(hOut, &wr, sizeof(wr));
                 SCLOGE("[Worker %zu] payload decode failed for active program", worker_id);
                 continue;
             }
 
+            auto progress_sink = [hOut, jh](uint32_t cur_frames,
+                uint32_t total_frames,
+                uint32_t elapsed_ms,
+                uint32_t flags,
+                const char* text)
+                {
+                    WireProgress wp{};
+                    wp.tag = MSG_PROGRESS;
+                    wp.job_id = jh.job_id;
+                    wp.epoch = jh.epoch;
+                    wp.phase_code = PHASE_RUN_UNTIL_BP; // primary emitter lives in runUntilBreakpointFlexible
+                    wp.cur_frames = cur_frames;
+                    wp.total_frames = total_frames;
+                    wp.elapsed_ms = elapsed_ms;
+                    wp.status_flags = flags;
+                    wp.poll_ms_used = 0; // optional; you can plumb actual poll if desired
+                    std::memset(wp.text, 0, sizeof(wp.text));
+                    if (text && *text)
+                        std::strncpy(wp.text, text, sizeof(wp.text) - 1);
+
+                    (void)write_all(hOut, &wp, sizeof(wp));
+                };
+
+            // For now, enable progress sink for all jobs; you can add a PSContext key later:
+            host.setProgressSink(progress_sink);
+
             // Run
             auto R = vm.run(pj);
-            wr.ok = R.ok ? 1 : 0;
-            wr.last_pc = R.last_hit_pc;
-            wr.seed = 0;
-            if (auto it = R.ctx.find("seed"); it != R.ctx.end()) {
-                if (auto p = std::get_if<uint32_t>(&it->second)) wr.seed = *p;
-            }
+
+            // --- clear sink after job ---
+            host.setProgressSink(nullptr);
+
+            // Encode numeric context
+            std::vector<uint8_t> blob;
+            bool enc_ok = simcore::psctx::encode_numeric(R.ctx, blob);
+
+            // Transport envelope
+            wr.ok = (R.ok && enc_ok) ? 1 : 0;
+            if (!enc_ok) wr.err = WERR_EncodePayloadFail;
+
+            wr.ctx_len = static_cast<uint32_t>(blob.size());
+
+            // Send tag, then send full header, then blob (if any)
             (void)write_all(hOut, &wr, sizeof(wr));
+            if (wr.ctx_len) (void)write_all(hOut, blob.data(), blob.size());
         }
         else {
             SCLOGD("[Worker %zu] unknown tag=%u (closing)", worker_id, tag);
