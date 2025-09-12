@@ -152,13 +152,13 @@ namespace simcore {
             return false;
         }
         
+        if (Core::IsRunning(*m_system))
+        {
         shutdownCore();
+            SetUserDirectory(m_user_dir);
+        }
 
         const WindowSystemInfo wsi = MakeHeadlessWSI();
-
-        setUserDirectory(std::filesystem::absolute(m_user_dir).string());
-        SConfig::Init();
-        SConfig::GetInstance().LoadSettings();
 
         sterilizeConfigs();
 
@@ -352,15 +352,6 @@ namespace simcore {
         catch (...) {
             return false;
         }
-    }
-
-    void DolphinWrapper::setUserDirectory(const std::string& abs_path)
-    {
-        const fs::path p = fs::absolute(abs_path);
-        fs::create_directories(p);
-
-        UICommon::SetUserDirectory(p.string());
-        UICommon::Init();
     }
 
     void DolphinWrapper::applyNextInputFrame() {

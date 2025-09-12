@@ -52,8 +52,6 @@ namespace simcore {
         // Disc metadata captured during last loadGame()
         std::optional<DiscInfo> getDiscInfo() const { return m_disc_info; }
 
-        void setUserDirectory(const std::string& abs_path);  // call before loadGame()
-
         // Run a functor on the CPU thread (blocks). Returns false if not running.
         bool runOnCpuThread(const std::function<void()>& fn, const bool waitForCompletion = true) const;
 
