@@ -226,20 +226,32 @@ namespace simcore {
             }
 
             if (tag == MSG_RESULT) {
-                WireResult wr{};
-                wr.tag = tag;
-                if (!read_all(hChildStd_OUT_Rd, reinterpret_cast<char*>(&wr) + 1, sizeof(wr) - 1)) break;
+                WireResult wr{}; wr.tag = tag;
+                if (!read_all(hChildStd_OUT_Rd, reinterpret_cast<char*>(&wr) + 1, sizeof(wr) - 1))
+                { 
+                    running_.store(false); 
+                    break; 
+                }
+
+                std::vector<uint8_t> blob; blob.resize(wr.ctx_len);
+                if (wr.ctx_len && !read_all(hChildStd_OUT_Rd, blob.data(), wr.ctx_len)) 
+                { 
+                    running_.store(false); 
+                    break; 
+                }
 
                 release_slot();
 
                 PRResult r{};
-                r.worker_id = id_;
-                r.accepted = true;
-                r.job_id = wr.job_id;
+                r.worker_id = id_; 
+                r.job_id = wr.job_id; 
                 r.epoch = wr.epoch;
+                r.accepted = true; 
                 r.ps.ok = (wr.ok != 0);
-                r.ps.last_hit_pc = wr.last_pc;
-                r.ps.ctx["seed"] = wr.seed;
+                r.ps.w_err = wr.err;
+
+                if (wr.ctx_len) simcore::psctx::decode_numeric(blob.data(), blob.size(), r.ps.ctx);
+
                 out_->push(std::move(r));
                 continue;
             }
