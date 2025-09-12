@@ -3,7 +3,7 @@
 #include <cstring>
 
 #include "../../../Runner/IPC/Wire.h"      // PK_SeedProbe
-#include "../../../Runner/Script/VMCoreKeys.h"    
+#include "../../../Runner/Script/VMCoreKeys.reg.h"    
 #include "../../../Runner/Script/PhaseScriptVM.h" // simcore::vmcore::<common keys>
 #include "SeedProbeScript.h"
 
@@ -61,14 +61,14 @@ namespace simcore::seedprobe {
         off += sizeof(GCInputFrame);
 
         // Set the input frame for the script's APPLY_INPUT_FROM(...)
-        out_ctx[K_INPUT] = frame;
+        out_ctx[keys::seed::INPUT] = frame;
 
         // Populate standardized core knobs if provided
         if (run_ms != 0) {
-            out_ctx[simcore::vmcore::K_RUN_MS] = run_ms;
+            out_ctx[keys::core::RUN_MS] = run_ms;
         }
         if (vi_stall_ms != 0) {
-            out_ctx[simcore::vmcore::K_VI_STALL_MS] = vi_stall_ms;
+            out_ctx[keys::core::VI_STALL_MS] = vi_stall_ms;
         }
 
         return true;

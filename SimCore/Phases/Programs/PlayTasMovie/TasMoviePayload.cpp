@@ -6,7 +6,8 @@
 #include "../../../Tas/DtmFile.h"   // simcore::tas::DtmFile
 #include "../../../Utils/Log.h"
 #include "../../../Runner/IPC/Wire.h"
-#include "../../../Runner/Script/VMCoreKeys.h"
+#include "../../../Runner/Script/VMCoreKeys.reg.h"
+#include "TasMovieKeys.reg.h"
 
 namespace fs = std::filesystem;
 
@@ -53,8 +54,12 @@ namespace simcore::tasmovie {
 
         out.push_back(PK_TasMovie);                 // payload kind tag
         put_u16(out, 1);                            // version
-        out.push_back(spec.save_on_fail ? 1 : 0);   // flags
-        out.push_back(0);                           // reserved
+        
+        uint8_t flags = 0;
+        if (spec.save_on_fail)   flags |= 0x01;
+        if (spec.progress_enable) flags |= 0x02;
+        out.push_back(flags);
+        out.push_back(0);  // reserved
 
         // reserved 6 bytes (future use: checksum or id6 snapshot)
         out.insert(out.end(), 6, uint8_t(0));
@@ -127,12 +132,13 @@ namespace simcore::tasmovie {
             : run_ms_in;
 
         // Fill TAS program context keys
-        out_ctx[K_DTM_PATH] = dtm_path;
-        out_ctx[K_SAVE_PATH] = save_path; 
-        out_ctx[vmcore::K_RUN_MS] = run_ms;
-        out_ctx[vmcore::K_VI_STALL_MS] = vi_stall_ms;
-        out_ctx[K_SAVE_ON_FAIL] = static_cast<uint32_t>((flags & 1) ? 1 : 0);
-        out_ctx[K_DISC_ID6] = id6;
+        out_ctx[keys::tas::DTM_PATH] = dtm_path;
+        out_ctx[keys::tas::SAVE_PATH] = save_path; 
+        out_ctx[keys::core::RUN_MS] = run_ms;
+        out_ctx[keys::core::VI_STALL_MS] = vi_stall_ms;
+        out_ctx[keys::tas::SAVE_ON_FAIL] = static_cast<uint32_t>((flags & 1) ? 1 : 0);
+        out_ctx[keys::core::PROGRESS_ENABLE] = static_cast<uint32_t>((flags & 0x02) ? 1 : 0);
+        out_ctx[keys::tas::DISC_ID6] = id6;
 
         return true;
     }

@@ -1,7 +1,8 @@
 #include "PhaseScriptVM.h"
 #include <algorithm>
 
-#include "VMCoreKeys.h"
+#include "VMCoreKeys.reg.h"
+#include "KeyRegistry.h"
 
 namespace simcore {
 
@@ -89,43 +90,30 @@ namespace simcore {
             }
 
             case PSOpCode::RUN_UNTIL_BP: {
-                using vmcore::K_RUN_MS;
-                using vmcore::K_VI_STALL_MS;
-                using vmcore::K_RUN_OUTCOME_CODE;
-                using vmcore::K_RUN_ELAPSED_MS;
-                using vmcore::K_RUN_HIT_PC;
-                using vmcore::K_METRICS_VI_LAST;
-                using vmcore::K_METRICS_POLL_MS;
-                using vmcore::RunToBpOutcome;
+                
+                using simcore::RunToBpOutcome;
 
-                // 1) Resolve timeout and VI-stall settings
-                //    - Default from VM init
-                //    - If your script previously executed SET_TIMEOUT(_FROM), that should have updated
-                //      a local 'timeout_ms' variable in this run() scope; if not, we fall back to ctx.
                 uint32_t timeout_ms = init_.default_timeout_ms;
-
-                // If your VM tracks a per-run timeout variable (e.g., mutated by SET_TIMEOUT_FROM),
-                // prefer it here. If not present in your codebase, this line is harmless to keep:
-                // (no-op unless you have such a variable).
-                // timeout_ms = timeout_ms; // placeholder; keep your existing behavior
-
-                // As a generic fallback, accept a per-job timeout from context if provided.
-                // (TAS payload writes "tas.run_ms"; other programs can introduce their own SET_TIMEOUT op.)
-                if (auto it = ctx.find(K_RUN_MS); it != ctx.end()) {
-                    if (auto p = std::get_if<uint32_t>(&it->second)) timeout_ms = *p;
-                }
-                if (op.to.ms) timeout_ms = op.to.ms; // legacy literal override still honored
+                ctx.get<uint32_t>(keys::core::RUN_MS, timeout_ms);
+                
 
                 uint32_t vi_stall_ms = 0;
-                if (auto it = ctx.find(K_VI_STALL_MS); it != ctx.end()) {
-                    if (auto p = std::get_if<uint32_t>(&it->second)) vi_stall_ms = *p;
-                }
+                ctx.get<uint32_t>(keys::core::VI_STALL_MS, vi_stall_ms);
 
                 // 2) Choose a poll cadence (VM emits the value it actually asked the wrapper to use)
                 const uint32_t poll_ms = host_.pickPollIntervalMs(timeout_ms);
 
                 // 3) Call into the flexible wrapper; it will treat watch_movie=true as a no-op if no movie is playing
                 const bool watch_movie = true;
+
+                bool progress_enable = false;
+                ctx.get<uint32_t>(keys::core::PROGRESS_ENABLE, (uint32_t&)progress_enable);
+
+                DolphinWrapper::ProgressSink sink = nullptr;
+                if (progress_enable)
+                {
+                    sink = host_.getProgressSink(); // host already has a per-job sink set by worker
+                }
 
                 auto t0 = std::chrono::steady_clock::now();
                 auto rr = host_.runUntilBreakpointFlexible(timeout_ms, vi_stall_ms, watch_movie, poll_ms);
@@ -145,47 +133,47 @@ namespace simcore {
                 }
 
                 // 5) Emit standardized, program-agnostic keys
-                R.ctx[K_RUN_OUTCOME_CODE] = static_cast<uint32_t>(outcome);
-                R.ctx[K_RUN_ELAPSED_MS] = elapsed_ms;
-                R.ctx[K_RUN_HIT_PC] = rr.hit ? rr.pc : 0u;
+                R.ctx[keys::core::OUTCOME_CODE] = static_cast<uint32_t>(outcome);
+                R.ctx[keys::core::ELAPSED_MS] = elapsed_ms;
+                R.ctx[keys::core::RUN_HIT_PC] = rr.hit ? rr.pc : 0u;
 
                 // Optional telemetry (present for observability)
-                R.ctx[K_METRICS_VI_LAST] = (uint32_t)(host_.getViFieldCountApprox() & 0xFFFFFFFFull);
-                R.ctx[K_METRICS_POLL_MS] = poll_ms;
+                R.ctx[keys::core::VI_LAST] = (uint32_t)(host_.getViFieldCountApprox() & 0xFFFFFFFFull);
+                R.ctx[keys::core::POLL_MS] = poll_ms;
 
                 // Preserve existing success semantics
                 if (!rr.hit) {
                     return R; // ok remains false; last_hit_pc left as-is (0)
                 }
-                R.last_hit_pc = rr.pc;
+                R.ctx[keys::core::RUN_HIT_PC] = rr.pc;
                 break;
             }
 
-            case PSOpCode::READ_U8: { uint8_t  v{}; if (!read_u8(op.rd.addr, v)) return R; ctx[op.rd.dst_key] = v; break; }
-            case PSOpCode::READ_U16: { uint16_t v{}; if (!read_u16(op.rd.addr, v)) return R; ctx[op.rd.dst_key] = v; break; }
+            case PSOpCode::READ_U8: { uint8_t  v{}; if (!read_u8(op.rd.addr, v)) return R; ctx[op.rd.dst] = v; break; }
+            case PSOpCode::READ_U16: { uint16_t v{}; if (!read_u16(op.rd.addr, v)) return R; ctx[op.rd.dst] = v; break; }
             case PSOpCode::READ_U32: 
             { 
                 uint32_t v{}; 
                 if (!read_u32(op.rd.addr, v)) 
                 {
-                    SCLOGD("[VM] READ_U32 FAIL @%08X key=%s", op.rd.addr, op.rd.dst_key.c_str());
+                    SCLOGD("[VM] READ_U32 FAIL @%08X key=%s", op.rd.addr, keys::name_for_id(op.rd.dst).data());
                     return R;
                 }
-                SCLOGD("[VM] READ_U32 @%08X -> %08X key=%s", op.rd.addr, v, op.rd.dst_key.c_str());
-                ctx[op.rd.dst_key] = v; 
+                SCLOGD("[VM] READ_U32 @%08X -> %08X key=%s", op.rd.addr, v, keys::name_for_id(op.rd.dst).data());
+                ctx[op.rd.dst] = v; 
                 break; 
             }
-            case PSOpCode::READ_F32: { float    v{}; if (!read_f32(op.rd.addr, v)) return R; ctx[op.rd.dst_key] = v; break; }
-            case PSOpCode::READ_F64: { double   v{}; if (!read_f64(op.rd.addr, v)) return R; ctx[op.rd.dst_key] = v; break; }
+            case PSOpCode::READ_F32: { float    v{}; if (!read_f32(op.rd.addr, v)) return R; ctx[op.rd.dst] = v; break; }
+            case PSOpCode::READ_F64: { double   v{}; if (!read_f64(op.rd.addr, v)) return R; ctx[op.rd.dst] = v; break; }
 
             case PSOpCode::EMIT_RESULT:
             {
-                SCLOGD("[VM] EMIT_RESULT %s=%08X", op.a_key.key.c_str(), ctx[op.a_key.key]);
-                R.ctx[op.a_key.key] = ctx[op.a_key.key]; // copy selected value to result
+                SCLOGD("[VM] EMIT_RESULT %s=%08X", keys::name_for_id(op.a_key.id).data(), ctx[op.a_key.id]);
+                R.ctx[op.a_key.id] = ctx[op.a_key.id]; // copy selected value to result
                 break;
             }
             case PSOpCode::APPLY_INPUT_FROM: {
-                auto it = ctx.find(op.a_key.key);
+                auto it = ctx.find(op.a_key.id);
                 if (it == ctx.end()) return R;
                 if (auto p = std::get_if<GCInputFrame>(&it->second)) {
                     host_.setInput(*p);
@@ -197,46 +185,33 @@ namespace simcore {
             }
 
             case PSOpCode::SET_TIMEOUT_FROM: {
-                auto it = ctx.find(op.a_key.key);
-                if (it == ctx.end()) return R;
-                if (auto p = std::get_if<uint32_t>(&it->second)) timeout_ms = *p;
-                else return R;
+                uint32_t timeout_ms;
+                ctx.get<uint32_t>(op.a_key.id, timeout_ms);
                 break;
             }
 
             case PSOpCode::MOVIE_PLAY_FROM: {
-                auto it = ctx.find(op.a_key.key);
-                if (it == ctx.end()) return R;
-                if (auto p = std::get_if<std::string>(&it->second)) {
-                    if (!host_.startMoviePlayback(*p)) return R;
-                }
-                else return R;
+                std::string path;
+                ctx.get<std::string>(op.a_key.id, path);
+                if (!host_.startMoviePlayback(path)) return R;
                 break;
             }
 
             case PSOpCode::SAVE_SAVESTATE_FROM: {
-                auto it = ctx.find(op.a_key.key);
-                if (it == ctx.end()) return R;
-                if (auto p = std::get_if<std::string>(&it->second)) {
-                    if (!host_.saveSavestateBlocking(*p)) return R;
-                }
-                else return R;
+                std::string path;
+                ctx.get<std::string>(op.a_key.id, path);
+                if (!host_.saveSavestateBlocking(path)) return R;
                 break;
             }
 
             case PSOpCode::REQUIRE_DISC_GAMEID_FROM: {
-                auto it = ctx.find(op.a_key.key);
-                if (it == ctx.end()) return R;
+                
                 const char* id6 = nullptr;
                 std::string tmp;
-                if (auto ps = std::get_if<std::string>(&it->second)) {
-                    tmp = *ps;
-                    if (tmp.size() < 6) return R;
-                    id6 = tmp.c_str();
-                }
-                else {
-                    return R;
-                }
+                ctx.get<std::string>(op.a_key.id, tmp);
+                if (tmp.size() < 6) return R;
+                id6 = tmp.c_str();
+
                 auto di = host_.getDiscInfo();
                 const bool ok = (di.has_value() && di->game_id.size() >= 6 &&
                     std::memcmp(di->game_id.data(), id6, 6) == 0);

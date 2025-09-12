@@ -26,7 +26,8 @@ namespace simcore {
         WERR_LoadGame = 3,
         WERR_VMInit = 4,
         WERR_NoProgramLoaded = 5,
-        WERR_WriteReady = 6
+        WERR_DecodePayloadFail = 7,
+        WERR_EncodePayloadFail = 8,
     };
 
     enum : uint8_t {

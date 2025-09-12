@@ -29,6 +29,7 @@ namespace simcore::tasmovie {
         uint32_t    run_ms{ 0 };       // 0 => derive from DTM header (VI/input count + headroom)
         uint32_t    vi_stall_ms{ 2000 };
         bool        save_on_fail{ true };
+        bool        progress_enable{ false };
     };
 
     // Build payload bytes (first byte PK_TasMovie). Returns true on success.
