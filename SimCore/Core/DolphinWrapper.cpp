@@ -312,9 +312,8 @@ namespace simcore {
         SCLOGI("[Movie] PLAY {}", dtm_path);
         bool ok = false;
         auto& movie = m_system->GetMovie();
-        runOnCpuThread([&] {
+        if (!movie.IsReadOnly()) movie.SetReadOnly(true);
             ok = movie.PlayInput(dtm_path, new std::optional<std::string>{});
-            }, true);
         return ok;
     }
 
