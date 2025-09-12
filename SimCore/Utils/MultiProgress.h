@@ -28,6 +28,8 @@ namespace simcore::utils {
 
         uint64_t total(size_t i) const;
         uint64_t done(size_t i) const;
+        void setLabel(size_t i, const std::string& s);
+        void setTotal(size_t i, uint64_t total);
 
     private:
         void maybe_redraw(bool force);

@@ -40,6 +40,19 @@ namespace simcore::utils {
         maybe_redraw(false);
     }
 
+    void MultiProgress::setLabel(size_t i, const std::string& s) {
+        if (i >= bars_.size()) return;
+        bars_[i].label = s;
+        maybe_redraw(true);
+    }
+
+    void MultiProgress::setTotal(size_t i, uint64_t total) {
+        if (i >= bars_.size()) return;
+        bars_[i].total = std::max<uint64_t>(1, total);
+        if (bars_[i].done > bars_[i].total) bars_[i].done = bars_[i].total;
+        maybe_redraw(true);
+    }
+
     void MultiProgress::finish() {
         finished_ = true;
         for (auto& b : bars_) b.done = b.total;
