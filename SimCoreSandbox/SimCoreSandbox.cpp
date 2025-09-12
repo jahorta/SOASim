@@ -22,7 +22,7 @@
 #include "SandboxConfig.h"
 #include "MenuConfig.h"
 #include "SeedProbe.h"
-//#include "TASMoviePlayer.h"
+#include "TASMoviePlayer.h"
 #include "utils.h"
 
 using namespace simcore;
@@ -46,7 +46,7 @@ static void menu_loop(AppState& g)
         std::cout << "\n=== SOASim Sandbox ===\n";
         std::cout << "1) Configure paths (ISO, Dolphin portable base, default savestate)\n";
         std::cout << "2) Run RNGSeedDeltaMap probe\n";
-        // std::cout << "3) TAS Movie -> BP -> Savestate (scaffold)\n";
+         std::cout << "3) TAS Movie -> BP -> Savestate (scaffold)\n";
         std::cout << "q) Quit\n";
         std::cout << "> ";
 
@@ -55,7 +55,7 @@ static void menu_loop(AppState& g)
         if (choice == "q" || choice == "Q") break;
         if (choice == "1") menu_configure_paths(g);
         else if (choice == "2") sandbox::run_rng_seed_probe_menu(g);
-        /*else if (choice == "3") sandbox::menu_tas_movie(g);*/
+        else if (choice == "3") sandbox::menu_tas_movie(g);
         else {
             std::cout << "Unknown option.\n";
         }
