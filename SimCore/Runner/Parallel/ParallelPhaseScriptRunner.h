@@ -35,6 +35,10 @@ namespace simcore {
         bool run_init_once();                                                   // MSG_RUN_INIT_ONCE to all
         bool activate_main();                                                   // MSG_ACTIVATE_MAIN to all
 
+        inline void increment_epoch() { epoch_.fetch_add(1); for (auto& w : workers_) w->epoch = epoch_.load(); }
+        inline void reset_job_ids() { job_seq_.store(0); }
+
+        inline uint32_t worker_count() { return static_cast<uint32_t>(workers_.size()); }
 
         bool try_get_progress(size_t worker_id, PRProgress& out) const {
             std::lock_guard<std::mutex> lk(progress_m_);
