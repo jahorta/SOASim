@@ -156,7 +156,7 @@ namespace simcore {
         const ButtonNameMap& names,
         const GCInputFrame& neutral)
     {
-        // Keep the same “neutral” convention used elsewhere
+        // Keep the same "neutral" convention used elsewhere
         if (frames_equal(f, neutral))
             return "(no changes vs neutral)";
 

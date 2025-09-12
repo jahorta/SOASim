@@ -29,7 +29,7 @@ namespace simcore {
             // Optional: you can add a runtime check on image path here via QueryFullProcessImageNameW
             // to ensure it's your worker in your repo path.
 
-            // First try a gentle close by sending CTRL_BREAK or closing pipes—if you track handles.
+            // First try a gentle close by sending CTRL_BREAK or closing pipes-if you track handles.
             // Here we just hard terminate as a last resort:
             TerminateProcess(h, 0);
             CloseHandle(h);
@@ -174,7 +174,7 @@ namespace simcore {
                     // still pending; also consider if the child exited before READY
                     DWORD s = WaitForSingleObject(w->proc->process_handle(), 0);
                     if (s == WAIT_OBJECT_0 && !w->proc->is_ready() && !w->proc->is_failed()) {
-                        // Exited without MSG_READY — treat as failure
+                        // Exited without MSG_READY - treat as failure
                         ++failed;
                     }
                 }

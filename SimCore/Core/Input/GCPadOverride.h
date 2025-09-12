@@ -20,7 +20,7 @@ namespace simcore {
         // Safe to call multiple times; it is a no-op after the first successful install.
         void install();
 
-        // Update the currently “held” controller state.
+        // Update the currently "held" controller state.
         void setFrame(const GCInputFrame& f);
 
         // Convenience: centered sticks, no buttons.

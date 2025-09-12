@@ -15,7 +15,7 @@ namespace simcore {
         GC_Z = PAD_TRIGGER_Z,     // 0x0010
         GC_R_BTN = PAD_TRIGGER_R,     // 0x0020
         GC_L_BTN = PAD_TRIGGER_L,     // 0x0040
-        // 0x0080 is intentionally unused in Dolphin’s GC mask
+        // 0x0080 is intentionally unused in Dolphin's GC mask
         GC_A = PAD_BUTTON_A,      // 0x0100
         GC_B = PAD_BUTTON_B,      // 0x0200
         GC_X = PAD_BUTTON_X,      // 0x0400

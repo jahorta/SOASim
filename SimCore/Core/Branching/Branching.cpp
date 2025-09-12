@@ -81,7 +81,7 @@ namespace simcore {
         for (size_t i = 0; i < m_spec.decisions.size(); ++i) {
             const size_t base = m_spec.decisions[i].options.size();
             const size_t weight = (i + 1 < m_radix.size()) ? m_radix[i] : 1;
-            // If there are no decisions, the loop doesn’t run.
+            // If there are no decisions, the loop doesn't run.
             choice_idx[i] = (base == 0) ? 0 : (m_index / weight) % base;
         }
 

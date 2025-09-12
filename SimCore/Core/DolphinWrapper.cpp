@@ -158,7 +158,7 @@ namespace simcore {
         
         if (Core::IsRunning(*m_system))
         {
-        shutdownCore();
+            shutdownCore();
             SetUserDirectory(m_user_dir);
         }
 
@@ -313,7 +313,7 @@ namespace simcore {
         bool ok = false;
         auto& movie = m_system->GetMovie();
         if (!movie.IsReadOnly()) movie.SetReadOnly(true);
-            ok = movie.PlayInput(dtm_path, new std::optional<std::string>{});
+        ok = movie.PlayInput(dtm_path, new std::optional<std::string>{});
         return ok;
     }
 
@@ -328,10 +328,10 @@ namespace simcore {
             movie.SetReadOnly(false);
         }
         else {
-        runOnCpuThread([&] {
-            movie.EndPlayInput(false);
+            runOnCpuThread([&] {
+                movie.EndPlayInput(false);
                 movie.SetReadOnly(false);
-            }, true);
+                }, true);
         }
 
         const auto deadline = steady_clock::now() + milliseconds(timeout_ms);
@@ -347,7 +347,7 @@ namespace simcore {
     {
         // We avoid Dolphin source changes: copy the provided RAW to the
         // standard per-region filenames so the current game will pick it up.
-        // MemoryCardA.<REG>.raw is the path Dolphin expects for “Memory Card” mode.
+        // MemoryCardA.<REG>.raw is the path Dolphin expects for "Memory Card" mode.
         // (Documented widely in user guides/bug threads.) 
         // USA/JAP/PAL cover GC regions.
         namespace fs = std::filesystem;
@@ -763,9 +763,9 @@ namespace simcore {
         // You can tweak these in one place and both VM and wrapper will follow.
         (void)timeout_ms; // reserved for future policy that also considers absolute scale
         if (time_left_ms >= 5u * 60u * 1000u) return 500u;  // >= 5 minutes
-        if (time_left_ms >= 60u * 1000u)      return 250u;  // 1–5 minutes
-        if (time_left_ms >= 10u * 1000u)      return 100u;  // 10–60 seconds
-        if (time_left_ms >= 2000u)            return 50u;   // 2–10 seconds
+        if (time_left_ms >= 60u * 1000u)      return 250u;  // 1-5 minutes
+        if (time_left_ms >= 10u * 1000u)      return 100u;  // 10-60 seconds
+        if (time_left_ms >= 2000u)            return 50u;   // 2-10 seconds
         return 20u;                                         // < 2 seconds
     }
 

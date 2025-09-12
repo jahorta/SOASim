@@ -35,5 +35,5 @@ public:
     void enqueue(DolphinJob job);
 private:
     void worker_main(size_t idx);
-    // …
+    
 };

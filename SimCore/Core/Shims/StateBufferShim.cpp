@@ -1,6 +1,6 @@
 #include "StateBufferShim.h"
 
-// Do NOT include Core/State.h here — its declaration (const&) doesn't match the library ABI.
+// Do NOT include Core/State.h here - its declaration (const&) doesn't match the library ABI.
 
 // Forward-declare the ABI that actually exists in DolphinLib (non-const UniqueBuffer&).
 namespace State {
