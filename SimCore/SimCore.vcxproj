@@ -1087,6 +1087,7 @@
       <SubType>
       </SubType>
     </None>
+    <None Include="_TODO.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
