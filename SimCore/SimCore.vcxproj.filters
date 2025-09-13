@@ -177,6 +177,9 @@
     <ClInclude Include="Runner\Script\PSContextCodec.h">
       <Filter>Runner\VM</Filter>
     </ClInclude>
+    <ClInclude Include="Utils\Time.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SimCore.cpp">

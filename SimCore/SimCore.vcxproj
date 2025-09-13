@@ -204,6 +204,7 @@
     <ClInclude Include="Utils\ProgressBar.h" />
     <ClInclude Include="Utils\SafeEnv.h" />
     <ClInclude Include="Utils\ThreadName.h" />
+    <ClInclude Include="Utils\Time.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\dolphin-2506a\Source\Core\Common\Analytics.cpp">
