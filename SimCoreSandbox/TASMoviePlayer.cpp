@@ -68,8 +68,31 @@ namespace sandbox {
                 auto result = RunTasMovieOnePerWorkerWithProgress(runner, a);
 
                 for (auto i : result.items) {
-                    if (i.ok) SCLOGI("Successful save: rtc:%d, path:", i.delta_sec, i.save_path.c_str());
-                    else SCLOGI("Failed to save: rtc:%d, dtm:%s", i.delta_sec, i.dtm_path.c_str());
+                    if (i.ok) SCLOGI("[rtc %d] Successful save to: %s", i.delta_sec, i.save_path.c_str());
+                    else {
+                        uint32_t o_temp; i.ctx.get(simcore::keys::core::OUTCOME_CODE, o_temp); simcore::RunToBpOutcome outcome = static_cast<simcore::RunToBpOutcome>(o_temp);
+                        if (outcome != simcore::RunToBpOutcome::Hit)
+                            switch (outcome) {
+                            case simcore::RunToBpOutcome::Aborted:
+                                SCLOGW("[rtc %d] Run Aborted!!!", i.delta_sec);
+                                break;
+                            case simcore::RunToBpOutcome::MovieEnded:
+                                SCLOGW("[rtc %d] Movie ended!!!", i.delta_sec);
+                                break;
+                            case simcore::RunToBpOutcome::Timeout:
+                                SCLOGW("[rtc %d] Timed out!!!", i.delta_sec);
+                                break;
+                            case simcore::RunToBpOutcome::ViStalled:
+                                SCLOGW("[rtc %d] VI Stalled!!!", i.delta_sec);
+                                break;
+                            case simcore::RunToBpOutcome::Unknown:
+                                SCLOGW("[rtc %d] Stopped for unknown reason??", i.delta_sec);
+                                break;
+                            default:
+                                break;
+                            }
+                        else SCLOGW("[rtc %d] Failed to save. dtm at: %s", i.delta_sec, i.dtm_path.c_str());
+                    }
                 }
 
                 runner.stop();
