@@ -21,6 +21,8 @@ namespace sandbox {
         a.vi_stall_ms = 60000;
         a.rtc_delta_lo = 0;         // UNIX seconds
         a.rtc_delta_hi = 0;         // UNIX seconds
+        a.base_dtm = { "D:\\SoATAS\\beginning.dtm" };
+        a.out_dir = { "D:\\SoATAS\\beginning_output" };
 
         for (;;) {
             std::cout << "\n--- TAS Movie -> BP -> Savestate ---\n";
