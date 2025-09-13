@@ -255,4 +255,6 @@ namespace SOA {
 
 namespace SOA::ADDR {
 		const uint32_t RNG_SEED = 0x803469A8;
+		const uint32_t SCT_FILE_NUM = 0x80311ac4;
+		const uint32_t SCT_FILE_LTTR = 0x80311ac8;
 }
