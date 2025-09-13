@@ -197,6 +197,7 @@ namespace simcore::tas_movie {
                 // Advance using VI frames if available; fallback to elapsed_ms heuristic.
                 uint64_t cur = p.cur_frames ? p.cur_frames : p.elapsed_ms / 16;
                 mp.advanceTo(wid, cur);
+                mp.setSuffix(wid, p.text);
             }
 
             if (!saw_any_progress) {

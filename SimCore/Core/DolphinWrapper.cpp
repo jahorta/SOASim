@@ -941,7 +941,15 @@ namespace simcore {
                     const uint32_t cur_frames = (uint32_t)getFrameCountApprox(false);
                     const uint32_t total_frames = 0; // if TAS-known, you can pass it via member/context later
                     const uint32_t elapsed_ms = (uint32_t)std::chrono::duration_cast<milliseconds>(now2 - start).count();
-                    const char* msg = (flags & PF_MOVIE_PLAYING) ? "playing" : "waiting on bp";
+
+                    std::string tag = getCurrentSctFileTag();
+                    const char* msg = nullptr;
+                    if (!tag.empty()) {
+                        msg = tag.c_str();
+                    }
+                    else {
+                        msg = (flags & PF_MOVIE_PLAYING) ? "playing" : "waiting on bp";
+                    }
 
                     emit(cur_frames, total_frames, elapsed_ms, flags, msg);
                     last_emit = now2;
