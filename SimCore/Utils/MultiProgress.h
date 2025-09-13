@@ -30,11 +30,13 @@ namespace simcore::utils {
         uint64_t done(size_t i) const;
         void setLabel(size_t i, const std::string& s);
         void setTotal(size_t i, uint64_t total);
+        void setSuffix(size_t i, const std::string& s);
 
     private:
         void maybe_redraw(bool force);
         static void format_line(char* out, size_t n, const char* label, int barw,
-            double pct, uint64_t done, uint64_t total, double rate);
+            double pct, uint64_t done, uint64_t total, double rate,
+            const char* suffix);
         bool enable_vt_once();
 
         struct Bar {
@@ -43,6 +45,7 @@ namespace simcore::utils {
             uint64_t done = 0;
             double rate = 0.0;
             std::chrono::steady_clock::time_point start{};
+            std::string suffix;
         };
 
         Options opt_{};

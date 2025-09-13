@@ -53,6 +53,12 @@ namespace simcore::utils {
         maybe_redraw(true);
     }
 
+    void MultiProgress::setSuffix(size_t i, const std::string& s) {
+        if (i >= bars_.size()) return;
+        bars_[i].suffix = s;
+        maybe_redraw(true);
+    }
+
     void MultiProgress::finish() {
         finished_ = true;
         for (auto& b : bars_) b.done = b.total;
@@ -91,7 +97,9 @@ namespace simcore::utils {
         for (size_t i = 0; i < bars_.size(); ++i) {
             auto& b = bars_[i];
             const double pct = 100.0 * double(b.done) / double(b.total);
-            format_line(line, sizeof(line), b.label.c_str(), opt_.bar_width, pct, b.done, b.total, b.rate);
+            format_line(line, sizeof(line),
+                b.label.c_str(), opt_.bar_width, pct, b.done, b.total, b.rate,
+                b.suffix.empty() ? nullptr : b.suffix.c_str());
             if (vt_ok_) {
                 std::fputs("\r", stdout);
                 std::fputs(line, stdout);
@@ -108,15 +116,25 @@ namespace simcore::utils {
     }
 
     void MultiProgress::format_line(char* out, size_t n, const char* label, int barw,
-        double pct, uint64_t done, uint64_t total, double rate) {
+        double pct, uint64_t done, uint64_t total, double rate, const char* suffix) {
+
         const int w = std::max(1, std::min(barw, 60));
         const int filled = std::clamp(int((pct / 100.0) * w), 0, w);
         char bar[64];
         for (int i = 0; i < w; ++i) bar[i] = (i < filled) ? '#' : '-';
         bar[w] = 0;
-        std::snprintf(out, n, "%-10s [%s] %6.2f%%  %llu/%llu  %.1f/s",
-            label ? label : "", bar, pct,
-            (unsigned long long)done, (unsigned long long)total, rate);
+
+        if (suffix && *suffix) {
+            std::snprintf(out, n, "%-10s [%s] %6.2f%%  %llu/%llu  %.1f/s\t%s",
+                label ? label : "", bar, pct,
+                (unsigned long long)done, (unsigned long long)total, rate,
+                suffix);
+        }
+        else {
+            std::snprintf(out, n, "%-10s [%s] %6.2f%%  %llu/%llu  %.1f/s",
+                label ? label : "", bar, pct,
+                (unsigned long long)done, (unsigned long long)total, rate);
+        }
     }
 
     bool MultiProgress::enable_vt_once() {
