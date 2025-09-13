@@ -105,8 +105,9 @@ namespace simcore {
                 // 3) Call into the flexible wrapper; it will treat watch_movie=true as a no-op if no movie is playing
                 const bool watch_movie = true;
 
-                bool progress_enable = false;
-                ctx.get<uint32_t>(keys::core::PROGRESS_ENABLE, (uint32_t&)progress_enable);
+                uint32_t progress_temp;
+                ctx.get(keys::core::PROGRESS_ENABLE, progress_temp);
+                bool progress_enable = progress_temp != 0;
 
                 DolphinWrapper::ProgressSink sink = nullptr;
                 if (progress_enable)
