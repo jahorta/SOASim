@@ -1037,6 +1037,8 @@ namespace simcore {
 
         //SCLOGT("Turning off alerts.");
         //Config::SetCurrent(Config::MAIN_);
+        Config::SetCurrent(Config::MAIN_WIIMOTE_CONTINUOUS_SCANNING, false);
+        Config::SetCurrent(Config::MAIN_CONNECT_WIIMOTES_FOR_CONTROLLER_INTERFACE, false);
 
         SCLOGT("Ensuring memorycard exists");
         setGCMemoryCardA("");
