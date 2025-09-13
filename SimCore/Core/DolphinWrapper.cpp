@@ -164,6 +164,10 @@ namespace simcore {
             std::this_thread::sleep_until(steady_clock::now() + milliseconds(1));
         }
 
+        Wiimote::Shutdown();
+        Keyboard::Shutdown();
+        Pad::Shutdown();
+        g_controller_interface.Shutdown();
         Core::Shutdown(*m_system);
         SConfig::Shutdown();
     }
