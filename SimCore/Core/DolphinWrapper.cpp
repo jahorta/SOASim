@@ -88,9 +88,29 @@ namespace simcore {
         return true;
     }
 
+    static bool initWiimotesNone() {
+        using namespace Wiimote;
+        // Ensure module is initialized and configs loaded so controllers exist.
+        Initialize(InitializeMode::DO_NOT_WAIT_FOR_WIIMOTES);
+        if (auto* ic = GetConfig()) {
+            ic->LoadConfig();
+            SCLOGI("[Wii] controllers=%d", ic->GetControllerCount());
+        }
+        // Force all Wiimote sources to None, then re-init to materialize devices.
+        Config::SetCurrent(Config::MAIN_CONNECT_WIIMOTES_FOR_CONTROLLER_INTERFACE, false);
+        Shutdown();
+        Initialize(InitializeMode::DO_NOT_WAIT_FOR_WIIMOTES);
+        if (auto* ic2 = GetConfig()) {
+            ic2->LoadConfig();
+            SCLOGI("[Wii] controllers(after None)=%d", ic2->GetControllerCount());
+        }
+        return true;
+    }
+
     static bool loadDolphinGUISettings(WindowSystemInfo wsi) {
         SCLOGI("Loading Dolphin GUI settings");
         initPads(wsi);
+        initWiimotesNone();
         return true;
     }
 
