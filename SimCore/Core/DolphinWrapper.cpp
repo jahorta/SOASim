@@ -301,9 +301,8 @@ namespace simcore {
     bool DolphinWrapper::saveSavestateBlocking(const std::string& path)
     {
         if (!Core::IsRunning(*m_system)) return false;
-        runOnCpuThread([&] {
-            State::SaveAs(*m_system, path);
-            }, true);
+        if (Core::GetState(*m_system) != Core::State::Paused) Core::SetState(*m_system, Core::State::Paused, false, false);
+        State::SaveAs(*m_system, path, true);
         return true;
     }
 
