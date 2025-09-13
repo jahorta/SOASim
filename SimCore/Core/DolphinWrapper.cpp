@@ -914,8 +914,8 @@ namespace simcore {
                             {
                                 SCLOGD("[run] close to VI stall!", left_ms_now2);
                                 flags |= PF_VI_STALLED_SUSPECTED;
+                            }
                         }
-                    }
                     }
 
                     const uint32_t cur_frames = (uint32_t)getFrameCountApprox(false);
