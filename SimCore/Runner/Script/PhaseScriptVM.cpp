@@ -70,7 +70,6 @@ namespace simcore {
     {
         PSResult R{};
         PSContext ctx = job.ctx;
-        uint32_t timeout_ms = init_.default_timeout_ms;
 
         // Always start by restoring the pre-captured snapshot for each job
         if (!load_snapshot()) return R;
