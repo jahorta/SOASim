@@ -786,6 +786,10 @@ namespace simcore {
         auto& movie = m_system->GetMovie();
         const bool had_movie = watch_movie && movie.IsPlayingInput();
 
+        
+        SCLOGD("[run] timeout set to: %lld ms", timeout_ms);
+        SCLOGD("[run] start=%s deadline=%s", simcore::time_util::steady_to_cstr(start), simcore::time_util::steady_to_cstr(deadline));
+
         // VI stall tracking baseline
         resetViCounterBaseline();
         uint64_t last_vi = getViFieldCountApprox();
@@ -805,7 +809,7 @@ namespace simcore {
             if (now >= deadline) {
                 // TIMEOUT: enforce postcondition (Paused) then return
                 Core::SetState(*m_system, Core::State::Paused);
-                SCLOGD("[DW/run] TIMEOUT polls=%zu pc=%08X", polls, getPC());
+                SCLOGD("[DW/run] TIMEOUT polls=%zu pc=%08X vi=%lld", polls, getPC(), getViFieldCountApprox());
                 return { false, 0u, "timeout" };
             }
 
@@ -872,7 +876,10 @@ namespace simcore {
                     // Warn if near timeout
                     const auto left_ms_now2 = (uint32_t)std::chrono::duration_cast<milliseconds>(deadline - now2).count();
                     if (left_ms_now2 <= std::max<uint32_t>(2000u, timeout_ms / 10u))
+                    {
+                        SCLOGD("[run] close to timeout! time remaining: %lld ms", left_ms_now2);
                         flags |= PF_TIMEOUT_NEAR;
+                    }
 
                     // VI stall early warning (if configured)
                     if (vi_stall_ms > 0)
@@ -882,8 +889,11 @@ namespace simcore {
                         {
                             const auto since_ms = (uint32_t)std::chrono::duration_cast<milliseconds>(now2 - last_vi_change).count();
                             if (since_ms >= (vi_stall_ms / 2u))
+                            {
+                                SCLOGD("[run] close to VI stall!", left_ms_now2);
                                 flags |= PF_VI_STALLED_SUSPECTED;
                         }
+                    }
                     }
 
                     const uint32_t cur_frames = (uint32_t)getFrameCountApprox(false);
