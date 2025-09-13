@@ -128,7 +128,7 @@ namespace simcore::tasmovie {
 
         // Derive run_ms if the payload asked us to (== 0)
         const uint32_t run_ms = (run_ms_in == 0)
-            ? compute_run_ms_from_counts(vi_count, input_count, /*headroom=*/1.15)
+            ? compute_run_ms_from_counts(vi_count, input_count, /*headroom=*/1.5)
             : run_ms_in;
 
         // Fill TAS program context keys
