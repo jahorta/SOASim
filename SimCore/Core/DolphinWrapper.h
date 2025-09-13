@@ -57,6 +57,7 @@ namespace simcore {
 
         uint32_t getPC();
         uint64_t getTBR();
+        std::string getCurrentSctFileTag() const;
 
         // Input functions
         void setInputPlan(const InputPlan& p) { m_plan = p; m_cursor = 0; }

@@ -9,6 +9,7 @@
 #include "../Utils/Log.h"
 #include "../Utils/Time.h"
 #include "../Runner/IPC/Wire.h"
+#include "../Runner/SOAConstants.h"
 
 // Dolphin headers (adjust paths to your tree)
 #include "Core/Boot/Boot.h"
@@ -255,6 +256,25 @@ namespace simcore {
             tbr = m_system->GetPowerPC().ReadFullTimeBaseValue();
             }, true);
         return tbr;
+    }
+
+    std::string DolphinWrapper::getCurrentSctFileTag() const
+    {
+        using namespace SOA::ADDR;
+        uint32_t num = 0;
+        uint8_t  ch = 0;
+
+        // Try both reads; if either fails, return empty.
+        if (!readU32(SCT_FILE_NUM, num)) return {};
+        if (!readU8(SCT_FILE_LTTR, ch))  return {};
+
+        // Enforce expected ranges: number 1..600; letter must be a printable ASCII.
+        if (num < 1 || num > 600) return {};
+        if (ch < 0x20 || ch > 0x7E) return {};
+
+        char buf[32];
+        std::snprintf(buf, sizeof(buf), "SCT_FILE:%03u%c", num, static_cast<char>(ch));
+        return std::string(buf);
     }
 
     bool DolphinWrapper::loadSavestate(const std::string& state_path)
