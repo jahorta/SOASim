@@ -158,10 +158,8 @@ namespace simcore::tas_movie {
             if (runner.try_get_result(r)) {
                 auto it = by_id.find(r.job_id);
                 if (it != by_id.end()) {
-                    uint32_t last_pc{};
-                    r.ps.ctx.get<uint32_t>(keys::core::RUN_HIT_PC, last_pc);
+                    it->second.ctx = r.ps.ctx;
                     it->second.ok = r.ps.ok;
-                    it->second.last_pc = last_pc;
                     if (r.ps.ok) ++br.succeeded;
                 }
                 // Seal the worker's bar as finished.

@@ -26,6 +26,7 @@ namespace simcore::tas_movie {
         uint64_t job_id{ 0 };
         bool ok{ false };
         uint32_t last_pc{ 0 };
+        PSContext ctx;
     };
 
     struct BatchResult {
