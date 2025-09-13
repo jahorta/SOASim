@@ -183,12 +183,12 @@ namespace simcore {
         if (Core::IsRunning(*m_system))
         {
             shutdownCore();
-            SetUserDirectory(m_user_dir);
         }
 
         const WindowSystemInfo wsi = MakeHeadlessWSI();
 
         sterilizeConfigs();
+        SetUserDirectory(m_user_dir);
 
         m_system_pad_is_inited = loadDolphinGUISettings(wsi);
 
