@@ -7,6 +7,7 @@
 #include <fstream>
 #include "../Utils/SafeEnv.h"
 #include "../Utils/Log.h"
+#include "../Utils/Time.h"
 #include "../Runner/IPC/Wire.h"
 
 // Dolphin headers (adjust paths to your tree)
@@ -34,6 +35,8 @@
 #include "Core/HW/GCMemcard/GCMemcard.h"
 #include "Core/HW/Sram.h"
 #include "Core/HW/EXI/EXI_DeviceIPL.h"
+#include "Core/HW/Wiimote.h"
+#include "Core/HW/WiimoteEmu/WiimoteEmu.h"
 
 #include "DiscIO/Enums.h"
 #include "DiscIO/VolumeDisc.h"
@@ -74,8 +77,7 @@ namespace simcore {
 
     // --- load settings helpers --------------------------------------------------
 
-    static bool initPads(WindowSystemInfo wsi) {
-        g_controller_interface.Initialize(wsi);
+    static bool initPads() {
         Pad::Initialize();
 
         if (auto* ic = Pad::GetConfig()) {
@@ -109,7 +111,8 @@ namespace simcore {
 
     static bool loadDolphinGUISettings(WindowSystemInfo wsi) {
         SCLOGI("Loading Dolphin GUI settings");
-        initPads(wsi);
+        g_controller_interface.Initialize(wsi);
+        initPads();
         initWiimotesNone();
         return true;
     }
