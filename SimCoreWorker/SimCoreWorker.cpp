@@ -11,14 +11,13 @@
 #include "Utils/Log.h"
 #include "Boot/Boot.h"
 #include "Core/DolphinWrapper.h"
-#include "Runner/Breakpoints/BPCore.h"
+#include "Runner/Breakpoints/BPRegistry.h"
 #include "Runner/Script/PhaseScriptVM.h"
 #include "Runner/Script/PSContextCodec.h"
 #include "Runner/Script/KeyRegistry.h"
 #include "Phases/Programs/ProgramRegistry.h"
 #include "Runner/Parallel/ParallelPhaseScriptRunner.h"
 #include "Runner/IPC/Wire.h"
-#include "Runner/Breakpoints/PreBattleBreakpoints.h"
 
 #include <windows.h>
 #include <Utils/ThreadName.h>
@@ -170,7 +169,7 @@ int main(int argc, char** argv)
     host.ConfigurePortsStandardPadP1();
 
     // ----- New control-mode only -----
-    BreakpointMap bpmap = battle_rng_probe::defaults();
+    BreakpointMap bpmap = BPRegistry::as_map();
     PhaseScriptVM vm(host, bpmap);
 
     // Advertise "NoProgram" at startup

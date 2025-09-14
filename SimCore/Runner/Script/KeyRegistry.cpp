@@ -9,15 +9,16 @@
 #include "VMCoreKeys.reg.h"
 #include "../../Phases/Programs/SeedProbe/SeedProbeKeys.reg.h"
 #include "../../Phases/Programs/PlayTasMovie/TasMovieKeys.reg.h"
+#include "../../Phases/Programs/BattleRunner/BattleRunnerKeys.reg.h"
 
 namespace simcore::keys {
 
     // Fixed list of module tables (deterministic order)
     static constexpr const KeyPair* kTablesPtrs[] = {
-    core::kKeys, seed::kKeys, tas::kKeys
+    core::kKeys, seed::kKeys, tas::kKeys, battle::kKeys,
     };
     static constexpr std::size_t kTablesSizes[] = {
-      core::kCount, seed::kCount, tas::kCount
+      core::kCount, seed::kCount, tas::kCount, battle::kCount
     };
 
     static constexpr size_t kNumTables = sizeof(kTablesPtrs) / sizeof(kTablesPtrs[0]);

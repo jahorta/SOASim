@@ -9,7 +9,7 @@
 #include "../Script/PhaseScriptVM.h"  // for PSResult
 #include "TSQueue.h"
 #include "PRTypes.h"
-#include "../Breakpoints/BPCore.h"
+#include "../Breakpoints/BPRegistry.h"
 
 
 namespace simcore {

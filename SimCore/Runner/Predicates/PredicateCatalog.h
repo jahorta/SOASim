@@ -4,15 +4,8 @@
 #include <vector>
 #include <functional>
 #include "../../Core/DolphinWrapper.h"
-#include "../Breakpoints/BPCore.h"
-
-#pragma once
-#include <string>
-#include <unordered_map>
-#include <vector>
-#include <functional>
+#include "../Breakpoints/BPRegistry.h"
 #include <variant>
-#include "../Breakpoints/BPCore.h"
 
 // Declared reads per predicate
 enum class MemType { U8, U16, U32, F32, F64 };

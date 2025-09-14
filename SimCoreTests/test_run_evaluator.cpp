@@ -39,11 +39,11 @@ static std::string write_temp_bpmap(const std::string& filename, const std::stri
 TEST(BreakpointMap, LoadOverridesByName_NoIfElse)
 {
 
-    // override StartTurn and EndBattle; include unknown key that should be ignored
+    // override StartTurn and BattleVictory; include unknown key that should be ignored
     const std::string path = write_temp_bpmap("battle_test.bpmap",
         "# overrides\n"
         "StartTurn=0x1234\n"
-        "EndBattle=65535\n"
+        "BattleVictory=65535\n"
         "UnknownKey=0xDEADBEEF\n");
 
     auto map = battle::load_from_file(path);
@@ -52,7 +52,7 @@ TEST(BreakpointMap, LoadOverridesByName_NoIfElse)
     for (const auto& a : map.addrs)
     {
         if (a.name == std::string("StartTurn"))   startTurnPC = a.pc;
-        if (a.name == std::string("EndBattle"))   endBattlePC = a.pc;
+        if (a.name == std::string("BattleVictory"))   endBattlePC = a.pc;
         if (a.name == std::string("EndTurn"))     endTurnPC = a.pc;
     }
 
@@ -68,25 +68,25 @@ TEST(BreakpointMap, Evaluator_TerminatesAtTerminalBP_AndAggregatesPredicates)
 
     // Set two PCs we will hit
     base.set_pc(battle::StartTurn, 0x2000);
-    base.set_pc(battle::EndBattle, 0x4000);
+    base.set_pc(battle::BattleVictory, 0x4000);
 
-    // Fake run hits StartTurn once, EndBattle once
+    // Fake run hits StartTurn once, BattleVictory once
     FakeRunner host;
     host.pcs = { 0x1000, 0x2000, 0x3000, 0x4000 };
 
-    // Predicate tied to EndBattle: expect mem[0xBEEF] == 2 (we'll set 2 -> pass)
+    // Predicate tied to BattleVictory: expect mem[0xBEEF] == 2 (we'll set 2 -> pass)
     host.mem[0xBEEF] = 2;
     std::vector<PredicatePtr> preds;
-    preds.push_back(std::make_shared<MemEqualsU32>("Victory", battle::EndBattle, 0xBEEF, 2));
+    preds.push_back(std::make_shared<MemEqualsU32>("Victory", battle::BattleVictory, 0xBEEF, 2));
 
     RunEvaluator eval{ host, base, preds, new NullLogger() };
     std::vector<simcore::GCInputFrame> plan(8);
     auto res = eval.run("branchX", plan);
 
     ASSERT_FALSE(res.hits.empty());
-    // Last hit must be EndBattle and run must succeed
+    // Last hit must be BattleVictory and run must succeed
     auto last = res.hits.back();
-    EXPECT_EQ(last.key, battle::EndBattle);
+    EXPECT_EQ(last.key, battle::BattleVictory);
     EXPECT_TRUE(res.final_success);
 
     // Now flip memory to cause explicit failure and confirm final_success == false

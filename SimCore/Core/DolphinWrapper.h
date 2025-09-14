@@ -10,6 +10,7 @@
 #include <mutex>
 #include <memory>
 #include <filesystem>
+#include <vector>
 
 #include "Input/InputPlan.h"
 #include "Config/SimConfig.h"
@@ -58,6 +59,7 @@ namespace simcore {
         uint32_t getPC();
         uint64_t getTBR();
         std::string getCurrentSctFileTag() const;
+        bool getMem1(std::string& out) const; // fills out with 24 MiB MEM1 snapshot
 
         // Input functions
         void setInputPlan(const InputPlan& p) { m_plan = p; m_cursor = 0; }

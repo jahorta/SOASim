@@ -39,6 +39,8 @@ namespace simcore {
         PK_None = 0,
         PK_SeedProbe = 1,
         PK_TasMovie = 2,
+        PK_BattleTurnRunner = 3, 
+        PK_BattleContextProbe = 4,
     };
 
     // Payload used for TAS jobs (paths are NUL-terminated, Windows MAX_PATH safe)

@@ -15,6 +15,14 @@ namespace simcore::keys::core {
   X(RUN_MS,            0x0007, "core.input.run_ms")      \
   X(VI_STALL_MS,       0x0008, "core.input.vi_stall_ms") \
   X(PROGRESS_ENABLE,   0x0009, "core.input.progress_enable") \
+  X(RUN_HIT_BP,        0x0009, "core.run.hit_bp")        \
+  X(PLAN_FRAME_IDX,    0x000A, "core.plan.frame_idx")    \
+  X(PLAN_DONE,         0x000B, "core.plan.done")         \
+  X(PRED_COUNT,        0x000C, "core.pred.count")        \
+  X(PRED_TABLE,        0x000D, "core.pred.table")        \
+  X(PRED_BASELINES,    0x000E, "core.pred.baselines")    \
+  X(PRED_TOTAL_AT_BP,  0x000F, "core.pred.total_at_bp")  \
+  X(PRED_PASS_AT_BP,   0x0010, "core.pred.pass_at_bp")   \
   X(WORKER_ERROR,      0x0010, "core.output.worker_err")
 
 // Emit KeyId constants + per-module range guards

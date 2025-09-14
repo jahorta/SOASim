@@ -2,7 +2,7 @@
 #include "../../../Runner/Script/PhaseScriptVM.h"
 #include "../../../Runner/Script/VMCoreKeys.reg.h"
 #include "../../../Runner/SOAConstants.h"
-#include "../../../Runner/Breakpoints/PreBattleBreakpoints.h"
+#include "../../../Runner/Breakpoints/BPRegistry.h"
 #include "SeedProbeKeys.reg.h"
 
 namespace simcore::seedprobe {
@@ -14,7 +14,7 @@ namespace simcore::seedprobe {
     inline PhaseScript MakeSeedProbeProgram()
     {
         PhaseScript ps{};
-        ps.canonical_bp_keys = { battle_rng_probe::AfterRandSeedSet };
+        ps.canonical_bp_keys = { bp::prebattle::AfterRandSeedSet };
 
         ps.ops.push_back(OpArmPhaseBps());
         ps.ops.push_back(OpLoadSnapshot());

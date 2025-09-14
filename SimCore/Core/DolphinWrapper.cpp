@@ -281,6 +281,29 @@ namespace simcore {
         return std::string(buf);
     }
 
+    bool simcore::DolphinWrapper::getMem1(std::string& out) const
+    {
+        if (!isRunning()) return false;
+        out.resize(0x01800000u);
+
+        auto copier = [&] {
+            auto& mem = m_system->GetMemory();
+            // CopyFromEmu(dst, VA, size) – big block copy of MEM1 starting at 0x80000000
+            mem.CopyFromEmu(out.data(), 0x80000000u, out.size());
+            };
+
+        if (Core::GetState(*m_system) == Core::State::Paused)
+        {
+            copier();
+            return true;
+        }
+        else
+        {
+            return runOnCpuThread([&] { copier(); }, true);
+        }
+    }
+
+
     bool DolphinWrapper::loadSavestate(const std::string& state_path)
     {
         if (!Core::IsRunning(*m_system))

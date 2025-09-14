@@ -25,9 +25,6 @@
     <Filter Include="Utils">
       <UniqueIdentifier>{44d5a27b-0a42-4f94-83b3-20b148da213b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="RunnerPrograms">
-      <UniqueIdentifier>{0e246091-c186-4944-9970-fea7e83d3784}</UniqueIdentifier>
-    </Filter>
     <Filter Include="IO">
       <UniqueIdentifier>{3323c09c-2ff3-43bc-a6ae-4d4bb181334e}</UniqueIdentifier>
     </Filter>
@@ -42,6 +39,27 @@
     </Filter>
     <Filter Include="_TODO">
       <UniqueIdentifier>{2d740122-075a-47be-a3de-5b927af8ae86}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Runner\Breakpoints">
+      <UniqueIdentifier>{eb90977c-bb6f-467c-9b6a-46f72e40aa63}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Phases\Programs">
+      <UniqueIdentifier>{0e246091-c186-4944-9970-fea7e83d3784}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Phases\Programs\BattleRunner">
+      <UniqueIdentifier>{52936252-3c3f-4a39-88b3-6228fe8151e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Phases\Programs\SeedProbe">
+      <UniqueIdentifier>{9970f495-ed71-4548-bb91-77f7142e3522}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Phases\Programs\TasMovie">
+      <UniqueIdentifier>{b45cfc68-55c6-4d32-9ebf-6c99a00387fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Phases\Programs\BattleContext">
+      <UniqueIdentifier>{8b0fb7f2-30e4-415d-aa1e-d7151ae137a9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Memory">
+      <UniqueIdentifier>{c909555e-6482-421c-b1e0-e0c35effd5cb}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -69,41 +87,17 @@
     <ClInclude Include="Core\Input\InputPlanFmt.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Runner\Breakpoints\BattleBreakpoints.h">
-      <Filter>Runner</Filter>
-    </ClInclude>
-    <ClInclude Include="Runner\Breakpoints\BPCore.h">
-      <Filter>Runner</Filter>
-    </ClInclude>
-    <ClInclude Include="Runner\LineRunLogger.h">
-      <Filter>Runner</Filter>
-    </ClInclude>
-    <ClInclude Include="Runner\Breakpoints\OverworldBreakpoints.h">
-      <Filter>Runner</Filter>
-    </ClInclude>
     <ClInclude Include="Utils\Log.h">
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="Utils\SafeEnv.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="Runner\Breakpoints\PreBattleBreakpoints.h">
-      <Filter>Runner</Filter>
-    </ClInclude>
     <ClInclude Include="Runner\SOAConstants.h">
       <Filter>Runner</Filter>
     </ClInclude>
     <ClInclude Include="Core\Shims\StateBufferShim.h">
       <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Runner\Predicates\PredicateCatalog.h">
-      <Filter>Runner</Filter>
-    </ClInclude>
-    <ClInclude Include="Runner\PhaseEngine.h">
-      <Filter>Runner</Filter>
-    </ClInclude>
-    <ClInclude Include="Runner\JobRunner.h">
-      <Filter>Runner</Filter>
     </ClInclude>
     <ClInclude Include="Runner\Parallel\ParallelPhaseScriptRunner.h">
       <Filter>Runner\Parallel</Filter>
@@ -142,31 +136,13 @@
       <Filter>IO</Filter>
     </ClInclude>
     <ClInclude Include="Phases\Programs\ProgramRegistry.h">
-      <Filter>RunnerPrograms</Filter>
-    </ClInclude>
-    <ClInclude Include="Phases\Programs\SeedProbe\SeedProbePayload.h">
-      <Filter>RunnerPrograms</Filter>
-    </ClInclude>
-    <ClInclude Include="Phases\Programs\SeedProbe\SeedProbeScript.h">
-      <Filter>RunnerPrograms</Filter>
-    </ClInclude>
-    <ClInclude Include="Phases\Programs\PlayTasMovie\TasMoviePayload.h">
-      <Filter>RunnerPrograms</Filter>
-    </ClInclude>
-    <ClInclude Include="Phases\Programs\PlayTasMovie\TasMovieScript.h">
-      <Filter>RunnerPrograms</Filter>
+      <Filter>Phases\Programs</Filter>
     </ClInclude>
     <ClInclude Include="Phases\FirstBattleGenerator.h">
       <Filter>Phases</Filter>
     </ClInclude>
     <ClInclude Include="Runner\Script\PhaseScriptVM.h">
       <Filter>Runner\VM</Filter>
-    </ClInclude>
-    <ClInclude Include="Phases\Programs\PlayTasMovie\TasMovieKeys.reg.h">
-      <Filter>RunnerPrograms</Filter>
-    </ClInclude>
-    <ClInclude Include="Phases\Programs\SeedProbe\SeedProbeKeys.reg.h">
-      <Filter>RunnerPrograms</Filter>
     </ClInclude>
     <ClInclude Include="Runner\Script\VMCoreKeys.reg.h">
       <Filter>Runner\VM</Filter>
@@ -182,6 +158,72 @@
     </ClInclude>
     <ClInclude Include="Utils\Time.h">
       <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Runner\Breakpoints\BPRegistry.h">
+      <Filter>Runner\Breakpoints</Filter>
+    </ClInclude>
+    <ClInclude Include="Runner\Breakpoints\BP.def.h">
+      <Filter>Runner\Breakpoints</Filter>
+    </ClInclude>
+    <ClInclude Include="Phases\Programs\BattleRunner\BattleRunnerKeys.reg.h">
+      <Filter>Phases\Programs\BattleRunner</Filter>
+    </ClInclude>
+    <ClInclude Include="Phases\Programs\BattleRunner\BattleRunnerPayload.h">
+      <Filter>Phases\Programs\BattleRunner</Filter>
+    </ClInclude>
+    <ClInclude Include="Phases\Programs\BattleRunner\BattleRunnerScript.h">
+      <Filter>Phases\Programs\BattleRunner</Filter>
+    </ClInclude>
+    <ClInclude Include="Phases\Programs\SeedProbe\SeedProbeKeys.reg.h">
+      <Filter>Phases\Programs\SeedProbe</Filter>
+    </ClInclude>
+    <ClInclude Include="Phases\Programs\SeedProbe\SeedProbePayload.h">
+      <Filter>Phases\Programs\SeedProbe</Filter>
+    </ClInclude>
+    <ClInclude Include="Phases\Programs\SeedProbe\SeedProbeScript.h">
+      <Filter>Phases\Programs\SeedProbe</Filter>
+    </ClInclude>
+    <ClInclude Include="Phases\Programs\PlayTasMovie\TasMovieScript.h">
+      <Filter>Phases\Programs\TasMovie</Filter>
+    </ClInclude>
+    <ClInclude Include="Phases\Programs\PlayTasMovie\TasMovieKeys.reg.h">
+      <Filter>Phases\Programs\TasMovie</Filter>
+    </ClInclude>
+    <ClInclude Include="Phases\Programs\PlayTasMovie\TasMoviePayload.h">
+      <Filter>Phases\Programs\TasMovie</Filter>
+    </ClInclude>
+    <ClInclude Include="Runner\SOAStructs.h">
+      <Filter>Runner</Filter>
+    </ClInclude>
+    <ClInclude Include="Phases\Programs\BattleContext\BattleContext.h">
+      <Filter>Phases\Programs\BattleContext</Filter>
+    </ClInclude>
+    <ClInclude Include="Phases\Programs\BattleContext\BattleContextCodec.h">
+      <Filter>Phases\Programs\BattleContext</Filter>
+    </ClInclude>
+    <ClInclude Include="Phases\Programs\BattleContext\BattleContextScript.h">
+      <Filter>Phases\Programs\BattleContext</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Memory\MemView.h">
+      <Filter>Core\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Memory\SoaAddr.def.h">
+      <Filter>Core\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Memory\SoaAddrRegistry.h">
+      <Filter>Core\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Memory\Endian.h">
+      <Filter>Core\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Memory\SoaStructs.h">
+      <Filter>Core\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Memory\SoaConstants.h">
+      <Filter>Core\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Memory\SoaStructReaders.h">
+      <Filter>Core\Memory</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -839,29 +881,14 @@
     <ClCompile Include="Core\Input\InputPlanFmt.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Runner\Breakpoints\BattleBreakpoints.cpp">
-      <Filter>Runner</Filter>
-    </ClCompile>
-    <ClCompile Include="Runner\Breakpoints\OverworldBreakpoints.cpp">
-      <Filter>Runner</Filter>
-    </ClCompile>
     <ClCompile Include="Utils\Log.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
     <ClCompile Include="Utils\SafeEnv.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="Runner\Breakpoints\PreBattleBreakpoints.cpp">
-      <Filter>Runner</Filter>
-    </ClCompile>
     <ClCompile Include="Core\Shims\StateBufferShim.cpp">
       <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Runner\Predicates\PredicateCatalog.cpp">
-      <Filter>Runner</Filter>
-    </ClCompile>
-    <ClCompile Include="Runner\PhaseEngine.cpp">
-      <Filter>Runner</Filter>
     </ClCompile>
     <ClCompile Include="Runner\Parallel\ParallelPhaseScriptRunner.cpp">
       <Filter>Runner\Parallel</Filter>
@@ -888,13 +915,7 @@
       <Filter>IO</Filter>
     </ClCompile>
     <ClCompile Include="Phases\Programs\ProgramRegistry.cpp">
-      <Filter>RunnerPrograms</Filter>
-    </ClCompile>
-    <ClCompile Include="Phases\Programs\SeedProbe\SeedProbePayload.cpp">
-      <Filter>RunnerPrograms</Filter>
-    </ClCompile>
-    <ClCompile Include="Phases\Programs\PlayTasMovie\TasMoviePayload.cpp">
-      <Filter>RunnerPrograms</Filter>
+      <Filter>Phases\Programs</Filter>
     </ClCompile>
     <ClCompile Include="Phases\FirstBattleGenerator.cpp">
       <Filter>Phases</Filter>
@@ -907,6 +928,24 @@
     </ClCompile>
     <ClCompile Include="Runner\Script\PSContextCodec.cpp">
       <Filter>Runner\VM</Filter>
+    </ClCompile>
+    <ClCompile Include="Runner\Breakpoints\BPRegistry.cpp">
+      <Filter>Runner\Breakpoints</Filter>
+    </ClCompile>
+    <ClCompile Include="Phases\Programs\BattleRunner\BattleRunnerPayload.cpp">
+      <Filter>Phases\Programs\BattleRunner</Filter>
+    </ClCompile>
+    <ClCompile Include="Phases\Programs\SeedProbe\SeedProbePayload.cpp">
+      <Filter>Phases\Programs\SeedProbe</Filter>
+    </ClCompile>
+    <ClCompile Include="Phases\Programs\PlayTasMovie\TasMoviePayload.cpp">
+      <Filter>Phases\Programs\TasMovie</Filter>
+    </ClCompile>
+    <ClCompile Include="Phases\Programs\BattleContext\BattleContextCodec.cpp">
+      <Filter>Phases\Programs\BattleContext</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Memory\SoaAddrRegistry.cpp">
+      <Filter>Core\Memory</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -3,6 +3,9 @@
 #include "SeedProbe/SeedProbeScript.h"
 #include "PlayTasMovie/TasMoviePayload.h"
 #include "PlayTasMovie/TasMovieScript.h"
+#include "BattleRunner/BattleRunnerPayload.h"
+#include "BattleRunner//BattleRunnerScript.h"
+#include "BattleContext//BattleContextScript.h"
 #include "../../Runner/IPC/Wire.h"
 
 namespace simcore::programs {
@@ -16,6 +19,10 @@ namespace simcore::programs {
         case PK_TasMovie:
             // TAS fixed program should use *_FROM("tas.*") keys (id6, dtm_path, run_ms, save_path)
             return tasmovie::MakeTasMovieProgram();
+        case PK_BattleTurnRunner:
+            return battle::MakeBattleRunnerProgram();
+        case PK_BattleContextProbe:
+            return battlectx::MakeBattleContextProbeProgram();
         default:
             return PhaseScript{};
         }
@@ -37,6 +44,10 @@ namespace simcore::programs {
             return seedprobe::decode_payload(payload, out_ctx);
         case PK_TasMovie:
             return tasmovie::decode_payload(payload, out_ctx);
+        case PK_BattleTurnRunner:          
+            return battle::decode_payload(payload, out_ctx);
+        case PK_BattleContextProbe:
+            return true; // no payload
         default:
             return false;
         }

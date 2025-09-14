@@ -6,7 +6,7 @@
 #include <atomic>
 
 #include "../Script/PhaseScriptVM.h"
-#include "../Breakpoints/BPCore.h"
+#include "../Breakpoints/BPRegistry.h"
 #include "../../Boot/Boot.h"
 #include "TSQueue.h"
 #include "PRTypes.h"

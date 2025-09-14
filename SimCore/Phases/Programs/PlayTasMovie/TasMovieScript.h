@@ -4,7 +4,7 @@
 #include <vector>
 #include "../../../Runner/Script/PhaseScriptVM.h"
 #include "../../../Runner/Script/VMCoreKeys.reg.h"
-#include "../../../Runner/Breakpoints/PreBattleBreakpoints.h"
+#include "../../../Runner/Breakpoints/BPRegistry.h"
 #include "TasMovieKeys.reg.h"
 #include "TasMoviePayload.h"
 
@@ -15,7 +15,7 @@ namespace simcore::tasmovie {
     inline PhaseScript MakeTasMovieProgram()
     {
         PhaseScript p{};
-        p.canonical_bp_keys = { battle_rng_probe::BeforeRandSeedSet }; // adjust if your header exposes a helper list
+        p.canonical_bp_keys = { bp::prebattle::BeforeRandSeedSet }; // adjust if your header exposes a helper list
 
         // 1) Make sure the disc matches the movie.
         p.ops.push_back(OpRequireDiscGameIdFrom(keys::tas::DISC_ID6));
