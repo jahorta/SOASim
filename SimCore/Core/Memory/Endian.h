@@ -1,7 +1,10 @@
 #pragma once
+#include <bit>
 #include <cstdint>
 #include <cstring>
 #include <type_traits>
+#include <tuple>
+#include "SoaStructs.reflect.h"  // generated file
 
 namespace simcore::endian {
 
@@ -34,4 +37,72 @@ namespace simcore::endian {
         uint64_t u; std::memcpy(&u, &d, 8); u = bswap64(u); std::memcpy(&d, &u, 8); return d;
     }
 
-} // namespace soa::endian
+    template <class T> inline void fix_endianness_in_place(T& v);
+
+    template<class T>
+    inline void fix_arith(T& v) {
+        if constexpr (std::is_same_v<T, uint16_t> || std::is_same_v<T, int16_t>) {
+            auto u = static_cast<uint16_t>(std::bit_cast<uint16_t>(v));
+            u = bswap16(u);
+            v = std::bit_cast<T>(u);
+        }
+        else if constexpr (std::is_same_v<T, uint32_t> || std::is_same_v<T, int32_t>) {
+            auto u = static_cast<uint32_t>(std::bit_cast<uint32_t>(v));
+            u = bswap32(u);
+            v = std::bit_cast<T>(u);
+        }
+        else if constexpr (std::is_same_v<T, uint64_t> || std::is_same_v<T, int64_t>) {
+            auto u = static_cast<uint64_t>(std::bit_cast<uint64_t>(v));
+            u = bswap64(u);
+            v = std::bit_cast<T>(u);
+        }
+        else if constexpr (std::is_same_v<T, float>) {
+            v = bswapf(v);
+        }
+        else if constexpr (std::is_same_v<T, double>) {
+            v = bswapd(v);
+        }
+    }
+
+    // Detection: does reflect<T> exist and expose ::members?
+    template <class T, class = void>
+    struct has_reflect_members : std::false_type {};
+    template <class T>
+    struct has_reflect_members<T, std::void_t<decltype(reflect<T>::members)>> : std::true_type {};
+
+    template <class T>
+    inline void fix_endianness_in_place(T& v) {
+        if constexpr (std::is_enum_v<T>) {
+            using U = std::underlying_type_t<T>;
+            auto u = static_cast<U>(v);
+            fix_endianness_in_place(u);
+            v = static_cast<T>(u);
+        }
+        else if constexpr (std::is_arithmetic_v<T>) {
+            if constexpr (sizeof(T) == 1) { /* no-op */ }
+            else {
+                if constexpr (std::is_same_v<T, float>) { v = bswapf(v); }
+                else if constexpr (std::is_same_v<T, double>) { v = bswapd(v); }
+                else if constexpr (sizeof(T) == 2) { auto u = std::bit_cast<uint16_t>(v); u = bswap16(u); v = std::bit_cast<T>(u); }
+                else if constexpr (sizeof(T) == 4) { auto u = std::bit_cast<uint32_t>(v); u = bswap32(u); v = std::bit_cast<T>(u); }
+                else if constexpr (sizeof(T) == 8) { auto u = std::bit_cast<uint64_t>(v); u = bswap64(u); v = std::bit_cast<T>(u); }
+            }
+        }
+        else if constexpr (std::is_array_v<T>) {
+            for (auto& e : v) fix_endianness_in_place(e);
+        }
+        else if constexpr (requires (T & x) { x.size(); x.data(); }) {
+            for (auto& e : v) fix_endianness_in_place(e);
+        }
+        else if constexpr (has_reflect_members<T>::value) {
+            // Visit every declared data member automatically
+            std::apply([&](auto... mem) {
+                (fix_endianness_in_place(v.*mem), ...);
+                }, reflect<T>::members);
+        }
+        else {
+            // Unknown class/struct with no reflection: treat as blob (no-op)
+        }
+    }
+
+} // namespace simcore::endian

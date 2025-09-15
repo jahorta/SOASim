@@ -7,7 +7,7 @@ namespace simcore::battlectx {
     inline PhaseScript MakeBattleContextProbeProgram()
     {
         PhaseScript ps{};
-        ps.canonical_bp_keys = { battle::FirstTurnInputs };
+        ps.canonical_bp_keys = { bp::battle::TurnInputs };
 
         ps.ops.push_back(OpArmPhaseBps());  // arms canonical list above
         ps.ops.push_back(OpLoadSnapshot()); // caller must have placed savestate into VM

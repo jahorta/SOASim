@@ -259,9 +259,8 @@ namespace soa {
         PC_Data Drachma; // embed PC_Data
         PC_Data Enrique; // embed PC_Data
         PC_Data Gilder; // embed PC_Data
-        PC_Data Piastol; // embed PC_Data
     };
-    static_assert(sizeof(All_PC_Data) == 644, "size");
+    static_assert(sizeof(All_PC_Data) == 552, "size");
 
 #pragma pack(pop)
 

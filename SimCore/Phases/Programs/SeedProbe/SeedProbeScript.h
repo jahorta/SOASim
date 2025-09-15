@@ -1,7 +1,7 @@
 #pragma once
 #include "../../../Runner/Script/PhaseScriptVM.h"
 #include "../../../Runner/Script/VMCoreKeys.reg.h"
-#include "../../../Runner/SOAConstants.h"
+#include "../../../Core/Memory/SoaAddrRegistry.h"
 #include "../../../Runner/Breakpoints/BPRegistry.h"
 #include "SeedProbeKeys.reg.h"
 
@@ -26,7 +26,7 @@ namespace simcore::seedprobe {
         ps.ops.push_back(OpRunUntilBp());
 
         // Read RNG and emit
-        ps.ops.push_back(OpReadU32(SOA::ADDR::RNG_SEED, simcore::keys::seed::RNG_SEED));
+        ps.ops.push_back(OpReadU32(addr::Registry::base(addr::core::RNG_SEED), simcore::keys::seed::RNG_SEED));
 
         ps.ops.push_back(OpEmitResult(simcore::keys::seed::RNG_SEED));
 

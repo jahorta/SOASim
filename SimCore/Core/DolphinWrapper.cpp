@@ -9,7 +9,7 @@
 #include "../Utils/Log.h"
 #include "../Utils/Time.h"
 #include "../Runner/IPC/Wire.h"
-#include "../Runner/SOAConstants.h"
+#include "Memory/SoaAddrRegistry.h"
 
 // Dolphin headers (adjust paths to your tree)
 #include "Core/Boot/Boot.h"
@@ -264,13 +264,12 @@ namespace simcore {
 
     std::string DolphinWrapper::getCurrentSctFileTag() const
     {
-        using namespace SOA::ADDR;
         uint32_t num = 0;
         uint8_t  ch = 0;
 
         // Try both reads; if either fails, return empty.
-        if (!readU32(SCT_FILE_NUM, num)) return {};
-        if (!readU8(SCT_FILE_LTTR, ch))  return {};
+        if (!readU32(addr::Registry::base(addr::core::SCT_FILE_NUM), num)) return {};
+        if (!readU8(addr::Registry::base(addr::core::SCT_FILE_LTTR), ch))  return {};
 
         // Enforce expected ranges: number 1..600; letter must be a printable ASCII.
         if (num < 1 || num > 600) return {};
@@ -419,7 +418,6 @@ namespace simcore {
         // MemoryCardA.<REG>.raw is the path Dolphin expects for "Memory Card" mode.
         // (Documented widely in user guides/bug threads.) 
         // USA/JAP/PAL cover GC regions.
-        namespace fs = std::filesystem;
         try {
             const fs::path gc_dir = fs::path(m_user_dir) / "GC";
             fs::create_directories(gc_dir);

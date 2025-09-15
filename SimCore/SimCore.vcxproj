@@ -118,6 +118,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <UseStandardPreprocessor>true</UseStandardPreprocessor>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -130,6 +131,9 @@
     <Lib>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
+    <PreBuildEvent>
+      <Command>python "$(ProjectDir)Utils\soa_struct_reflector.py" "$(ProjectDir)Core\Memory\SoaStructs.h" "$(ProjectDir)Core\Memory\SoaStructs.reflect.h"</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -143,6 +147,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <UseStandardPreprocessor>true</UseStandardPreprocessor>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -173,6 +178,7 @@
     <ClInclude Include="Core\Memory\SoaConstants.h" />
     <ClInclude Include="Core\Memory\SoaStructReaders.h" />
     <ClInclude Include="Core\Memory\SoaStructs.h" />
+    <ClInclude Include="Core\Memory\SoaStructs.reflect.h" />
     <ClInclude Include="Core\Shims\StateBufferShim.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Phases\FirstBattleGenerator.h" />
@@ -1094,6 +1100,7 @@
       <SubType>
       </SubType>
     </None>
+    <None Include="Utils\soa_struct_reflector.py" />
     <None Include="_TODO.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

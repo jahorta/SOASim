@@ -4,7 +4,7 @@
 #include "KeyRegistry.h"
 #include "../../Phases/Programs/BattleRunner/BattleRunnerPayload.h"
 #include "../../Phases/Programs/BattleContext/BattleContextCodec.h"
-#include "../../Core/MemView.h"
+#include "../../Core/Memory/MemView.h"
 
 namespace simcore {
 

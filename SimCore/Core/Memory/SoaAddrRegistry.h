@@ -38,19 +38,20 @@ namespace addr {
         static std::span<const AddrRec> all();
         static const AddrRec* find(AddrKey k);
         static const DolphinAddr& spec(AddrKey k);
+        static const uint32_t base(AddrKey k);
         static const char* name(AddrKey k);
 
         // Resolve to final VA. For PtrChain with spec.base==0, this fails—use resolve_from_base.
-        static bool resolve(const MemView& view, const DolphinAddr& a, uint32_t& out_va);
+        static bool resolve(const simcore::MemView& view, const DolphinAddr& a, uint32_t& out_va);
 
         // Resolve when the base is dynamic (e.g., per-instance pointer).
-        static bool resolve_from_base(const MemView& view, const DolphinAddr& a, uint32_t base_override, uint32_t& out_va);
+        static bool resolve_from_base(const simcore::MemView& view, const DolphinAddr& a, uint32_t base_override, uint32_t& out_va);
 
         // Typed reads (use resolve() or resolve_from_base() before calling these if needed).
-        static bool readU8(const MemView& v, AddrKey k, uint8_t& out);
-        static bool readU16(const MemView& v, AddrKey k, uint16_t& out);
-        static bool readU32(const MemView& v, AddrKey k, uint32_t& out);
-        static bool readU64(const MemView& v, AddrKey k, uint64_t& out);
+        static bool readU8(const simcore::MemView& v, AddrKey k, uint8_t& out);
+        static bool readU16(const simcore::MemView& v, AddrKey k, uint16_t& out);
+        static bool readU32(const simcore::MemView& v, AddrKey k, uint32_t& out);
+        static bool readU64(const simcore::MemView& v, AddrKey k, uint64_t& out);
     };
 
     // ergonomic aliases: addr::core::X, addr::battle::Y

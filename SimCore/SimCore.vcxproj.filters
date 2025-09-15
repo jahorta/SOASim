@@ -225,6 +225,9 @@
     <ClInclude Include="Core\Memory\SoaStructReaders.h">
       <Filter>Core\Memory</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Memory\SoaStructs.reflect.h">
+      <Filter>Core\Memory</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SimCore.cpp">
@@ -951,5 +954,8 @@
   <ItemGroup>
     <None Include="Interesting SOA Addresses.md" />
     <None Include="_TODO.md" />
+    <None Include="Utils\soa_struct_reflector.py">
+      <Filter>Utils</Filter>
+    </None>
   </ItemGroup>
 </Project>
