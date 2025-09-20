@@ -1,8 +1,8 @@
 #pragma once
 #include <cstdint>
 #include <cstring>
-#include "MemView.h"
-#include "Endian.h"
+#include "../MemView.h"
+#include "../Endian.h"
 
 namespace soa::readers {
 

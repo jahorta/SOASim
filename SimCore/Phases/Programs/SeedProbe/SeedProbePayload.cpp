@@ -3,7 +3,7 @@
 #include <cstring>
 
 #include "../../../Runner/IPC/Wire.h"      // PK_SeedProbe
-#include "../../../Runner/Script/VMCoreKeys.reg.h"    
+#include "../../../Runner/Script/KeyRegistry.h"    
 #include "../../../Runner/Script/PhaseScriptVM.h" // simcore::vmcore::<common keys>
 #include "SeedProbeScript.h"
 

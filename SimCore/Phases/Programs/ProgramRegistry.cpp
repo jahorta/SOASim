@@ -32,6 +32,11 @@ namespace simcore::programs {
         const std::vector<uint8_t>& payload,
         PSContext& out_ctx)
     {
+        switch (active_program_kind) {
+        case PK_BattleContextProbe:
+            return true;
+        }
+        
         if (payload.empty()) return false;
         const uint8_t tag = payload[0];
 
@@ -46,8 +51,6 @@ namespace simcore::programs {
             return tasmovie::decode_payload(payload, out_ctx);
         case PK_BattleTurnRunner:          
             return battle::decode_payload(payload, out_ctx);
-        case PK_BattleContextProbe:
-            return true; // no payload
         default:
             return false;
         }

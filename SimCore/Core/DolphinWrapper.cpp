@@ -9,7 +9,8 @@
 #include "../Utils/Log.h"
 #include "../Utils/Time.h"
 #include "../Runner/IPC/Wire.h"
-#include "Memory/SoaAddrRegistry.h"
+#include "Memory/Soa/SoaAddrRegistry.h"
+#include "Memory/MemView.h"
 
 // Dolphin headers (adjust paths to your tree)
 #include "Core/Boot/Boot.h"
@@ -56,6 +57,8 @@
 using namespace std::chrono_literals;
 using namespace std::chrono;
 namespace fs = std::filesystem;
+using addr::AddrKey;
+using addr::DolphinAddr;
 
 namespace simcore {
 
@@ -268,8 +271,8 @@ namespace simcore {
         uint8_t  ch = 0;
 
         // Try both reads; if either fails, return empty.
-        if (!readU32(addr::Registry::base(addr::core::SCT_FILE_NUM), num)) return {};
-        if (!readU8(addr::Registry::base(addr::core::SCT_FILE_LTTR), ch))  return {};
+        if (!readByKey(addr::core::SCT_FILE_NUM, num)) return {};
+        if (!readByKey(addr::core::SCT_FILE_LTTR, ch))  return {};
 
         // Enforce expected ranges: number 1..600; letter must be a printable ASCII.
         if (num < 1 || num > 600) return {};
@@ -287,7 +290,7 @@ namespace simcore {
 
         auto copier = [&] {
             auto& mem = m_system->GetMemory();
-            // CopyFromEmu(dst, VA, size) – big block copy of MEM1 starting at 0x80000000
+            // CopyFromEmu(dst, VA, size) - big block copy of MEM1 starting at 0x80000000
             mem.CopyFromEmu(out.data(), 0x80000000u, out.size());
             };
 
@@ -713,6 +716,25 @@ namespace simcore {
         return true;
     }
 
+    bool simcore::DolphinWrapper::readU64(uint32_t addr, uint64_t& out) const
+    {
+        if (!isRunning()) return false;
+
+        if (Core::GetState(*m_system) == Core::State::Paused)
+        {
+            auto& mem = m_system->GetMemory();
+            out = mem.Read_U64(addr);
+        }
+        else {
+            Core::CPUThreadGuard guard(Core::System::GetInstance());
+            auto& mem = guard.GetSystem().GetMemory();
+            out = mem.Read_U64(addr);
+        }
+
+        SCLOGT("[mem read] Successfully read u32: 0x%X", out);
+        return true;
+    }
+
     bool simcore::DolphinWrapper::readF32(uint32_t addr, float& out) const
     {
         if (!isRunning()) return false;
@@ -753,6 +775,90 @@ namespace simcore {
         out = std::bit_cast<double>(u);
         SCLOGT("[mem read] Successfully read double: %.2f", out);
         return true;
+    }
+
+    bool DolphinWrapper::resolveKey(addr::AddrKey k, uint32_t& out_va) const
+    {
+        out_va = addr::Registry::base(k);
+        return true;
+    }
+
+    bool DolphinWrapper::readByKey(addr::AddrKey k, uint8_t& out) const
+    {
+        if (!isRunning()) return false;
+        if (Core::GetState(*m_system) != Core::State::Paused) {
+            SCLOGE("[DW] readByKey(%s) denied: core not paused", addr::Registry::name(k));
+            return false;
+        }
+        uint32_t va = 0;
+        if (!resolveKey(k, va)) {
+            SCLOGE("[DW] readByKey(%s) resolve failed", addr::Registry::name(k));
+            return false;
+        }
+        return readU8(va, out);
+    }
+
+    bool DolphinWrapper::readByKey(addr::AddrKey k, uint16_t& out) const
+    {
+        if (!isRunning()) return false;
+        if (Core::GetState(*m_system) != Core::State::Paused) {
+            SCLOGE("[DW] readByKey(%s) denied: core not paused", addr::Registry::name(k));
+            return false;
+        }
+        uint32_t va = 0;
+        if (!resolveKey(k, va)) {
+            SCLOGE("[DW] readByKey(%s) resolve failed", addr::Registry::name(k));
+            return false;
+        }
+        return readU16(va, out);
+    }
+
+    bool DolphinWrapper::readByKey(addr::AddrKey k, uint32_t& out) const
+    {
+        if (!isRunning()) return false;
+        if (Core::GetState(*m_system) != Core::State::Paused) {
+            SCLOGE("[DW] readByKey(%s) denied: core not paused", addr::Registry::name(k));
+            return false;
+        }
+        uint32_t va = 0;
+        if (!resolveKey(k, va)) {
+            SCLOGE("[DW] readByKey(%s) resolve failed", addr::Registry::name(k));
+            return false;
+        }
+        return readU32(va, out);
+    }
+
+    bool DolphinWrapper::readByKey(addr::AddrKey k, uint64_t& out) const
+    {
+        if (!isRunning()) return false;
+        if (Core::GetState(*m_system) != Core::State::Paused) {
+            SCLOGE("[DW] readByKey(%s) denied: core not paused", addr::Registry::name(k));
+            return false;
+        }
+        uint32_t va = 0;
+        if (!resolveKey(k, va)) {
+            SCLOGE("[DW] readByKey(%s) resolve failed", addr::Registry::name(k));
+            return false;
+        }
+
+        // No existing readU64 raw API in header; use MEM1 snapshot as a fallback:
+        std::string mem1;
+        if (!getMem1(mem1)) return false;
+        MemView view(reinterpret_cast<const uint8_t*>(mem1.data()), mem1.size());
+        return view.read_u64(va, out);
+    }
+
+    bool DolphinWrapper::readByKeyAny(addr::AddrKey k, uint8_t width, uint64_t& out, uint8_t& out_width) const
+    {
+        out = 0; out_width = width;
+        const auto& spec = addr::Registry::spec(k);
+        switch (width) {
+        case 1: { uint8_t  v = 0; if (!readByKey(k, v)) return false; out = v; return true; }
+        case 2: { uint16_t v = 0; if (!readByKey(k, v)) return false; out = v; return true; }
+        case 4: { uint32_t v = 0; if (!readByKey(k, v)) return false; out = v; return true; }
+        case 8: { uint64_t v = 0; if (!readByKey(k, v)) return false; out = v; return true; }
+        default: return false;
+        }
     }
 
     static bool contains_pc(const std::unordered_set<uint32_t>& s, uint32_t v) { return s.find(v) != s.end(); }
@@ -811,6 +917,20 @@ namespace simcore {
             armed.clear();
             }, true);
         SCLOGT("[core] properly removed breakpoints: %s", disarm_result ? "true" : "false");
+    }
+
+    bool DolphinWrapper::setEnableAllBreakpoints(bool enabled)
+    {
+        SCLOGT("[core] silencing all breakpoints");
+        auto& armed = armed_singleton().pcs; bool silence_result = runOnCpuThread([&] {
+            for (auto pc : armed)
+            {
+                if (m_system->GetPowerPC().GetBreakPoints().IsBreakPointEnable(pc) != enabled) 
+                    m_system->GetPowerPC().GetBreakPoints().ToggleEnable(pc);
+            }
+            }, true);
+        
+        return false;
     }
 
     DolphinWrapper::RunUntilHitResult DolphinWrapper::runUntilBreakpointBlocking(uint32_t timeout_ms)

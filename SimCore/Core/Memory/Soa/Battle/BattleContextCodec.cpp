@@ -1,9 +1,10 @@
 #include "BattleContextCodec.h"
-#include "../../../Core/Memory/SoaAddrRegistry.h"
-#include "../../../Core/Memory/SoaStructReaders.h"
+#include "../SoaAddrRegistry.h"
+#include "../SoaStructReaders.h"
+#include "../SoaConstants.h"
 #include <cstring>
 
-namespace simcore::battlectx::codec {
+namespace soa::battle::ctx::codec {
 
     bool extract_from_mem1(const simcore::MemView& view, BattleContext& out)
     {
@@ -30,19 +31,29 @@ namespace simcore::battlectx::codec {
             out.slots[i].id = id;
         }
 
-        const auto& ed_spec = addr::Registry::spec(addr::battle::EnemyDefinitionFromInstance);
         for (int i = 4; i < 12; ++i) {
             auto& s = out.slots[i];
             if (!s.present) continue;
 
-            uint32_t ed_va = 0;
-            if (!addr::Registry::resolve_from_base(view, ed_spec, s.instance_addr, ed_va))
-                continue;
+            uint32_t ed_va = s.instance.Enemy_Definition;
             if (!view.in_mem1(ed_va)) continue;
 
             s.enemy_def_addr = ed_va;
             s.has_enemy_def = 1;
             (void)soa::readers::read(view, ed_va, s.enemy_def);
+        }
+
+        uint32_t p = 0;
+        if (!view.read_u32(addr::Registry::base(addr::battle::MainInstancePtr), p)) return false;
+        if (p && view.in_mem1(p)) {
+            (void)soa::readers::read(view, p, out.state);
+        }
+
+        p = addr::Registry::base(addr::battle::TurnType);
+        if (p && view.in_mem1(p)) {
+            uint32_t v;
+            (void)soa::readers::read(view, p, v);
+            out.turn_type = soa::battle::TurnType(v);
         }
 
         return true;
@@ -127,5 +138,16 @@ namespace simcore::battlectx::codec {
         }
         return p == end;
     }
+
+    bool resolve(const simcore::MemView& view, const addr::DolphinAddr& a, uint32_t& out_va) {
+        if (!view.in_mem1(a.base)) return false;
+        out_va = a.base;
+        return true;
+    }
+
+    bool readU8(const simcore::MemView& v, addr::AddrKey k, uint8_t& out) { uint32_t va = 0; if (!resolve(v, addr::Registry::spec(k), va)) return false; return v.read_u8(va, out); }
+    bool readU16(const simcore::MemView& v, addr::AddrKey k, uint16_t& out) { uint32_t va = 0; if (!resolve(v, addr::Registry::spec(k), va)) return false; return v.read_u16(va, out); }
+    bool readU32(const simcore::MemView& v, addr::AddrKey k, uint32_t& out) { uint32_t va = 0; if (!resolve(v, addr::Registry::spec(k), va)) return false; return v.read_u32(va, out); }
+    bool readU64(const simcore::MemView& v, addr::AddrKey k, uint64_t& out) { uint32_t va = 0; if (!resolve(v, addr::Registry::spec(k), va)) return false; return v.read_u64(va, out); }
 
 } // namespace simcore::battlectx::codec

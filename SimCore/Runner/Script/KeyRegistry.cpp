@@ -6,11 +6,6 @@
 #include <string>
 #include <algorithm>
 
-#include "VMCoreKeys.reg.h"
-#include "../../Phases/Programs/SeedProbe/SeedProbeKeys.reg.h"
-#include "../../Phases/Programs/PlayTasMovie/TasMovieKeys.reg.h"
-#include "../../Phases/Programs/BattleRunner/BattleRunnerKeys.reg.h"
-
 namespace simcore::keys {
 
     // Fixed list of module tables (deterministic order)

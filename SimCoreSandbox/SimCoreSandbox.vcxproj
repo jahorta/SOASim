@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="MenuBattleExplorer.cpp" />
     <ClCompile Include="MenuConfig.cpp" />
     <ClCompile Include="SandboxAppState.h" />
     <ClCompile Include="SandboxConfig.cpp" />
@@ -165,6 +166,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="MenuBattleExplorer.h" />
     <ClInclude Include="MenuConfig.h" />
     <ClInclude Include="SandboxConfig.h" />
     <ClInclude Include="SeedProbe.h" />

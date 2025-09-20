@@ -1,17 +1,19 @@
 #pragma once
 #include <cstddef>
-#include "../../../Runner/Script/KeyIds.h"
+#include "KeyIds.h"
 
 namespace simcore::keys::battle {
 
 #define BATTLE_KEYS(X) \
-  X(ACTIVE_TURN,   0x0300, "battle.active_turn")   \
-  X(INITIAL_INPUT, 0x0301, "battle.initial_input") \
-  X(NUM_PLANS,     0x0302, "battle.plan.count")     \
-  X(PLAN_COUNTS,   0x0303, "battle.plan.counts")  /* raw u32 array in a std::string */ \
-  X(PLAN_TABLE,    0x0304, "battle.plan.frames")  /* raw GCInputFrame array in a std::string (flattened) */  \
-  X(LAST_TURN_IDX, 0x0305, "battle.plan.last_idx") \
-  X(CTX_BLOB,      0x03C0, "battle.CTX_BLOB")
+  X(ACTIVE_TURN,              0x0300, "battle.active_turn")   \
+  X(INITIAL_INPUT,            0x0301, "battle.initial_input") \
+  X(INPUTPLAN_FRAME_COUNT,    0x03C1, "battle.inputplan.frame_count") \
+  X(INPUTPLAN,                0x03C2, "battle.inputplan.frames") \
+  X(CTX_BLOB,                 0x03B0, "battle.CTX_BLOB")      \
+  X(NUM_TURN_PLANS,           0x03C0, "battle.turnplan.count")     \
+  X(TURN_PLANS,               0x03C1, "battle.turnplan.plans") \
+  X(LAST_TURN_IDX,            0x03C2, "battle.turnplan.last_idx") \
+  X(PLAN_MATERIALIZE_ERR,     0x03C3, "battle.turnplan.materialize_err")
 
 #define DECL_KEY(NAME, ID, STR) inline constexpr simcore::keys::KeyId NAME = static_cast<simcore::keys::KeyId>(ID); \
 static_assert(NAME >= simcore::keys::BATTLE_MIN && NAME <= simcore::keys::BATTLE_MAX, "battle key out of range");
@@ -26,4 +28,5 @@ static_assert(NAME >= simcore::keys::BATTLE_MIN && NAME <= simcore::keys::BATTLE
 	inline constexpr std::size_t kCount = sizeof(kKeys) / sizeof(kKeys[0]);
 
 #undef BATTLE_KEYS
+
 } // namespace simcore::keys::battle

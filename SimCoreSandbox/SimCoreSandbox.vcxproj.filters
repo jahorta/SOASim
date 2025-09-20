@@ -13,45 +13,57 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Menus">
+      <UniqueIdentifier>{01143a80-cc44-4b32-a300-581683aa3a80}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{89e54278-97d2-4ec8-a519-55328bd375ce}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SimCoreSandbox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SeedProbe.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TASMoviePlayer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="SandboxAppState.h">
-      <Filter>Header Files</Filter>
+      <Filter>Menus</Filter>
     </ClCompile>
     <ClCompile Include="MenuConfig.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Menus</Filter>
     </ClCompile>
     <ClCompile Include="SandboxConfig.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="SeedProbe.cpp">
+      <Filter>Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="TASMoviePlayer.cpp">
+      <Filter>Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="utils.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="MenuBattleExplorer.cpp">
+      <Filter>Menus</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="MenuConfig.h">
+      <Filter>Menus</Filter>
+    </ClInclude>
     <ClInclude Include="SeedProbe.h">
-      <Filter>Header Files</Filter>
+      <Filter>Menus</Filter>
     </ClInclude>
     <ClInclude Include="TASMoviePlayer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MenuConfig.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="utils.h">
-      <Filter>Header Files</Filter>
+      <Filter>Menus</Filter>
     </ClInclude>
     <ClInclude Include="SandboxConfig.h">
-      <Filter>Header Files</Filter>
+      <Filter>Menus</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="MenuBattleExplorer.h">
+      <Filter>Menus</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

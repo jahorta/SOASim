@@ -7,10 +7,14 @@
 #include <cstdint>
 
 #include "../Breakpoints/BPRegistry.h"    // BreakpointMap, BPKey
+#include "../Breakpoints/Predicate.h"
 #include "../../Core/DolphinWrapper.h"
 #include "../../Core/Input/InputPlan.h" // GCInputFrame
+#include "../../Core/Input/SoaBattle/Actiontypes.h"
+#include "../../Core/Memory/DerivedBase.h"
 #include "Core/Common/Buffer.h"
-#include "KeyIds.h"
+#include "KeyRegistry.h"
+#include "PSContext.h"
 
 namespace simcore {
 
@@ -46,7 +50,8 @@ namespace simcore {
 		ARM_BPS_FROM_PRED_TABLE,
 		SET_U32,                    // ctx[key] = imm
 		ADD_U32,                    // ctx[key] += imm
-		APPLY_PLAN_FRAME_FROM_KEY   // plan_id = ctx[key]
+		APPLY_BATTLE_INPUTPLAN_FRAMES,   // plan_id = ctx[key]
+		BUILD_TURN_INPUTPLAN_FROM_BATTLE_PATH // build plan from actions
 	};
 
 	static std::string get_psop_name(PSOpCode op);
@@ -78,50 +83,7 @@ namespace simcore {
 	struct PSArg_ImmU32 { uint32_t v; };
 	struct PSArg_KeyImm { simcore::keys::KeyId key; uint32_t imm; };
 
-	using PSValue = std::variant<uint8_t, uint16_t, uint32_t, float, double, std::string, GCInputFrame>;
-	class PSContext {
-	public:
-		using key_type = simcore::keys::KeyId;
-		using map_type = std::unordered_map<key_type, PSValue>;
-		using iterator = map_type::iterator;
-		using const_iterator = map_type::const_iterator;
-
-		// map-like API
-		bool   empty() const noexcept { return kv_.empty(); }
-		size_t size()  const noexcept { return kv_.size(); }
-		void   clear()       noexcept { kv_.clear(); }
-
-		iterator       begin()       noexcept { return kv_.begin(); }
-		const_iterator begin() const noexcept { return kv_.begin(); }
-		const_iterator cbegin()const noexcept { return kv_.cbegin(); }
-		iterator       end()         noexcept { return kv_.end(); }
-		const_iterator end()   const noexcept { return kv_.end(); }
-		const_iterator cend()  const noexcept { return kv_.cend(); }
-
-		iterator find(key_type k) { return kv_.find(k); }
-		const_iterator find(key_type k) const { return kv_.find(k); }
-
-		template<class... Args>
-		std::pair<iterator, bool> emplace(key_type k, Args&&... args) {
-			return kv_.emplace(k, PSValue(std::forward<Args>(args)...));
-		}
-
-		PSValue& operator[](key_type k) { return kv_[k]; }
-
-		// typed getter
-		template <typename T>
-		bool get(key_type k, T& out) const {
-			auto it = kv_.find(k); if (it == kv_.end()) return false;
-			if (auto p = std::get_if<T>(&it->second)) { out = *p; return true; }
-			return false;
-		}
-
-		// erase helper
-		size_t erase(key_type k) { return kv_.erase(k); }
-
-	private:
-		map_type kv_;
-	};
+	
 
 	// Only one of these will be used depending on `code`
 	struct PSOp {           
@@ -150,7 +112,9 @@ namespace simcore {
 	inline PSOp OpRecordProgressAtBP() { PSOp o; o.code = PSOpCode::RECORD_PROGRESS_AT_BP; return o; }
 	inline PSOp OpSetU32(simcore::keys::KeyId key, uint32_t v) { PSOp o; o.code = PSOpCode::SET_U32; o.keyimm = { key,v }; return o; }
 	inline PSOp OpAddU32(simcore::keys::KeyId key, uint32_t v) { PSOp o; o.code = PSOpCode::ADD_U32; o.keyimm = { key,v }; return o; }
-	inline PSOp OpApplyPlanFrameFrom(simcore::keys::KeyId key) { PSOp o; o.code = PSOpCode::APPLY_PLAN_FRAME_FROM_KEY; o.a_key = { key }; return o; }
+	inline PSOp OpApplyPlanFrameFrom(simcore::keys::KeyId key) { PSOp o; o.code = PSOpCode::APPLY_BATTLE_INPUTPLAN_FRAMES; o.a_key = { key }; return o; }
+	inline PSOp OpBuildTurnInputFromActions() { PSOp o; o.code = PSOpCode::BUILD_TURN_INPUTPLAN_FROM_BATTLE_PATH; return o; }
+
 
 	inline PSOp OpGcSlotASet(simcore::keys::KeyId k) { PSOp o; o.code = PSOpCode::GC_SLOT_A_SET_FROM; o.a_key.id = k; return o; }
 	inline PSOp OpApplyInputFrom(simcore::keys::KeyId k) { PSOp o; o.code = PSOpCode::APPLY_INPUT_FROM;   o.a_key.id = k; return o; }
@@ -183,9 +147,16 @@ namespace simcore {
 		std::vector<PSOp>  ops;                 // executed in order per job
 	};
 
+	enum DBuf : uint8_t {
+		DK_None = 0,
+		DK_Battle = 1,
+		DK_Explore = 2,
+	};
+
 	struct PSInit {
 		std::string savestate_path;
 		uint32_t default_timeout_ms{ 10000 };
+		DBuf derived_buffer_type{ DBuf::DK_None };
 	};
 
 	struct PSJob {
@@ -242,9 +213,19 @@ namespace simcore {
 		bool read_f32(uint32_t a, float& v)    const { return host_.readF32(a, v); }
 		bool read_f64(uint32_t a, double& v)   const { return host_.readF64(a, v); }
 
+		// ---- Key-based reads (prefer keys; raw-address helpers remain available) ----
+		bool read_u8(addr::AddrKey k, uint8_t& out) { return host_.readByKey(k, out); }
+		bool read_u16(addr::AddrKey k, uint16_t& out) { return host_.readByKey(k, out); }
+		bool read_u32(addr::AddrKey k, uint32_t& out) { return host_.readByKey(k, out); }
+		bool read_u64(addr::AddrKey k, uint64_t& out) { return host_.readByKey(k, out); }
+		// Convenience for width-aware fetch (1,2,4,8) into 64-bit; returns width in out_width.
+		bool read_any(addr::AddrKey k, uint8_t width, uint64_t& out, uint8_t& out_width) { return host_.readByKeyAny(k, width, out, out_width); }
+
 		struct PlanView { const GCInputFrame* frames{ nullptr }; uint32_t count{ 0 }; };
 		std::vector<PlanView> plan_table_;
 		uint32_t last_plan_id_{ UINT32_MAX };
+
+		std::unique_ptr<simcore::IDerivedBuffer> derived_; // active derived buffer provider for this program
 	};
 
 } // namespace simcore

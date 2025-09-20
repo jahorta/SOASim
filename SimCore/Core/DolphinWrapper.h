@@ -19,6 +19,7 @@
 #include "Core/Common/Buffer.h"
 
 namespace Core { class System; }
+namespace addr { enum class AddrKey : uint16_t; struct DolphinAddr; }
 
 namespace simcore {
 
@@ -97,13 +98,28 @@ namespace simcore {
         bool readU8(uint32_t addr, uint8_t& out) const;
         bool readU16(uint32_t addr, uint16_t& out) const;
         bool readU32(uint32_t addr, uint32_t& out) const;
+        bool readU64(uint32_t addr, uint64_t& out) const;
         bool readF32(uint32_t addr, float& out) const;
         bool readF64(uint32_t addr, double& out) const;
+
+        // Resolve an address key to a VA using the paused core's memory (no MEM1 copy).
+        bool resolveKey(addr::AddrKey k, uint32_t& out_va) const;
+        bool resolveKeyWithBase(addr::AddrKey k, uint32_t base_override, uint32_t& out_va) const;
+
+        // Typed reads by key (paused-only; soft-fail on missing/unresolved key).
+        bool readByKey(addr::AddrKey k, uint8_t& out) const;
+        bool readByKey(addr::AddrKey k, uint16_t& out) const;
+        bool readByKey(addr::AddrKey k, uint32_t& out) const;
+        bool readByKey(addr::AddrKey k, uint64_t& out) const;
+
+        // Width-aware read into 64-bit bucket; returns the actual width via out_width (1,2,4,8).
+        bool readByKeyAny(addr::AddrKey k, uint8_t width, uint64_t& out, uint8_t& out_width) const;
 
         struct RunUntilHitResult { bool hit; uint32_t pc; const char* reason; };
         bool armPcBreakpoints(const std::vector<uint32_t>& pcs);
         bool disarmPcBreakpoints(const std::vector<uint32_t>& pcs);
         void clearAllPcBreakpoints();
+        bool setEnableAllBreakpoints(bool enabled);
 
         using ProgressSink = std::function<void(uint32_t cur_frames,
             uint32_t total_frames,

@@ -2,14 +2,15 @@
 #include <cstdint>
 
 namespace simcore::battle {
-    enum class Outcome : uint32_t {
-        Victory = 0x00010000u,
-        Defeat = 0x00010001u,
-        PlanMismatch = 0x00010002u,
-        TurnsExhausted = 0x00010003u,
-        Timeout = 0x00010004u,
-        ViStalled = 0x00010005u,
-        MovieEnded = 0x00010006u,
-        Unknown = 0x0001FFFFu,
+    enum class Outcome : uint16_t {
+        Victory =         0x0000u,
+        Defeat =          0x0001u,
+        PredFailure =     0x0002u,
+        PlanMismatch =    0x0003u,
+        TurnsExhausted =  0x0004u,
+        Timeout =         0x0005u,
+        ViStalled =       0x0006u,
+        MovieEnded =      0x0007u,
+        Unknown =         0xFFFFu,
     };
 } // namespace simcore::battle

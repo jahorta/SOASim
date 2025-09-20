@@ -6,8 +6,7 @@
 #include "../../../Tas/DtmFile.h"   // simcore::tas::DtmFile
 #include "../../../Utils/Log.h"
 #include "../../../Runner/IPC/Wire.h"
-#include "../../../Runner/Script/VMCoreKeys.reg.h"
-#include "TasMovieKeys.reg.h"
+#include "../../../Runner/Script/KeyRegistry.h"
 
 namespace fs = std::filesystem;
 

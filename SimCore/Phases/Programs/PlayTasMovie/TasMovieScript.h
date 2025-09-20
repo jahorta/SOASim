@@ -3,9 +3,8 @@
 #include <string>
 #include <vector>
 #include "../../../Runner/Script/PhaseScriptVM.h"
-#include "../../../Runner/Script/VMCoreKeys.reg.h"
+#include "../../../Runner/Script/KeyRegistry.h"
 #include "../../../Runner/Breakpoints/BPRegistry.h"
-#include "TasMovieKeys.reg.h"
 #include "TasMoviePayload.h"
 
 namespace simcore::tasmovie {

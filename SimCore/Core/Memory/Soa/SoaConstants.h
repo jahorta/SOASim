@@ -4,8 +4,18 @@
 #include <optional>
 #include <cstddef>
 #include <cassert>
+#include <string>
 
 namespace soa::text {
+
+	inline constexpr auto PCNames = std::to_array<std::string_view>({
+		"Vyse",
+		"Aika",
+		"Fina",
+		"Drachma",
+		"Enrique",
+		"Gilder"
+		});
 
 	inline constexpr auto EnemyNames = std::to_array<std::string_view>({
 		"Soldier",
@@ -261,7 +271,7 @@ namespace soa::text {
 		return EnemyNames[id];
 	}
 
-	inline constexpr auto ItemNames = std::to_array<std::string_view>({
+	inline constexpr auto ItemNames = std::to_array<std::string_view>({ //TODO: Fix this list so that it aligns with item_id
 		"Cutlass",
 		"Pirate Cutlass",
 		"Sky Cutlass",
@@ -298,6 +308,21 @@ namespace soa::text {
 		"Cupil Lance",
 		"Cupil Star",
 		"Cupicone",
+		"Cupil Spear",
+		"Cupil Blade",
+		"Cupil Sword",
+		"Cupil Cutlass",
+		"Cupil Claymore",
+		"Cupil Cannon",
+		"Cupil Spike",
+		"Cupil Weight",
+		"Cupil Pan",
+		"Cupil Club",
+		"Cupil Hammer",
+		"Final Cupil",
+		"Artificial Arm",
+		"Hook Hand",
+		"Mace Hand",
 		"Mining Arm",
 		"Dragon Arm",
 		"Beak Hand",
@@ -597,7 +622,7 @@ namespace soa::text {
 		"Clara's Purse",
 		"Book of Polarity",
 		"Velorium",
-		"Velorium",
+		"",
 		"",
 		"Harbor Key",
 		"Magic Cannon",
@@ -755,6 +780,7 @@ namespace soa::text {
 		"Crystal Ball",
 		"Magic Cannon",
 	});
+	//static_assert(sizeof(ItemNames) == 510, "size");
 
 	constexpr std::optional<std::size_t> find_item_index(std::string_view name) {
 		for (std::size_t i = 0; i < ItemNames.size(); ++i)
@@ -767,4 +793,22 @@ namespace soa::text {
 		assert(id < ItemNames.size());
 		return ItemNames[id];
 	}
+}
+
+namespace soa::battle {
+
+	enum TurnType : uint32_t {
+		BackAttack = 0,
+		Normal = 1,
+		Advantage = 2
+	};
+
+	constexpr std::string get_turn_type_string(TurnType type) {
+		switch (type) {
+		case BackAttack: return { "Back Attack" }; case Normal: return { "Normal" }; case Advantage: return { "Advantage" };
+	} 
+		return "Unknown type";
+	}
+
+
 }

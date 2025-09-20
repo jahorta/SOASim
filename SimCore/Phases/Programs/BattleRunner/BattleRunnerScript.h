@@ -1,9 +1,8 @@
 #pragma once
 #include "../../../Runner/Script/PhaseScriptVM.h"
-#include "../../../Runner/Script/VMCoreKeys.reg.h"
-#include "BattleOutcome.h"
-#include "BattleRunnerKeys.reg.h"
+#include "../../../Runner/Script/KeyRegistry.h"
 #include "../../../Runner/Breakpoints/BPRegistry.h"
+#include "BattleOutcome.h"
 
     namespace simcore::battle {
 
@@ -37,7 +36,8 @@
             ps.ops.push_back(OpRecordProgressAtBP());
 
             ps.ops.push_back(OpGotoIf(keys::core::RUN_HIT_BP, PSCmp::EQ, (uint32_t)BP_Victory, "RET_SUCCESS"));
-            ps.ops.push_back(OpGotoIf(keys::core::RUN_HIT_BP, PSCmp::EQ, (uint32_t)BP_Defeat, "RET_FAILURE"));
+            ps.ops.push_back(OpGotoIf(keys::core::RUN_HIT_BP, PSCmp::EQ, (uint32_t)BP_Defeat,  "RET_FAILURE"));
+            ps.ops.push_back(OpGotoIf(keys::core::PRED_ALL_PASSED, PSCmp::EQ, (uint32_t)0,     "RET_FAILURE"));
 
             ps.ops.push_back(OpGotoIf(keys::core::RUN_HIT_BP, PSCmp::NE, (uint32_t)BP_BattleAcceptInput, "B"));
 
@@ -56,6 +56,9 @@
 
             ps.ops.push_back(OpLabel("RET_FAILURE"));
             ps.ops.push_back(OpReturnResult((uint32_t)Outcome::Defeat));
+
+            ps.ops.push_back(OpLabel("RET_PRED_FAILURE"));
+            ps.ops.push_back(OpReturnResult((uint32_t)Outcome::PredFailure));
 
             ps.ops.push_back(OpLabel("RET_MISMATCH"));
             ps.ops.push_back(OpReturnResult((uint32_t)Outcome::PlanMismatch));

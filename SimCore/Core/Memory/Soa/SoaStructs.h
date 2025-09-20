@@ -20,6 +20,22 @@ namespace soa {
     };
     static_assert(sizeof(Vec3Float) == 12, "size");
 
+    struct Instruction {
+        uint32_t inst;
+        uint8_t target;
+        uint8_t targetMethod;
+        uint16_t instParam;
+        uint8_t atkResult;
+        uint8_t _pad[7];
+    };
+    static_assert(sizeof(Instruction) == 16, "size");
+
+    struct InstructionSet {
+        Instruction current;
+        Instruction previous;
+    };
+    static_assert(sizeof(InstructionSet) == 32, "size");
+
     // TODO: Correct these fields
     struct Thread {
         uint32_t fxn;
@@ -261,6 +277,37 @@ namespace soa {
         PC_Data Gilder; // embed PC_Data
     };
     static_assert(sizeof(All_PC_Data) == 552, "size");
+
+    struct BattleItemDropSlot {
+        int16_t count;
+        int16_t item_id;
+    };
+    static_assert(sizeof(BattleItemDropSlot) == 4, "size");
+
+    struct ItemSlot {
+        uint16_t item_id;
+        uint8_t count;
+        uint8_t _pad0[1];
+    };
+    static_assert(sizeof(ItemSlot) == 4, "size");
+
+    struct BattleState {
+        uint8_t  initiative;
+        uint8_t  _pad0[1];
+        uint8_t  PC_escape_chance;
+        uint8_t  EC_escape_chance;
+        uint8_t  _pad1[2];
+        uint16_t maxSP;
+        uint16_t curSP;
+        uint16_t sp_after_instructions;
+        uint16_t enemies_killed;
+        BattleItemDropSlot item_drops[8];
+        uint8_t  _pad2[2];
+        uint32_t experience_earned;
+        uint32_t gold_earned;
+        ItemSlot useable_items[80];
+    };
+    static_assert(sizeof(BattleState) == 0x178, "size");
 
 #pragma pack(pop)
 

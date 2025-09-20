@@ -132,7 +132,7 @@
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
     <PreBuildEvent>
-      <Command>python "$(ProjectDir)Utils\soa_struct_reflector.py" "$(ProjectDir)Core\Memory\SoaStructs.h" "$(ProjectDir)Core\Memory\SoaStructs.reflect.h"</Command>
+      <Command>python "$(ProjectDir)Utils\soa_struct_reflector.py" "$(ProjectDir)Core\Memory\Soa\SoaStructs.h" "$(ProjectDir)Core\Memory\Soa\SoaStructs.reflect.h"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -162,6 +162,9 @@
     <Lib>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
+    <PreBuildEvent>
+      <Command>python "$(ProjectDir)Utils\soa_struct_reflector.py" "$(ProjectDir)Core\Memory\Soa\SoaStructs.h" "$(ProjectDir)Core\Memory\Soa\SoaStructs.reflect.h"</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Boot\Boot.h" />
@@ -171,45 +174,59 @@
     <ClInclude Include="Core\Input\GCPadOverride.h" />
     <ClInclude Include="Core\Input\InputPlan.h" />
     <ClInclude Include="Core\Input\InputPlanFmt.h" />
+    <ClInclude Include="Core\Input\SoaBattle\ActionLibrary.h" />
+    <ClInclude Include="Core\Input\SoaBattle\ActionPlanSerializer.h" />
+    <ClInclude Include="Core\Input\SoaBattle\ActionTypes.h" />
+    <ClInclude Include="Core\Input\SoaBattle\PlanWriter.h" />
+    <ClInclude Include="Core\Memory\DerivedBase.h" />
     <ClInclude Include="Core\Memory\Endian.h" />
+    <ClInclude Include="Core\Memory\IKeyReader.h" />
+    <ClInclude Include="Core\Memory\KeyHostRouter.h" />
     <ClInclude Include="Core\Memory\MemView.h" />
-    <ClInclude Include="Core\Memory\SoaAddr.def.h" />
-    <ClInclude Include="Core\Memory\SoaAddrRegistry.h" />
-    <ClInclude Include="Core\Memory\SoaConstants.h" />
-    <ClInclude Include="Core\Memory\SoaStructReaders.h" />
-    <ClInclude Include="Core\Memory\SoaStructs.h" />
-    <ClInclude Include="Core\Memory\SoaStructs.reflect.h" />
+    <ClInclude Include="Core\Memory\Soa\Battle\BattleContext.h" />
+    <ClInclude Include="Core\Memory\Soa\Battle\BattleContextCodec.h" />
+    <ClInclude Include="Core\Memory\Soa\Battle\DerivedBattleBuffer.h" />
+    <ClInclude Include="Core\Memory\Soa\Battle\DerivedBattleBuffer.addr.h" />
+    <ClInclude Include="Core\Memory\Soa\SoaAddr.def.h" />
+    <ClInclude Include="Core\Memory\Soa\SoaAddrCatalog.h" />
+    <ClInclude Include="Core\Memory\Soa\SoaAddrProgram.h" />
+    <ClInclude Include="Core\Memory\Soa\SoaAddrProgramBuilder.h" />
+    <ClInclude Include="Core\Memory\Soa\SoaAddrRegistry.h" />
+    <ClInclude Include="Core\Memory\Soa\SoaConstants.h" />
+    <ClInclude Include="Core\Memory\Soa\SoaStructReaders.h" />
+    <ClInclude Include="Core\Memory\Soa\SoaStructs.h" />
+    <ClInclude Include="Core\Memory\Soa\SoaStructs.reflect.h" />
     <ClInclude Include="Core\Shims\StateBufferShim.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="Phases\BattleExplorer.h" />
     <ClInclude Include="Phases\FirstBattleGenerator.h" />
-    <ClInclude Include="Phases\Programs\BattleContext\BattleContext.h" />
-    <ClInclude Include="Phases\Programs\BattleContext\BattleContextCodec.h" />
     <ClInclude Include="Phases\Programs\BattleContext\BattleContextScript.h" />
-    <ClInclude Include="Phases\Programs\BattleRunner\BattleRunnerKeys.reg.h" />
+    <ClInclude Include="Phases\Programs\BattleRunner\BattleOutcome.h" />
     <ClInclude Include="Phases\Programs\BattleRunner\BattleRunnerPayload.h" />
     <ClInclude Include="Phases\Programs\BattleRunner\BattleRunnerScript.h" />
-    <ClInclude Include="Phases\Programs\PlayTasMovie\TasMovieKeys.reg.h" />
     <ClInclude Include="Phases\Programs\PlayTasMovie\TasMoviePayload.h" />
     <ClInclude Include="Phases\Programs\PlayTasMovie\TasMovieScript.h" />
     <ClInclude Include="Phases\Programs\ProgramRegistry.h" />
-    <ClInclude Include="Phases\Programs\SeedProbe\SeedProbeKeys.reg.h" />
     <ClInclude Include="Phases\Programs\SeedProbe\SeedProbePayload.h" />
     <ClInclude Include="Phases\Programs\SeedProbe\SeedProbeScript.h" />
     <ClInclude Include="Phases\RNGSeedDeltaMap.h" />
     <ClInclude Include="Runner\Breakpoints\BP.def.h" />
     <ClInclude Include="Runner\Breakpoints\BPRegistry.h" />
+    <ClInclude Include="Runner\Breakpoints\Predicate.h" />
     <ClInclude Include="Runner\IPC\Wire.h" />
     <ClInclude Include="Runner\Parallel\ParallelPhaseScriptRunner.h" />
     <ClInclude Include="Runner\Parallel\ProcessWorker.h" />
     <ClInclude Include="Runner\Parallel\PRTypes.h" />
     <ClInclude Include="Runner\Parallel\TSQueue.h" />
-    <ClInclude Include="Runner\Script\KeyIds.h" />
-    <ClInclude Include="Runner\Script\KeyRegistry.h" />
+    <ClInclude Include="Runner\Script\ContextKeys\BattleRunnerKeys.reg.h" />
+    <ClInclude Include="Runner\Script\ContextKeys\KeyIds.h" />
+    <ClInclude Include="Runner\Script\ContextKeys\KeyRegistry.h" />
+    <ClInclude Include="Runner\Script\ContextKeys\SeedProbeKeys.reg.h" />
+    <ClInclude Include="Runner\Script\ContextKeys\TasMovieKeys.reg.h" />
+    <ClInclude Include="Runner\Script\ContextKeys\VMCoreKeys.reg.h" />
     <ClInclude Include="Runner\Script\PhaseScriptVM.h" />
+    <ClInclude Include="Runner\Script\PSContext.h" />
     <ClInclude Include="Runner\Script\PSContextCodec.h" />
-    <ClInclude Include="Runner\Script\VMCoreKeys.reg.h" />
-    <ClInclude Include="Runner\SOAConstants.h" />
-    <ClInclude Include="Runner\SOAStructs.h" />
     <ClInclude Include="Tas\DtmFile.h" />
     <ClInclude Include="Utils\DeltaColorizer.h" />
     <ClInclude Include="Utils\EnsureSys.h" />
@@ -1072,16 +1089,24 @@
     <ClCompile Include="Core\HostStubs.cpp" />
     <ClCompile Include="Core\Input\GCPadOverride.cpp" />
     <ClCompile Include="Core\Input\InputPlanFmt.cpp" />
-    <ClCompile Include="Core\Memory\SoaAddrRegistry.cpp" />
+    <ClCompile Include="Core\Input\SoaBattle\ActionLibrary.cpp" />
+    <ClCompile Include="Core\Input\SoaBattle\ActionPlanSerializer.cpp" />
+    <ClCompile Include="Core\Input\SoaBattle\PlanWriter.cpp" />
+    <ClCompile Include="Core\Memory\Soa\Battle\BattleContextCodec.cpp" />
+    <ClCompile Include="Core\Memory\Soa\SoaAddrCatalog.cpp" />
+    <ClCompile Include="Core\Memory\Soa\SoaAddrProgram.cpp" />
+    <ClCompile Include="Core\Memory\Soa\SoaAddrProgramBuilder.cpp" />
+    <ClCompile Include="Core\Memory\Soa\SoaAddrRegistry.cpp" />
     <ClCompile Include="Core\Shims\StateBufferShim.cpp" />
+    <ClCompile Include="Phases\BattleExplorer.cpp" />
     <ClCompile Include="Phases\FirstBattleGenerator.cpp" />
-    <ClCompile Include="Phases\Programs\BattleContext\BattleContextCodec.cpp" />
     <ClCompile Include="Phases\Programs\BattleRunner\BattleRunnerPayload.cpp" />
     <ClCompile Include="Phases\Programs\PlayTasMovie\TasMoviePayload.cpp" />
     <ClCompile Include="Phases\Programs\ProgramRegistry.cpp" />
     <ClCompile Include="Phases\Programs\SeedProbe\SeedProbePayload.cpp" />
     <ClCompile Include="Phases\RNGSeedDeltaMap.cpp" />
     <ClCompile Include="Runner\Breakpoints\BPRegistry.cpp" />
+    <ClCompile Include="Runner\Breakpoints\Predicate.cpp" />
     <ClCompile Include="Runner\Parallel\ParallelPhaseScriptRunner.cpp" />
     <ClCompile Include="Runner\Parallel\ProcessWorker.cpp" />
     <ClCompile Include="Runner\Script\KeyRegistry.cpp" />

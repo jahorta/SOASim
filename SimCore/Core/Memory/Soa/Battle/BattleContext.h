@@ -1,8 +1,9 @@
 #pragma once
 #include <cstdint>
-#include "../../../Core/Memory/SoaStructs.h"  // contains dme::CombatantInstance and dme::EnemyDefinition
+#include "../SoaStructs.h"  // contains dme::CombatantInstance and dme::EnemyDefinition
+#include "../SoaConstants.h"
 
-namespace simcore::battlectx {
+namespace soa::battle::ctx {
 
     struct BattleSlot
     {
@@ -23,6 +24,8 @@ namespace simcore::battlectx {
     struct BattleContext
     {
         BattleSlot slots[12];
+        soa::BattleState state{};
+        soa::battle::TurnType turn_type;
 
         BattleContext() = default;
     };

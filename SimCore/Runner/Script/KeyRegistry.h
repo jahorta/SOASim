@@ -3,7 +3,11 @@
 #include <cstdint>
 #include <cstddef>
 #include <string>
-#include "KeyIds.h"
+#include "ContextKeys/KeyIds.h"
+#include "ContextKeys/VMCoreKeys.reg.h"
+#include "ContextKeys/SeedProbeKeys.reg.h"
+#include "ContextKeys/TasMovieKeys.reg.h"
+#include "ContextKeys/BattleRunnerKeys.reg.h"
 
 namespace simcore::keys {
 

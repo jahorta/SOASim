@@ -1,14 +1,10 @@
 #pragma once
 #include "../../../Runner/Script/PhaseScriptVM.h"
-#include "../../../Runner/Script/VMCoreKeys.reg.h"
-#include "../../../Core/Memory/SoaAddrRegistry.h"
+#include "../../../Runner/Script/KeyRegistry.h"
+#include "../../../Core/Memory/Soa/SoaAddrRegistry.h"
 #include "../../../Runner/Breakpoints/BPRegistry.h"
-#include "SeedProbeKeys.reg.h"
 
 namespace simcore::seedprobe {
-
-    static const std::string K_INPUT{ "seed.input" };
-    static const std::string K_RNG_SEED{ "seed.seed" };
     
     // Build a small program for "apply 1 frame input, then run-until-bp, then read RNG"
     inline PhaseScript MakeSeedProbeProgram()
@@ -32,7 +28,5 @@ namespace simcore::seedprobe {
 
         return ps;
     }
-
-    
 
 } // namespace simcore

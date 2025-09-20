@@ -1,6 +1,6 @@
 #pragma once
 #include <cstddef>
-#include "../../../Runner/Script/KeyIds.h"
+#include "KeyIds.h"
 
 namespace simcore::keys::seed {
 

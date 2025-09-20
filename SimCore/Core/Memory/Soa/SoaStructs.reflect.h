@@ -27,6 +27,26 @@ template <> struct reflect<soa::Vec3Float> {
   );
 };
 
+template <> struct reflect<soa::Instruction> {
+  using type = soa::Instruction;
+  static constexpr auto members = std::make_tuple(
+    &type::inst,
+    &type::target,
+    &type::targetMethod,
+    &type::instParam,
+    &type::atkResult,
+    &type::_pad
+  );
+};
+
+template <> struct reflect<soa::InstructionSet> {
+  using type = soa::InstructionSet;
+  static constexpr auto members = std::make_tuple(
+    &type::current,
+    &type::previous
+  );
+};
+
 template <> struct reflect<soa::Thread> {
   using type = soa::Thread;
   static constexpr auto members = std::make_tuple(
@@ -301,6 +321,43 @@ template <> struct reflect<soa::All_PC_Data> {
     &type::Drachma,
     &type::Enrique,
     &type::Gilder
+  );
+};
+
+template <> struct reflect<soa::BattleItemDropSlot> {
+  using type = soa::BattleItemDropSlot;
+  static constexpr auto members = std::make_tuple(
+    &type::count,
+    &type::item_id
+  );
+};
+
+template <> struct reflect<soa::ItemSlot> {
+  using type = soa::ItemSlot;
+  static constexpr auto members = std::make_tuple(
+    &type::item_id,
+    &type::count,
+    &type::_pad0
+  );
+};
+
+template <> struct reflect<soa::BattleState> {
+  using type = soa::BattleState;
+  static constexpr auto members = std::make_tuple(
+    &type::initiative,
+    &type::_pad0,
+    &type::PC_escape_chance,
+    &type::EC_escape_chance,
+    &type::_pad1,
+    &type::maxSP,
+    &type::curSP,
+    &type::sp_after_instructions,
+    &type::enemies_killed,
+    &type::item_drops,
+    &type::_pad2,
+    &type::experience_earned,
+    &type::gold_earned,
+    &type::useable_items
   );
 };
 

@@ -20,6 +20,7 @@
 #include "SeedProbe.h"
 #include "TASMoviePlayer.h"
 #include "utils.h"
+#include "MenuBattleExplorer.h"
 
 using namespace simcore;
 
@@ -42,7 +43,9 @@ static void menu_loop(AppState& g)
         std::cout << "\n=== SOASim Sandbox ===\n";
         std::cout << "1) Configure paths (ISO, Dolphin portable base, default savestate)\n";
         std::cout << "2) Run RNGSeedDeltaMap probe\n";
-         std::cout << "3) TAS Movie -> BP -> Savestate (scaffold)\n";
+        std::cout << "3) TAS Movie -> BP -> Savestate (scaffold)\n";
+        std::cout << "4) Battle Context\n";
+        std::cout << "5) Battle Runner\n";
         std::cout << "q) Quit\n";
         std::cout << "> ";
 
@@ -52,6 +55,8 @@ static void menu_loop(AppState& g)
         if (choice == "1") menu_configure_paths(g);
         else if (choice == "2") sandbox::run_rng_seed_probe_menu(g);
         else if (choice == "3") sandbox::menu_tas_movie(g);
+        else if (choice == "4") sandbox::get_battle_context(g);
+        else if (choice == "5") sandbox::run_battle_explorer_menu(g);
         else {
             std::cout << "Unknown option.\n";
         }
