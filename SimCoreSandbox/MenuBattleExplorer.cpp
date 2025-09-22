@@ -457,14 +457,14 @@ namespace sandbox {
         const UI_Config& ui,
         const BattleExplorer& ex) {
         render_battle_context(bc);
-        std::cout << "\n";
+        std::cout << "\n---- Battle Run Setup ----";
 
         // 2) Number of turn plans set
         const auto N = ui.turns.size();
-        std::cout << "Turns defined : " << N << "\n";
+        std::cout << "\nTurns defined : " << N;
 
         // 3) Players with T(t):(action) summaries
-        std::cout << "Players (compact per-turn actions):\n";
+        std::cout << "\nPlayers (compact per-turn actions):";
 
         // 3.1) Build labels and find max label width
         int max_label = 0;
@@ -507,33 +507,28 @@ namespace sandbox {
 
         // 3.3) Emit rows with padded label and fixed-width columns per turn
         for (int pc : pcs) {
+            std::cout << "\n";
             std::cout << "  " << std::left << std::setw(max_label) << labels[pc] << "  ";
             for (std::size_t t = 0; t < T; ++t) {
                 // +2 spaces gap between columns; tweak to taste
                 std::cout << std::left << std::setw(colw[t] + 2) << tokens[pc][t];
             }
-            std::cout << "\n";
         }
-        std::cout << "\n";
 
-        // 4) Enemies with enemy-scoped predicates
-        std::cout << "Enemies:\n";
-        // TODO: print enemies and mark relevant predicates
+        // 4) Active Predicates
+        std::cout << "\nActive Predicates : " << ui.predicates.size();
+        for (auto p : ui.predicates) {
+            std::cout << "\n  [" << p.id << "] " << p.desc;
+        }
 
-        std::cout << "\n";
         // 5) Options
-        std::cout << "Options:\n    FakeAttack Budget = " << std::max(0, ui.fakeattack_budget) << "\n";
+        std::cout << "\nOptions:";
+        std::cout << "\n  FakeAttack Budget = " << std::max(0, ui.fakeattack_budget);
 
-        std::cout << "\n";
-
-        // 6) Active Predicates
-        std::cout << "Active Predicates : " << ui.predicates.size() << "\n";
-
-        std::cout << "\n";
         // Footer: estimates
         const auto X = ex.estimate_paths_no_fake(ui, bc);
         const auto Y = ex.estimate_paths_with_fake(ui, X);
-        std::cout << "Base paths: " << X << " | With FakeAttacks ? B: " << Y << "\n";
+        std::cout << "\nBase paths: " << X << " | With FakeAttacks ? B: " << Y << "\n";
     }
 
     static int prompt_int(const char* label, int defval) {
