@@ -646,6 +646,9 @@ namespace sandbox {
                 ui.turns.push_back(std::move(t));
             }
             else if (c == '2') {
+                std::cout << "[Not implemented]";
+                continue;
+
                 if (ui.turns.empty()) continue;
                 const int idx = prompt_int("Turn index (1..N)", 1) - 1;
                 if (idx >= 0 && idx < static_cast<int>(ui.turns.size())) {
@@ -653,6 +656,8 @@ namespace sandbox {
                 }
             }
             else if (c == '3') {
+                std::cout << "[Not implemented]";
+                continue;
                 // TODO: predicate catalog ? push into ui.predicates
             }
             else if (c == '4') {
