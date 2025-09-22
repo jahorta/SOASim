@@ -11,7 +11,7 @@ namespace phase::battle::runner {
     static constexpr BPKey BP_BattleLoadComplete = bp::battle::BattleLoadComplete;
     static constexpr BPKey BP_BattleAcceptInput = bp::battle::TurnInputs;
     static constexpr BPKey BP_Victory = bp::battle::EndBattleVictory;
-    static constexpr BPKey BP_Defeat = bp::battle::EndBattleVictory;
+    static constexpr BPKey BP_Defeat = bp::battle::EndBattleDefeat;
 
     static const std::string LabelA = "A";
     static const std::string LabelB = "B";
