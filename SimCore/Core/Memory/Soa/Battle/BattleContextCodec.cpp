@@ -56,6 +56,14 @@ namespace soa::battle::ctx::codec {
             out.turn_type = soa::battle::TurnType(v);
         }
 
+        uint32_t bp;
+        if (!view.read_u32(addr::Registry::base(addr::battle::BattlePhase), bp)) return false;
+        out.battle_phase = bp;
+
+        uint8_t ct;
+        if (!view.read_u8(addr::Registry::base(addr::battle::CurrentTurn), ct)) return false;
+        out.turn_count = ct;
+
         return true;
     }
 
@@ -103,7 +111,13 @@ namespace soa::battle::ctx::codec {
                 const char* bytes = reinterpret_cast<const char*>(&s.enemy_def);
                 out.append(bytes, bytes + sizeof(soa::EnemyDefinition));
             }
+            
         }
+
+        append_u32_native(out, (uint32_t)in.turn_type);
+        append_u32_native(out, in.turn_count);
+        append_u32_native(out, in.battle_phase);
+
         return true;
     }
 
@@ -136,6 +150,12 @@ namespace soa::battle::ctx::codec {
                 p += sizeof(soa::EnemyDefinition);
             }
         }
+        
+        uint32_t tt; read_u32_native(p, end, tt);
+        out.turn_type = (soa::battle::TurnType)tt;
+        read_u32_native(p, end, out.turn_count);
+        read_u32_native(p, end, out.battle_phase);
+
         return p == end;
     }
 

@@ -3,6 +3,7 @@
 #include <vector>
 #include <cstdint>
 #include <optional>
+#include <string>
 #include "../../Core/Memory/Soa/SoaAddrRegistry.h"
 
 namespace simcore::pred {
@@ -12,6 +13,8 @@ namespace simcore::pred {
         CaptureBaseline = 1 << 0,
         Active = 1 << 1,
         RhsIsKey = 1 << 2,
+        LhsIsProg = 1 << 3,
+        RhsIsProg = 1 << 4
     };
 
     inline constexpr PredFlag operator|(PredFlag a, PredFlag b) { return PredFlag(uint8_t(a) | uint8_t(b)); }
@@ -53,17 +56,27 @@ namespace simcore::pred {
         CmpOp    cmp{ CmpOp::EQ };
         uint8_t  flags{ 0 }; // bit0=capture_baseline, bit1=active, bit2=rhs_is_key
 
-        std::optional<addr::AddrKey> key{};     // LHS anchor (symbolic), optional
         uint32_t lhs_addr{ 0 };                   // LHS absolute VA (legacy path)
+        std::optional<addr::AddrKey> lhs_key{};     // LHS anchor (symbolic), optional
 
-        uint64_t rhs_bits{ 0 };                   // RHS immediate if not key and not program
+        uint64_t rhs_value{ 0 };                   // RHS immediate if not key and not program
         std::optional<addr::AddrKey> rhs_key{}; // RHS anchor when RhsIsKey
 
-        uint32_t turn_mask{ 0xFFFFFFFFu };
+        uint32_t turn_mask{ 0x0u };
 
         // NEW: embedded address programs (may be empty)
         std::vector<uint8_t> lhs_prog;          // must start with OP_BASE_KEY if non-empty
         std::vector<uint8_t> rhs_prog;          // must start with OP_BASE_KEY if non-empty
+
+        std::string desc{};
+
+        void set_flag(PredFlag f) { flags |= uint8_t(f); }
+        void clear_flag(PredFlag f) { flags &= ~uint8_t(f); }
+        bool has_flag(PredFlag f) const { return (flags & uint8_t(f)) != 0; }
+
+        void set_every_turn() { turn_mask = 0xFFFFFFFFu; }
+        void set_turns(const std::vector<uint8_t> turns) { for (const auto i : turns) if (i > 0 && i <= 32) turn_mask = turn_mask | (1 << (i - 1)); }
+        void set_turn(const uint8_t turn) {if ( turn > 0 && turn <= 32) turn_mask = turn_mask | (1 << (turn - 1)); }
     };
 
     // One-and-done builder: fills records and returns packed program blob.

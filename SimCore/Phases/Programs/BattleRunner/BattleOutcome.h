@@ -13,4 +13,20 @@ namespace simcore::battle {
         MovieEnded =      0x0007u,
         Unknown =         0xFFFFu,
     };
+
+    inline std::string get_outcome_string(Outcome o) {
+        switch (o) {
+        case Outcome::Victory: return "Victory";
+        case Outcome::Defeat: return "Defeat";
+        case Outcome::PredFailure: return "Predicate Failure";
+        case Outcome::PlanMismatch: return "Plan Mismatch";
+        case Outcome::TurnsExhausted: return "Turns Exhausted";
+        case Outcome::Timeout: return "Timeout";
+        case Outcome::ViStalled: return "VI Stalled";
+        case Outcome::MovieEnded: return "Movie Ended";
+        case Outcome::Unknown: 
+        default:
+            return "Victory";
+        }
+    }
 } // namespace simcore::battle

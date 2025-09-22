@@ -20,10 +20,12 @@
 #include "Core/State.h"
 #include "Core/Movie.h"
 #include "Core/HW/Memmap.h"
+#include "Core/HW/CPU.h"
 
 #include "Core/ConfigManager.h"  // SConfig::Init/Shutdown/LoadSettings
 #include "Core/Config/MainSettings.h"
 #include "Common/Config/Config.h"
+#include "Common/Event.h"
 
 #include "Core/PowerPC/PowerPC.h"       // PowerPC::PowerPCManager, GetPPCState()
 
@@ -271,8 +273,8 @@ namespace simcore {
         uint8_t  ch = 0;
 
         // Try both reads; if either fails, return empty.
-        if (!readByKey(addr::core::SCT_FILE_NUM, num)) return {};
-        if (!readByKey(addr::core::SCT_FILE_LTTR, ch))  return {};
+        if (!readByKey(addr::core::SCT_FILE_NUM, num, false)) return {};
+        if (!readByKey(addr::core::SCT_FILE_LTTR, ch, false))  return {};
 
         // Enforce expected ranges: number 1..600; letter must be a printable ASCII.
         if (num < 1 || num > 600) return {};
@@ -783,10 +785,10 @@ namespace simcore {
         return true;
     }
 
-    bool DolphinWrapper::readByKey(addr::AddrKey k, uint8_t& out) const
+    bool DolphinWrapper::readByKey(addr::AddrKey k, uint8_t& out, bool require_paused) const
     {
         if (!isRunning()) return false;
-        if (Core::GetState(*m_system) != Core::State::Paused) {
+        if (require_paused && Core::GetState(*m_system) != Core::State::Paused) {
             SCLOGE("[DW] readByKey(%s) denied: core not paused", addr::Registry::name(k));
             return false;
         }
@@ -798,10 +800,10 @@ namespace simcore {
         return readU8(va, out);
     }
 
-    bool DolphinWrapper::readByKey(addr::AddrKey k, uint16_t& out) const
+    bool DolphinWrapper::readByKey(addr::AddrKey k, uint16_t& out, bool require_paused) const
     {
         if (!isRunning()) return false;
-        if (Core::GetState(*m_system) != Core::State::Paused) {
+        if (require_paused && Core::GetState(*m_system) != Core::State::Paused) {
             SCLOGE("[DW] readByKey(%s) denied: core not paused", addr::Registry::name(k));
             return false;
         }
@@ -813,10 +815,10 @@ namespace simcore {
         return readU16(va, out);
     }
 
-    bool DolphinWrapper::readByKey(addr::AddrKey k, uint32_t& out) const
+    bool DolphinWrapper::readByKey(addr::AddrKey k, uint32_t& out, bool require_paused) const
     {
         if (!isRunning()) return false;
-        if (Core::GetState(*m_system) != Core::State::Paused) {
+        if (require_paused && Core::GetState(*m_system) != Core::State::Paused) {
             SCLOGE("[DW] readByKey(%s) denied: core not paused", addr::Registry::name(k));
             return false;
         }
@@ -828,10 +830,10 @@ namespace simcore {
         return readU32(va, out);
     }
 
-    bool DolphinWrapper::readByKey(addr::AddrKey k, uint64_t& out) const
+    bool DolphinWrapper::readByKey(addr::AddrKey k, uint64_t& out, bool require_paused) const
     {
         if (!isRunning()) return false;
-        if (Core::GetState(*m_system) != Core::State::Paused) {
+        if (require_paused && Core::GetState(*m_system) != Core::State::Paused) {
             SCLOGE("[DW] readByKey(%s) denied: core not paused", addr::Registry::name(k));
             return false;
         }
@@ -919,6 +921,17 @@ namespace simcore {
         SCLOGT("[core] properly removed breakpoints: %s", disarm_result ? "true" : "false");
     }
 
+    bool DolphinWrapper::setEnableBreakpoint(uint32_t pc, bool enabled)
+    {
+        SCLOGT("[core] silencing all breakpoints");
+        bool silence_result = runOnCpuThread([&] {
+            if (m_system->GetPowerPC().GetBreakPoints().IsBreakPointEnable(pc) != enabled)
+                m_system->GetPowerPC().GetBreakPoints().ToggleEnable(pc);
+            }, true);
+
+        return false;
+    }
+
     bool DolphinWrapper::setEnableAllBreakpoints(bool enabled)
     {
         SCLOGT("[core] silencing all breakpoints");
@@ -985,9 +998,24 @@ namespace simcore {
         const ProgressSink& emit = sink ? sink : m_progress_sink; // toggle: null = no progress
         auto last_emit = steady_clock::time_point{};
 
+        const uint32_t pc = getPC();
+        if (contains_pc(armed_singleton().pcs, pc)) {
+            SCLOGD("[DW/run] Stepping past pc=%08X to avoid breakpoint", pc);
+            //setEnableBreakpoint(pc, false);
+            Common::Event sync_event;
+            auto& power_pc = m_system->GetPowerPC();
+            PowerPC::CoreMode old_mode = power_pc.GetMode();
+            power_pc.SetMode(PowerPC::CoreMode::Interpreter);
+            m_system->GetCPU().StepOpcode(&sync_event);
+            sync_event.WaitFor(std::chrono::milliseconds(20));
+            power_pc.SetMode(old_mode);
+            //setEnableBreakpoint(pc, true);
+        }
+
         // Ensure we begin in Running so time can advance (unless already paused by a BP before entry)
         if (Core::GetState(*m_system) != Core::State::Paused)
             Core::SetState(*m_system, Core::State::Running);
+
 
         size_t polls = 0;
         while (true)

@@ -9,10 +9,12 @@
 #include "../Breakpoints/Predicate.h"
 #include "../../Core/Input/SoaBattle/PlanWriter.h"
 #include "../../Core/Input/SoaBattle/ActionLibrary.h"
+#include "../../Core/Input/InputPlanFmt.h"
 #include "../../Core/Memory/IKeyReader.h"
 #include "../../Core/Memory/DerivedBase.h"
 #include "../../Core/Memory/Soa/Battle/DerivedBattleBuffer.h"
 #include "../../Core/Memory/KeyHostRouter.h"
+#include "../Breakpoints/BPRegistry.h"
 
 namespace {
     inline bool read_via_addrprog(simcore::DolphinWrapper& host,
@@ -126,6 +128,7 @@ namespace simcore {
     {
         PSResult R{};
         PSContext ctx = job.ctx;
+        predicate_bp_keys_.clear();
 
         // Always start by restoring the pre-captured snapshot for each job
         if (!load_snapshot()) return R;
@@ -137,13 +140,13 @@ namespace simcore {
         if (derived_) router = std::make_unique<KeyHostRouter>(&mem1_reader, derived_.get());
         else router = std::make_unique<KeyHostRouter>(&mem1_reader, nullptr);
 
-        std::unordered_map<std::string, size_t> label_pc;
+        std::unordered_map<std::string, size_t> label_vm_pc_map;
         for (size_t i = 0; i < prog_.ops.size(); ++i) {
-            if (prog_.ops[i].code == PSOpCode::LABEL) label_pc[prog_.ops[i].label.name] = i;
+            if (prog_.ops[i].code == PSOpCode::LABEL) label_vm_pc_map[prog_.ops[i].label.name] = i;
         }
 
-        for (size_t pc = 0; pc < prog_.ops.size(); ++pc) {
-            const auto& op = prog_.ops[pc];
+        for (size_t vm_pc = 0; vm_pc < prog_.ops.size(); ++vm_pc) {
+            const auto& op = prog_.ops[vm_pc];
             SCLOGT("[VM] running op: %s", get_psop_name(op.code).c_str());
 
             switch (op.code) {
@@ -152,8 +155,8 @@ namespace simcore {
             case PSOpCode::CAPTURE_SNAPSHOT: { if (!save_snapshot()) return R; break; }
             case PSOpCode::LABEL: { break; }
             case PSOpCode::GOTO: {
-                auto it = label_pc.find(op.jmp.name);
-                if (it != label_pc.end()) pc = it->second;
+                auto it = label_vm_pc_map.find(op.jmp.name);
+                if (it != label_vm_pc_map.end()) vm_pc = it->second;
                 break;
             }
 
@@ -170,8 +173,8 @@ namespace simcore {
                 case PSCmp::GE: take = (v >= op.jcc.imm); break;
                 }
                 if (take) {
-                    auto it = label_pc.find(op.jcc.name);
-                    if (it != label_pc.end()) pc = it->second;
+                    auto it = label_vm_pc_map.find(op.jcc.name);
+                    if (it != label_vm_pc_map.end()) vm_pc = it->second;
                 }
                 break;
             }
@@ -190,8 +193,8 @@ namespace simcore {
                 case PSCmp::GE: take = (lv >= rv); break;
                 }
                 if (take) {
-                    auto it = label_pc.find(op.jcc2.name);
-                    if (it != label_pc.end()) pc = it->second;
+                    auto it = label_vm_pc_map.find(op.jcc2.name);
+                    if (it != label_vm_pc_map.end()) vm_pc = it->second;
                 }
                 break;
             }
@@ -290,10 +293,9 @@ namespace simcore {
                     GCInputFrame f{};
                     std::memcpy(&f, frames + (idx * sizeof(GCInputFrame)), sizeof(GCInputFrame));
 
+                    SCLOGD("[vm] setting input [%d]: %s", idx, DescribeFrame(f).c_str());
                     host_.setInput(f);
                     host_.stepOneFrameBlocking();
-
-                    ++idx;
                 }
                 host_.setEnableAllBreakpoints(true);
                 if (idx >= count) ctx[keys::core::PLAN_DONE] = uint32_t(1);
@@ -338,19 +340,22 @@ namespace simcore {
                 // mirror -> ctx
                 ctx[keys::core::OUTCOME_CODE] = static_cast<uint32_t>(outcome);
                 ctx[keys::core::ELAPSED_MS] = elapsed_ms;
-                ctx[keys::core::RUN_HIT_PC] = rr.hit ? rr.pc : 0u;
+                ctx[keys::core::RUN_HIT_PC] = rr.hit ? (uint32_t)rr.pc : (uint32_t)0u;
 
                 // derive hit BP id by matching PC
-                uint32_t hit_bp_id = 0;
+                uint32_t hit_bp_key = 0;
                 if (rr.hit) {
                     for (auto k : canonical_bp_keys_) {
-                        if (const auto* e = bpmap_.find(k); e && e->pc == rr.pc) { hit_bp_id = (uint32_t)k; break; }
+                        if (const auto* e = bpmap_.find(k); e && e->pc == rr.pc) { hit_bp_key = (uint32_t)e->key; break; }
+                    }
+                    for (auto k : predicate_bp_keys_) {
+                        if (const auto* e = bpmap_.find(k); e && e->pc == rr.pc) { hit_bp_key = (uint32_t)e->key; break; }
                     }
                 }
-                ctx[keys::core::RUN_HIT_BP] = hit_bp_id;
-                R.ctx[keys::core::RUN_HIT_BP] = hit_bp_id;
+                ctx[keys::core::RUN_HIT_BP_KEY] = hit_bp_key;
+                R.ctx[keys::core::RUN_HIT_BP_KEY] = hit_bp_key;
                 // keep derived buffer in sync for this frame
-                if (derived_) derived_->update_on_bp(hit_bp_id, ctx, host_);
+                if (derived_) derived_->update_on_bp(hit_bp_key, ctx, host_);
 
                 // mirror -> R.ctx
                 R.ctx[keys::core::OUTCOME_CODE] = static_cast<uint32_t>(outcome);
@@ -388,7 +393,7 @@ namespace simcore {
                 if (!soa::battle::ctx::codec::extract_from_mem1(view, bc)) { R.ok = false; break; }
                 std::string blob;
                 soa::battle::ctx::codec::encode(bc, blob);
-                R.ctx[simcore::keys::battle::CTX_BLOB] = blob;
+                ctx[simcore::keys::battle::CTX_BLOB] = blob;
                 break;
             }
 
@@ -455,19 +460,23 @@ namespace simcore {
             case PSOpCode::ARM_BPS_FROM_PRED_TABLE: {
                 auto itN = ctx.find(keys::core::PRED_COUNT);
                 auto itT = ctx.find(keys::core::PRED_TABLE);
-                if (itN != ctx.end() && itT != ctx.end()) {
-                    const uint32_t n = std::get<uint32_t>(itN->second);
-                    const auto* tbl = std::get_if<std::string>(&itT->second);
-                    if (n && tbl) {
-                        const auto* rec = reinterpret_cast<const pred::PredicateRecord*>(tbl->data());
-                        std::vector<uint32_t> pcs; pcs.reserve(n);
-                        for (uint32_t i = 0; i < n; ++i) {
-                            const BPAddr* e = bpmap_.find(static_cast<BPKey>(rec[i].required_bp));
-                            if (e && e->pc) pcs.push_back(e->pc);
-                        }
-                        if (!pcs.empty()) host_.armPcBreakpoints(pcs);
-                    }
+                if (itN == ctx.end() || itT == ctx.end()) break;
+
+                const uint32_t n = std::get<uint32_t>(itN->second);
+                const auto* tbl = std::get_if<std::string>(&itT->second);
+                if (!n || !tbl) break;
+                
+                const auto* rec = reinterpret_cast<const pred::PredicateRecord*>(tbl->data());
+                std::vector<uint32_t> pcs; pcs.reserve(n);
+                for (uint32_t i = 0; i < n; ++i) {
+                    const BPAddr* e = bpmap_.find(static_cast<BPKey>(rec[i].required_bp));
+                    if (!e || !e->pc) continue;
+                    
+                    pcs.push_back(e->pc);
+                    predicate_bp_keys_.push_back(e->key);
                 }
+                
+                if (!pcs.empty()) host_.armPcBreakpoints(pcs);
                 break;
             }
 
@@ -516,17 +525,17 @@ namespace simcore {
             }
 
             case PSOpCode::EVAL_PREDICATES_AT_HIT_BP: {
-                uint32_t hit_bp = 0; ctx.get<uint32_t>(keys::core::RUN_HIT_BP, hit_bp);
+                uint32_t hit_bp = 0; ctx.get<uint32_t>(keys::core::RUN_HIT_PC, hit_bp);
                 uint32_t cur_turn = 0; ctx.get<uint32_t>(keys::battle::ACTIVE_TURN, cur_turn);
 
                 uint32_t total = 0; ctx.get(keys::core::PRED_TOTAL, total);
                 uint32_t pass = 0;
-                uint8_t all_passed = 1;
+                uint32_t all_passed = 1;
 
                 auto itN = ctx.find(keys::core::PRED_COUNT);
                 auto itT = ctx.find(keys::core::PRED_TABLE);
                 auto itB = ctx.find(keys::core::PRED_BASELINES);
-                auto itHit = ctx.find(keys::core::RUN_HIT_BP);
+                auto itHit = ctx.find(keys::core::RUN_HIT_BP_KEY);
                 if (itN == ctx.end() || itT == ctx.end() || itB == ctx.end() || itHit == ctx.end()) break;
 
                 const uint32_t n = std::get<uint32_t>(itN->second);
@@ -548,7 +557,7 @@ namespace simcore {
                     uint64_t lhs = 0, rhs = 0;
 
                     // LHS precedence: addrprog -> key -> absolute
-                    if (r.lhs_addrprog_offset &&
+                    if (r.has_flag(PredFlag::LhsIsProg) &&
                         read_via_addrprog(host_, derived_.get(), *tbl, r.lhs_addrprog_offset, r.width, lhs)) {
                         // ok
                     }
@@ -566,12 +575,11 @@ namespace simcore {
                     }
 
                     // RHS precedence: key (RhsIsKey) -> addrprog -> immediate
-                    if (r.has_flag(PredFlag::RhsIsKey)) {
-                        if (!router->read(static_cast<addr::AddrKey>(r.rhs_addr_key), r.width, rhs)) continue;
-                    }
-                    else if (r.rhs_addrprog_offset &&
+                    if (r.has_flag(PredFlag::RhsIsProg) &&
                         read_via_addrprog(host_, derived_.get(), *tbl, r.rhs_addrprog_offset, r.width, rhs)) {
                         // ok
+                    } else if (r.has_flag(PredFlag::RhsIsKey)) {
+                        if (!router->read(static_cast<addr::AddrKey>(r.rhs_addr_key), r.width, rhs)) continue;
                     }
                     else {
                         rhs = r.rhs_imm;
@@ -595,6 +603,7 @@ namespace simcore {
                     default: ok = false; break;
                     }
 
+                    ++total;
                     if (ok) ++pass;
                     else all_passed = 0;
                 }
@@ -609,7 +618,7 @@ namespace simcore {
                 if (tot) {
                     uint32_t turn = 0, hitbp = 0, pass = 0;
                     ctx.get<uint32_t>(keys::battle::ACTIVE_TURN, turn);
-                    ctx.get<uint32_t>(keys::core::RUN_HIT_BP, hitbp);
+                    ctx.get<uint32_t>(keys::core::RUN_HIT_BP_KEY, hitbp);
                     ctx.get<uint32_t>(keys::core::PRED_PASSED, pass);
                     auto sink = host_.getProgressSink();
                     if (sink) {

@@ -102,8 +102,8 @@ namespace soa {
     static_assert(sizeof(StatusEffectiveness) == 32, "size");
 
     struct ItemDrop {
-        int16_t chance;
-        int16_t amount;
+        uint16_t chance;
+        uint16_t amount;
         int16_t itemId;
     };
     static_assert(sizeof(ItemDrop) == 6, "size");
@@ -311,4 +311,4 @@ namespace soa {
 
 #pragma pack(pop)
 
-} // namespace dme
+} // namespace soa

@@ -26,6 +26,8 @@ namespace soa::battle::ctx {
         BattleSlot slots[12];
         soa::BattleState state{};
         soa::battle::TurnType turn_type;
+        uint32_t turn_count;
+        uint32_t battle_phase;
 
         BattleContext() = default;
     };

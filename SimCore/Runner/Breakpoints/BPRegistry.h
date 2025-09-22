@@ -36,7 +36,7 @@ struct BreakpointMap
 };
 
 // Central, X-macro driven dataset
-namespace simcore {
+namespace bp {
 
     struct BPRec { BPKey key; uint32_t pc; const char* name; };
 

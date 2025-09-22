@@ -28,10 +28,6 @@ namespace soa::battle::actions {
         w._pad0 = 0;
 
         w.target_mask = static_cast<std::uint32_t>(ap.params.target_mask);
-        w.rng_tickle = static_cast<std::uint8_t>(ap.params.rng_tickle);
-        w._pad1[0] = 0; w._pad1[1] = 0; w._pad1[2] = 0;
-
-        w.guard_flags = static_cast<std::uint32_t>(ap.params.guard_flags);
 
         const auto* p = reinterpret_cast<const std::uint8_t*>(&w);
         out.insert(out.end(), p, p + sizeof(w));
@@ -46,8 +42,6 @@ namespace soa::battle::actions {
         ap.is_prelude = (w->is_prelude != 0);
         ap.macro = static_cast<actions::BattleAction>(w->macro);
         ap.params.target_mask = w->target_mask;
-        ap.params.rng_tickle = w->rng_tickle;
-        ap.params.guard_flags = w->guard_flags;
 
         cur += sizeof(simcore::WireActionPlan);
         return true;

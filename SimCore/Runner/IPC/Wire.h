@@ -110,7 +110,8 @@ namespace simcore {
         uint32_t tag;         // MSG_SET_PROGRAM
         uint8_t  init_kind;   // PK_*
         uint8_t  main_kind;   // PK_*
-        uint16_t _pad0;
+        uint8_t  buff_kind;   // DK_* 
+        uint8_t _pad0;
         uint32_t timeout_ms;
         char     savestate_path[260]; // empty => start from boot
     };
@@ -136,12 +137,9 @@ namespace simcore {
         uint8_t macro;   // BattleAction
         uint8_t _pad0;
         uint32_t target_mask;
-        uint8_t rng_tickle;
-        uint8_t _pad1[3];
-        uint32_t guard_flags;
     };
 #pragma pack(pop)
 
-    static_assert(sizeof(WireActionPlan) == 16, "WireActionPlan size drift");
+    static_assert(sizeof(WireActionPlan) == 8, "WireActionPlan size drift");
 
 } // namespace simcore

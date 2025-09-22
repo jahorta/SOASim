@@ -33,6 +33,10 @@ namespace soa::battle::actions {
         void tapDown(simcore::InputPlan& p);
         void neutral(simcore::InputPlan& p, uint32_t n);
 
+        bool if_stop_rotate();
+        bool stop_rotate(simcore::InputPlan& p);
+        bool stop_zoom(simcore::InputPlan& p);
+
         void navMainTo(simcore::InputPlan& p, uint8_t dst); // main menu, no wrap, +neutral(2) after each move
         bool attack(simcore::InputPlan& p, const ActionParameters& ap, MaterializeErr& err);
         bool defend(simcore::InputPlan& p, MaterializeErr& err);

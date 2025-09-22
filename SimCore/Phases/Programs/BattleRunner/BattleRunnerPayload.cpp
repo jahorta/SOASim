@@ -6,7 +6,7 @@
 #include "../../../Runner/Script/KeyRegistry.h"
 #include "../../../Core/Input/SoaBattle/ActionPlanSerializer.h"
 
-namespace simcore::battle {
+namespace phase::battle::runner {
     static inline void put_u32(std::vector<uint8_t>& b, uint32_t v) { b.push_back(uint8_t(v)); b.push_back(uint8_t(v >> 8)); b.push_back(uint8_t(v >> 16)); b.push_back(uint8_t(v >> 24)); }
     static inline bool get_u32(const uint8_t*& p, const uint8_t* e, uint32_t& v) { if (p + 4 > e) return false; v = (uint32_t)p[0] | (uint32_t(p[1]) << 8) | (uint32_t(p[2]) << 16) | (uint32_t(p[3]) << 24); p += 4; return true; }
 
@@ -23,7 +23,7 @@ namespace simcore::battle {
         const auto* f = reinterpret_cast<const uint8_t*>(&spec.initial);
         out.insert(out.end(), f, f + sizeof(GCInputFrame));
 
-        // NEW: one-and-done table build (records + blob)
+        // build predicate table (records + blob)
         std::vector<pred::PredicateRecord> records;
         std::vector<uint8_t> blob;
         simcore::pred::BuildTable(spec.predicates, records, blob);
@@ -86,12 +86,16 @@ namespace simcore::battle {
 
         uint32_t battle_plan_buf_size = 0; if (!get_u32(p, e, battle_plan_buf_size)) return false;
         soa::battle::actions::BattlePath b_path;
-        soa::battle::actions::decode_turn_plans_from_buffer(std::span<const uint8_t>(p, battle_plan_buf_size), b_path);
+        soa::battle::actions::decode_turn_plans_from_buffer(std::span<const uint8_t>(p, p + battle_plan_buf_size), b_path);
         p += battle_plan_buf_size;
+
+        out_ctx[keys::core::RUN_MS] = run_ms;
+        out_ctx[keys::core::VI_STALL_MS] = vi_stall_ms;
 
         uint32_t n_plans = (uint32_t)b_path.size();
         out_ctx[keys::battle::INITIAL_INPUT] = initial;
         out_ctx[keys::battle::NUM_TURN_PLANS] = n_plans;
+        out_ctx[keys::battle::LAST_TURN_IDX] = n_plans;
 
         out_ctx[keys::core::PRED_COUNT] = pred_count;
         out_ctx[keys::core::PRED_TABLE] = pred_table;   // now [records || blob]

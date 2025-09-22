@@ -4,8 +4,9 @@
 #include "PlayTasMovie/TasMoviePayload.h"
 #include "PlayTasMovie/TasMovieScript.h"
 #include "BattleRunner/BattleRunnerPayload.h"
-#include "BattleRunner//BattleRunnerScript.h"
-#include "BattleContext//BattleContextScript.h"
+#include "BattleRunner/BattleRunnerScript.h"
+#include "BattleContext/BattleContextScript.h"
+#include "BattleContext/BattleContextPayload.h"
 #include "../../Runner/IPC/Wire.h"
 
 namespace simcore::programs {
@@ -20,9 +21,9 @@ namespace simcore::programs {
             // TAS fixed program should use *_FROM("tas.*") keys (id6, dtm_path, run_ms, save_path)
             return tasmovie::MakeTasMovieProgram();
         case PK_BattleTurnRunner:
-            return battle::MakeBattleRunnerProgram();
+            return phase::battle::runner::MakeBattleRunnerProgram();
         case PK_BattleContextProbe:
-            return battlectx::MakeBattleContextProbeProgram();
+            return phase::battle::ctx::MakeBattleContextProbeProgram();
         default:
             return PhaseScript{};
         }
@@ -32,11 +33,6 @@ namespace simcore::programs {
         const std::vector<uint8_t>& payload,
         PSContext& out_ctx)
     {
-        switch (active_program_kind) {
-        case PK_BattleContextProbe:
-            return true;
-        }
-        
         if (payload.empty()) return false;
         const uint8_t tag = payload[0];
 
@@ -50,7 +46,9 @@ namespace simcore::programs {
         case PK_TasMovie:
             return tasmovie::decode_payload(payload, out_ctx);
         case PK_BattleTurnRunner:          
-            return battle::decode_payload(payload, out_ctx);
+            return phase::battle::runner::decode_payload(payload, out_ctx);
+        case PK_BattleContextProbe:
+            return phase::battle::ctx::decode_payload(payload, out_ctx);
         default:
             return false;
         }

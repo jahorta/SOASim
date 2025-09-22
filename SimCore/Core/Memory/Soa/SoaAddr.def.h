@@ -11,9 +11,12 @@
 #define ADDR_TABLE_BATTLE(X) \
   X(battle, CombatantInstancesTable,     MEM1,      0x80309DE4) /* 12 x u32 pointers (PC0..PC3, EC0..EC7) */\
   X(battle, CombatantIdTable,            MEM1,      0x80309DCC) /* 12 x u8 IDs parallel to instances */\
-  X(battle, TurnOrderTable,              MEM1,      0x803092f4) /* 12 x u8 IDs in turn order*/\
-  X(battle, MainInstancePtr,             MEM1,      0x80347390) /* Singular instance for recording overall battle details*/\
-  X(battle, TurnType,                    MEM1,      0x80347344) /* Singular instance for recording overall battle details*/\
+  X(battle, TurnOrderTable,              MEM1,      0x803092f4) /* 12 x u8 IDs in turn order */\
+  X(battle, MainInstancePtr,             MEM1,      0x80347390) /* Singular instance for recording overall battle details */\
+  X(battle, BattlePhase,                 MEM1,      0x8034737c) /* Current Battle phase */\
+  X(battle, TurnType,                    MEM1,      0x80347344) /* Turn type for detecting a back attack */\
+  X(battle, TurnPhase,                   MEM1,      0x8034733c) /* Current Turn phase */\
+  X(battle, CurrentTurn,                 MEM1,      0x80347340) /* Current Turn number */\
 
 
 /*

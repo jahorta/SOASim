@@ -194,6 +194,7 @@ namespace simcore {
 		simcore::DolphinWrapper& host_;
 		const BreakpointMap& bpmap_;
 		std::vector<BPKey> canonical_bp_keys_;
+		std::vector<BPKey> predicate_bp_keys_;
 		PhaseScript prog_;
 		PSInit init_;
 		std::vector<uint32_t> armed_pcs_;

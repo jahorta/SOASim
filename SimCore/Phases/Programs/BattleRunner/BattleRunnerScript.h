@@ -4,65 +4,91 @@
 #include "../../../Runner/Breakpoints/BPRegistry.h"
 #include "BattleOutcome.h"
 
-    namespace simcore::battle {
+using namespace simcore;
 
-        static constexpr BPKey BP_BattleAcceptInput = bp::battle::TurnInputs;
-        static constexpr BPKey BP_Victory = bp::battle::EndBattle;
-        static constexpr BPKey BP_Defeat = bp::battle::EndBattle;
+namespace phase::battle::runner {
 
-        inline PhaseScript MakeBattleRunnerProgram()
-        {
-            PhaseScript ps{};
-            ps.canonical_bp_keys = { BP_BattleAcceptInput, BP_Victory, BP_Defeat };
+    static constexpr BPKey BP_BattleLoadComplete = bp::battle::BattleLoadComplete;
+    static constexpr BPKey BP_BattleAcceptInput = bp::battle::TurnInputs;
+    static constexpr BPKey BP_Victory = bp::battle::EndBattleVictory;
+    static constexpr BPKey BP_Defeat = bp::battle::EndBattleVictory;
 
-            ps.ops.push_back(OpArmPhaseBps());
-            ps.ops.push_back(OpArmBpsFromPredTable());
-            ps.ops.push_back(OpLoadSnapshot());
+    static const std::string LabelA = "A";
+    static const std::string LabelB = "B";
+    static const std::string LabelADV = "ADV";
+    static const std::string LabelVictory = "RET_SUCCESS";
+    static const std::string LabelDefeat = "RET_FAILURE";
+    static const std::string LabelPredFail = "RET_PRED_FAILURE";
+    static const std::string LabelMismatch = "RET_MISMATCH";
 
-            ps.ops.push_back(OpApplyInputFrom(keys::battle::INITIAL_INPUT));
-            ps.ops.push_back(OpRunUntilBp());
+    inline PhaseScript MakeBattleRunnerProgram()
+    {
+        using simcore::battle::Outcome;
+        
+        PhaseScript ps{};
+        ps.canonical_bp_keys = { BP_BattleAcceptInput, BP_Victory, BP_Defeat, BP_BattleLoadComplete };
 
-            ps.ops.push_back(OpSetU32(keys::battle::ACTIVE_TURN, 0));
-            ps.ops.push_back(OpCapturePredBaselines());
+        ps.ops.push_back(OpArmPhaseBps());
+        ps.ops.push_back(OpArmBpsFromPredTable());
+        ps.ops.push_back(OpLoadSnapshot());
 
-            ps.ops.push_back(OpLabel("A"));
-            ps.ops.push_back(OpApplyPlanFrameFrom(keys::battle::ACTIVE_TURN));
-            ps.ops.push_back(OpGotoIf(keys::core::PLAN_DONE, PSCmp::EQ, 1, "B"));
-            ps.ops.push_back(OpGoto("A"));
+        ps.ops.push_back(OpSetU32(keys::battle::ACTIVE_TURN, 0));
+        ps.ops.push_back(OpApplyInputFrom(keys::battle::INITIAL_INPUT));
+        ps.ops.push_back(OpGoto(LabelB));  // Going to LabelB so that we can run until turn inputs checking that the initial battle state is favorable (might need to check turn_type at start of battle)
 
-            ps.ops.push_back(OpLabel("B"));
-            ps.ops.push_back(OpRunUntilBp());
-            ps.ops.push_back(OpEvalPredicatesAtHitBP());
-            ps.ops.push_back(OpRecordProgressAtBP());
+        // ============  Label A  ===================
+        // Run all inputs
+        ps.ops.push_back(OpLabel(LabelA));
+        ps.ops.push_back(OpGetBattleContext());
+        ps.ops.push_back(OpBuildTurnInputFromActions());
+        ps.ops.push_back(OpApplyPlanFrameFrom(keys::battle::ACTIVE_TURN));
+        ps.ops.push_back(OpGotoIf(keys::core::PLAN_DONE, PSCmp::EQ, 1, LabelB));
+        ps.ops.push_back(OpGoto(LabelA));
 
-            ps.ops.push_back(OpGotoIf(keys::core::RUN_HIT_BP, PSCmp::EQ, (uint32_t)BP_Victory, "RET_SUCCESS"));
-            ps.ops.push_back(OpGotoIf(keys::core::RUN_HIT_BP, PSCmp::EQ, (uint32_t)BP_Defeat,  "RET_FAILURE"));
-            ps.ops.push_back(OpGotoIf(keys::core::PRED_ALL_PASSED, PSCmp::EQ, (uint32_t)0,     "RET_FAILURE"));
+        // ============  Label B  ===================
+        ps.ops.push_back(OpLabel(LabelB));
 
-            ps.ops.push_back(OpGotoIf(keys::core::RUN_HIT_BP, PSCmp::NE, (uint32_t)BP_BattleAcceptInput, "B"));
+        // Run to bp, check predicates, record progress
+        ps.ops.push_back(OpRunUntilBp());
+        ps.ops.push_back(OpEvalPredicatesAtHitBP()); // Sets whether all predicates passed into keys::core::PRED_ALL_PASSED
+        ps.ops.push_back(OpRecordProgressAtBP());
 
-            ps.ops.push_back(OpGotoIf(keys::core::PLAN_DONE, PSCmp::EQ, 0, "RET_MISMATCH"));
-            ps.ops.push_back(OpGotoIfKeys(keys::battle::ACTIVE_TURN, PSCmp::LT,
-                keys::battle::LAST_TURN_IDX, "ADV"));
-            ps.ops.push_back(OpReturnResult((uint32_t)Outcome::TurnsExhausted));
+        // Check exit conditions
+        ps.ops.push_back(OpGotoIf(keys::core::RUN_HIT_BP_KEY, PSCmp::EQ, (uint32_t)BP_Victory, LabelVictory));
+        ps.ops.push_back(OpGotoIf(keys::core::RUN_HIT_BP_KEY, PSCmp::EQ, (uint32_t)BP_Defeat, LabelDefeat));
+        ps.ops.push_back(OpGotoIf(keys::core::PRED_ALL_PASSED, PSCmp::EQ, (uint32_t)0, LabelPredFail));
 
-            ps.ops.push_back(OpLabel("ADV"));
-            ps.ops.push_back(OpAddU32(keys::battle::ACTIVE_TURN, 1));
-            ps.ops.push_back(OpCapturePredBaselines());
-            ps.ops.push_back(OpGoto("A"));
+        
+        // If we are not to the next input bp, keep running
+        ps.ops.push_back(OpGotoIf(keys::core::RUN_HIT_BP_KEY, PSCmp::EQ, (uint32_t)BP_BattleLoadComplete, LabelADV));
+        ps.ops.push_back(OpGotoIf(keys::core::RUN_HIT_BP_KEY, PSCmp::NE, (uint32_t)BP_BattleAcceptInput, LabelB));
 
-            ps.ops.push_back(OpLabel("RET_SUCCESS"));
-            ps.ops.push_back(OpReturnResult((uint32_t)Outcome::Victory));
+        ps.ops.push_back(OpGotoIfKeys(keys::battle::ACTIVE_TURN, PSCmp::LT,
+            keys::battle::LAST_TURN_IDX, LabelADV));
+        ps.ops.push_back(OpReturnResult((uint32_t)Outcome::TurnsExhausted));
 
-            ps.ops.push_back(OpLabel("RET_FAILURE"));
-            ps.ops.push_back(OpReturnResult((uint32_t)Outcome::Defeat));
+        // ============  Label ADV  ===================
+        ps.ops.push_back(OpLabel(LabelADV));
+        ps.ops.push_back(OpAddU32(keys::battle::ACTIVE_TURN, 1));
+        ps.ops.push_back(OpCapturePredBaselines());
+        ps.ops.push_back(OpGoto(LabelA));
 
-            ps.ops.push_back(OpLabel("RET_PRED_FAILURE"));
-            ps.ops.push_back(OpReturnResult((uint32_t)Outcome::PredFailure));
+        // ============  Label Victory  ===================
+        ps.ops.push_back(OpLabel(LabelVictory));
+        ps.ops.push_back(OpReturnResult((uint32_t)Outcome::Victory));
 
-            ps.ops.push_back(OpLabel("RET_MISMATCH"));
-            ps.ops.push_back(OpReturnResult((uint32_t)Outcome::PlanMismatch));
+        // ============  Label Defeat  ===================
+        ps.ops.push_back(OpLabel(LabelDefeat));
+        ps.ops.push_back(OpReturnResult((uint32_t)Outcome::Defeat));
 
-            return ps;
-        }
-    } // namespace simcore::battle
+        // ============  Label Predicate Failure  ===================
+        ps.ops.push_back(OpLabel(LabelPredFail));
+        ps.ops.push_back(OpReturnResult((uint32_t)Outcome::PredFailure));
+
+        // ============  Label Plan Mismatch  ===================
+        ps.ops.push_back(OpLabel(LabelMismatch));
+        ps.ops.push_back(OpReturnResult((uint32_t)Outcome::PlanMismatch));
+
+        return ps;
+    }
+} // namespace simcore::battle

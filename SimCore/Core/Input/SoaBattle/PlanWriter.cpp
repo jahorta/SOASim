@@ -40,8 +40,7 @@ namespace soa::battle::actions {
         if (!mask) return base;
         for (int i = 4; i < 12; ++i) {
             if (bc_.slots[i].present && !bc_.slots[i].is_player) {
-                uint32_t logical = bc_.slots[i].id;
-                if (mask & (1u << (logical & 31u))) return i - 4;
+                if (mask & (1u << (i & 31u))) return i - 4;
             }
         }
         return -1;
@@ -58,7 +57,7 @@ namespace soa::battle::actions {
 
     bool PlanWriter::attack(InputPlan& p, const ActionParameters& ap, MaterializeErr& err) {
         navMainTo(p, 3);
-        tapA(p); neutral(p, 1); // enter targets, 1-frame animation
+        tapA(p); // enter targets, 1-frame animation
         const int cur = currentTargetIndex();
         const int dst = resolveRequestedTargetIndex(ap.target_mask);
         if (dst < 0) { err = MaterializeErr::NoValidTarget; return false; }
@@ -74,8 +73,7 @@ namespace soa::battle::actions {
         return true;
     }
 
-    bool PlanWriter::focus(InputPlan& p, MaterializeErr& err) {
-        // TODO-RES: if insufficient resource, set err and return false
+    bool PlanWriter::focus(InputPlan& p, MaterializeErr&) {
         navMainTo(p, 6);
         tapA(p);
         return true;
@@ -91,11 +89,30 @@ namespace soa::battle::actions {
         return true;
     }
 
+    bool PlanWriter::stop_zoom(InputPlan& p) {
+        neutral(p, 1);
+        tapA(p); 
+        return true;
+    }
+
+    bool PlanWriter::stop_rotate(InputPlan& p) {
+        tapA(p);
+        return true;
+    }
+
+    bool PlanWriter::if_stop_rotate() {
+        return bc_.turn_count == 1 && bc_.battle_phase == 4;
+    }
+
     bool PlanWriter::buildTurn(const TurnPlan& plan, InputPlan& out, MaterializeErr& err) {
         out.clear();
         err = MaterializeErr::OK;
+        if (if_stop_rotate()) if (!stop_rotate(out)) return false;
+        if (!stop_zoom(out)) return false;
         if (!fake_attack(out, plan)) return false;
-        for (const auto& ac : plan.spec ) {
+        for (int i = 0; i < plan.spec.size(); i++ ) {
+            if (i > 0) neutral(out, 1);
+            const auto& ac = plan.spec[i];
             actor_slot_ = ac.actor_slot; // tracked for future, if actor-specific behaviors needed
             switch (ac.macro) {
             case BattleAction::Attack: if (!attack(out, ac.params, err)) return false; break;

@@ -5,6 +5,8 @@
 #include "../Core/Input/SoaBattle/ActionTypes.h"
 #include "../Core/Memory/Soa/Battle/BattleContext.h"
 #include "../Runner/Parallel/ParallelPhaseScriptRunner.h"
+#include "Programs/BattleRunner/BattleOutcome.h"
+#include "Programs/BattleRunner/BattleRunnerPayload.h"
 // Forward-declare your runner and predicate types to avoid heavy includes.
 namespace simcore { class ParallelPhaseScriptRunner; }
 
@@ -27,24 +29,25 @@ namespace simcore::battleexplorer {
 
     using UI_Turn = std::vector<UI_Action>;
 
-    struct PredicateSpec {
-        // Whatever your predicate selection requires:
-        // id / addr key / params / enabled. Keep minimal here; integrate later.
-        uint32_t id = 0;
-        bool     enabled = true;
-        // Optionally: parameters...
-    };
-
     struct UI_Config {
         std::vector<UI_Turn>       turns;            // N == max turns
         int                        fakeattack_budget = 0; // B >= 0
-        std::vector<PredicateSpec> predicates;      // enabled predicates (+ params)
+        std::vector<pred::Spec>    predicates;      // enabled predicates (+ params)
+        std::vector<GCInputFrame>  initial_frames;
+    };
+
+    struct JobResult {
+        battle::Outcome outcome;
+        uint64_t job_id;
+        phase::battle::runner::EncodeSpec spec;
+        PRResult pr;
     };
 
     struct RunResultSummary {
-        // Fill with whatever you print to CLI for successes; placeholder for now.
         uint64_t jobs_total = 0;
         uint64_t jobs_success = 0;
+        std::vector<JobResult> fails;
+        std::vector<JobResult> successes;
     };
 
     class BattleExplorer {

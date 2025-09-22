@@ -5,7 +5,9 @@
 #include "../../../Runner/Script/PhaseScriptVM.h"
 #include "../../../Runner/Breakpoints/Predicate.h"
 
-namespace simcore::battle {
+using namespace simcore;
+
+namespace phase::battle::runner {
 
     // encode side (parent)
     struct EncodeSpec {
@@ -14,8 +16,6 @@ namespace simcore::battle {
         GCInputFrame initial{};
         soa::battle::actions::BattlePath path;
         std::vector<simcore::pred::Spec> predicates;
-
-        std::vector<uint8_t> addrprog_blob; // NEW
     };
 
     // ProgramRegistry.decode -> fill ctx

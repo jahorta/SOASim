@@ -107,10 +107,10 @@ namespace simcore {
         bool resolveKeyWithBase(addr::AddrKey k, uint32_t base_override, uint32_t& out_va) const;
 
         // Typed reads by key (paused-only; soft-fail on missing/unresolved key).
-        bool readByKey(addr::AddrKey k, uint8_t& out) const;
-        bool readByKey(addr::AddrKey k, uint16_t& out) const;
-        bool readByKey(addr::AddrKey k, uint32_t& out) const;
-        bool readByKey(addr::AddrKey k, uint64_t& out) const;
+        bool readByKey(addr::AddrKey k, uint8_t& out, bool require_paused = true) const;
+        bool readByKey(addr::AddrKey k, uint16_t& out, bool require_paused = true) const;
+        bool readByKey(addr::AddrKey k, uint32_t& out, bool require_paused = true) const;
+        bool readByKey(addr::AddrKey k, uint64_t& out, bool require_paused = true) const;
 
         // Width-aware read into 64-bit bucket; returns the actual width via out_width (1,2,4,8).
         bool readByKeyAny(addr::AddrKey k, uint8_t width, uint64_t& out, uint8_t& out_width) const;
@@ -119,6 +119,7 @@ namespace simcore {
         bool armPcBreakpoints(const std::vector<uint32_t>& pcs);
         bool disarmPcBreakpoints(const std::vector<uint32_t>& pcs);
         void clearAllPcBreakpoints();
+        bool setEnableBreakpoint(uint32_t pc, bool enabled);
         bool setEnableAllBreakpoints(bool enabled);
 
         using ProgressSink = std::function<void(uint32_t cur_frames,

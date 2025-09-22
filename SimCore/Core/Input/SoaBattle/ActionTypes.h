@@ -1,6 +1,8 @@
 #pragma once
 #include <cstdint>
 #include <vector>
+#include <string>
+#include "../../Memory/Soa/SoaConstants.h"
 
 namespace soa::battle::actions {
 
@@ -14,8 +16,6 @@ namespace soa::battle::actions {
 
     struct ActionParameters {
         uint32_t target_mask = 0;   // single-target for now
-        uint8_t  rng_tickle = 0;   // FakeAttack intensity
-        uint32_t guard_flags = 0;   // reserved
         uint16_t item_id = 0xFFFF; // valid when macro==UseItem
     };
 
@@ -34,5 +34,46 @@ namespace soa::battle::actions {
     };
 
     using BattlePath = std::vector<TurnPlan>;
+
+    inline std::string get_action_string(BattleAction a) {
+        switch (a) {
+        case BattleAction::Attack: return "Attack";
+        case BattleAction::Defend: return "Guard";
+        case BattleAction::Focus: return "Focus";
+        case BattleAction::UseItem: return "UseItem";
+        default: return "Unknown";
+        }
+    }
+
+    inline int resolveTargetIndex(uint32_t mask) {
+        if (!mask) return -1;
+        for (int i = 4; i < 12; ++i) {
+            if (mask & (1u << (i & 31u))) return i;
+        }
+        return -1;
+    }
+
+    inline std::string get_battle_path_summary(BattlePath bp) {
+        std::vector<std::string> path;
+        for (int i = 0; i < bp.size(); i++) {
+            auto tp = bp[i];
+            path.emplace_back("\n T" + std::to_string(i) + " FakeAtk:" + std::to_string(tp.fake_attack_count));
+            for (auto sp : tp.spec) {
+                std::string actor = " [" + std::to_string(sp.actor_slot) + "] " + get_action_string(sp.macro);
+                if (sp.macro == BattleAction::Attack) 
+                    actor = actor + ":[" + std::to_string(resolveTargetIndex(sp.params.target_mask)) + "]";
+                if (sp.macro == BattleAction::UseItem) 
+                {
+                    actor = actor + ":[" + std::to_string(sp.params.item_id) + "]";
+                    actor = actor + ":[" + std::to_string(resolveTargetIndex(sp.params.target_mask)) + "]";
+                }
+                path.emplace_back(actor);
+            }
+        }
+
+        std::string out;
+        for (auto s : path) out.append(s);
+        return out;
+    }
 
 } // namespace soa::battle::actions

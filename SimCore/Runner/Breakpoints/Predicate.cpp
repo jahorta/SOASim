@@ -58,7 +58,7 @@ namespace simcore::pred {
 
             // LHS
             r.lhs_addr = s.lhs_addr;
-            r.lhs_addr_key = s.key.has_value() ? static_cast<uint16_t>(*s.key) : 0;
+            r.lhs_addr_key = s.lhs_key.has_value() ? static_cast<uint16_t>(*s.lhs_key) : 0;
             r.lhs_addrprog_offset = 0; // fill after packing
 
             // RHS
@@ -66,7 +66,7 @@ namespace simcore::pred {
             if (rhs_is_key) r.flags |= uint8_t(PredFlag::RhsIsKey);
 
             r.rhs_addr_key = rhs_is_key ? static_cast<uint16_t>(*s.rhs_key) : 0;
-            r.rhs_imm = rhs_is_key ? 0ull : s.rhs_bits;
+            r.rhs_imm = rhs_is_key ? 0ull : s.rhs_value;
             r.rhs_addrprog_offset = 0; // fill after packing
 
             out_records.push_back(r);
@@ -81,13 +81,13 @@ namespace simcore::pred {
             auto& r = out_records[i];
             const auto& s = in[i];
 
-            if (!s.lhs_prog.empty()) {
+            if (!s.lhs_prog.empty() && s.has_flag(PredFlag::LhsIsProg)) {
                 const uint32_t off = dedupe.intern(std::span<const uint8_t>(s.lhs_prog.data(), s.lhs_prog.size()));
-                r.lhs_addrprog_offset = off ? base + off : 0;
+                r.lhs_addrprog_offset =base + off;
             }
-            if (!s.rhs_prog.empty()) {
+            if (!s.rhs_prog.empty() && s.has_flag(PredFlag::RhsIsProg)) {
                 const uint32_t off = dedupe.intern(std::span<const uint8_t>(s.rhs_prog.data(), s.rhs_prog.size()));
-                r.rhs_addrprog_offset = off ? base + off : 0;
+                r.rhs_addrprog_offset = base + off;
             }
         }
 

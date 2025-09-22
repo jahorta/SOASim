@@ -10,6 +10,8 @@
 #include "../Core/Input/SoaBattle/ActionPlanSerializer.h"
 #include "../Runner/IPC/Wire.h"
 #include "../Core/Memory/Soa/Battle/BattleContextCodec.h"
+#include "../Phases/Programs/BattleContext/BattleContextPayload.h"
+#include "../Phases/Programs/BattleRunner/BattleRunnerPayload.h"
 
 namespace simcore::battleexplorer {
 
@@ -67,7 +69,8 @@ namespace simcore::battleexplorer {
         PSInit init{};
         init.savestate_path = m_savestate_path;
         init.default_timeout_ms = 10000; // or your default
-
+        
+        SCLOGI("[runner] setting and activating context program.");
         // Worker program kinds: PK_BattleContextProbe
         if (!runner.set_program(PK_BattleContextProbe, PK_BattleContextProbe, init)) {
             throw std::runtime_error("BattleExplorer.gather_context: set_program failed");
@@ -75,9 +78,13 @@ namespace simcore::battleexplorer {
         if (!runner.activate_main()) {
             throw std::runtime_error("BattleExplorer.gather_context: activate_main failed");
         }
-
+        
+        SCLOGI("[runner] submitting context job.");
         // 2) Submit an empty job; the probe script reads memory and emits the result in PSContext.
         PSJob job{};
+        std::vector<uint8_t> payload;
+        phase::battle::ctx::encode_payload({ 100000, 2000 }, payload);
+        job.payload = std::move(payload);
         const uint64_t jid = runner.submit(job);
 
         // 3) Drain results until our job arrives (runner is multi-worker)
@@ -97,15 +104,9 @@ namespace simcore::battleexplorer {
             }
 
             // 4) Decode from PSContext.
-            //    Your BattleContext probe script should have placed either:
-            //      (A) a ready-to-use structured BattleContext (unlikely, since PSValue has no such type), or
-            //      (B) an encoded blob/string under a well-known key (most common), or
-            //      (C) individual numeric fields under known keys.
             //
-            //    Below, we handle (B): a blob in std::string under keys::battle::CTX_BLOB (replace with your real key).
+            //    Below, we handle a blob in std::string under keys::battle::CTX_BLOB (replace with your real key).
             //    If your script uses per-field keys instead, replace this block with those reads.
-            //
-            // TODO: replace keys::battle::CTX_BLOB with your real key id.
             {
                 std::string blob;
                 constexpr auto CTX_BLOB_KEY = simcore::keys::battle::CTX_BLOB;
@@ -429,12 +430,15 @@ namespace simcore::battleexplorer {
             ParallelPhaseScriptRunner& runner)
     {
         RunResultSummary sum{};
-        sum.jobs_total = paths.size();
+        sum.jobs_total = paths.size() * ui.initial_frames.size();
 
         // 1) Broadcast BattleRunner program to all workers
         PSInit init{};
         init.savestate_path = m_savestate_path;
         init.default_timeout_ms = 10000; // or your default; can be overridden per job via ctx if needed
+        init.derived_buffer_type = DK_Battle;
+
+        SCLOGI("[explorer] Setting up workers");
 
         if (!runner.set_program(PK_BattleTurnRunner, PK_BattleTurnRunner, init)) {
             throw std::runtime_error("BattleExplorer.run_paths: set_program failed");
@@ -446,28 +450,37 @@ namespace simcore::battleexplorer {
             throw std::runtime_error("BattleExplorer.run_paths: activate_main failed");
         }
 
+        SCLOGI("[explorer] Creating Jobs");
         // 2) Submit one job per terminal BattlePath
         struct Pending {
             uint64_t job_id;
-            // If you need to track which path or additional metadata, add here.
+            phase::battle::runner::EncodeSpec spec;
         };
-        std::vector<Pending> pendings;
-        pendings.reserve(paths.size());
+        std::unordered_map<uint64_t, Pending> pendings;
+        pendings.reserve(paths.size() * ui.initial_frames.size());
 
-        for (const auto& path : paths) {
-            std::vector<uint8_t> buf;
-            soa::battle::actions::encode_turn_plans_to_buffer(path, buf); // LE/host-order counters
 
-            PSJob job{};
-            job.payload = std::move(buf);
+        SCLOGI("[explorer] Submitting Jobs");
+        for (const auto& initial : ui.initial_frames)
+        {
+            for (const auto& path : paths) {
+                phase::battle::runner::EncodeSpec spec{};
+                spec.run_ms = 30000;
+                spec.vi_stall_ms = 2000;
+                spec.initial = initial;
+                spec.predicates = ui.predicates;
+                spec.path = path;
 
-            // Attach predicate settings into ctx if your worker expects keys (enable mask, params, etc.)
-            // TODO: fill these with your actual predicate table wiring.
-            // e.g., job.ctx[simcore::keys::pred::TABLE] = ...;
-            //       job.ctx[simcore::keys::pred::ENABLE_MASK] = ...;
+                std::vector<uint8_t> buf;
+                phase::battle::runner::encode_payload(spec, buf);
 
-            const uint64_t jid = runner.submit(job);
-            pendings.push_back({ jid });
+                PSJob job{};
+                job.payload = std::move(buf);
+
+                const uint64_t jid = runner.submit(job);
+                Pending p{ jid, spec };
+                pendings.emplace(jid, p);
+            }
         }
 
         // 3) Collect results for all submitted jobs
@@ -479,38 +492,44 @@ namespace simcore::battleexplorer {
                 continue;
             }
 
+
+            
+
             // Only count results that correspond to our epoch; runner handles epochs internally.
             // Validate transport OK + VM OK
-            if (!rr.accepted || !rr.ps.ok) {
+            if (!rr.accepted) {
                 // Transport or VM failure; treat as non-success and continue
+                SCLOGW("[explorer] Job was not accepted: worker=%d jobid=%d", rr.worker_id, rr.job_id);
                 --remaining;
                 continue;
             }
 
-            // Decide success based on the VM's hard-coded outcome keys.
-            // Typical patterns:
-            //  - OUTCOME_CODE == Victory
-            //  - or a predicate "all satisfied" flag set under a known key
-            //
-            // TODO: replace these with your real KeyRegistry ids / policy.
-            bool is_success = false;
-            {
-                // Example A: outcome code
-                // uint32_t oc = 0;
-                // if (ctx_get<uint32_t>(rr.ps.ctx, simcore::keys::battle::OUTCOME_CODE, oc)) {
-                //     is_success = (oc == static_cast<uint32_t>(BattleOutcome::Victory));
-                // }
-
-                // Example B: predicates pass flag
-                // uint32_t pred_ok = 0;
-                // if (ctx_get<uint32_t>(rr.ps.ctx, simcore::keys::pred::ALL_PASS, pred_ok) && pred_ok) {
-                //     is_success = true;
-                // }
-
-                // Pick the one your BattleRunner script actually writes.
+            if (!rr.ps.ok) {
+                uint32_t outcome; rr.ps.ctx.get(keys::core::OUTCOME_CODE, outcome);
+                SCLOGW("[explorer] Job VM run not ok: worker=%d jobid=%d, outcome=%d", rr.worker_id, rr.job_id, outcome);
+                --remaining;
+                continue;
             }
 
-            if (is_success) ++sum.jobs_success;
+            bool is_success = false;
+            //Example A: outcome code
+            uint32_t oc = 0;
+            if (rr.ps.ctx.get<uint32_t>(simcore::keys::core::OUTCOME_CODE, oc)) {
+                is_success = (oc == static_cast<uint32_t>(battle::Outcome::Victory));
+            }
+
+            SCLOGI("[explorer] Received results from: workerid=%d jobid=%d success=%s", rr.worker_id, rr.job_id, is_success ? "true" : "false");
+
+            auto p = pendings.find(rr.job_id)->second;
+
+            if (is_success) 
+            {
+                sum.successes.emplace_back((battle::Outcome)oc, p.job_id, p.spec, rr);
+                ++sum.jobs_success;
+            }
+            else {
+                sum.fails.emplace_back((battle::Outcome)oc, p.job_id, p.spec, rr);
+            }
             --remaining;
         }
 

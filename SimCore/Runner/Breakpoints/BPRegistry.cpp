@@ -1,7 +1,7 @@
 #include "BPRegistry.h"
 #include <cctype>
 
-namespace simcore {
+namespace bp {
 
     static const BPRec kAll[] = {
     #define ROW(ns, NAME, ID, PC, STR) { static_cast<BPKey>(ID), static_cast<uint32_t>(PC), STR },

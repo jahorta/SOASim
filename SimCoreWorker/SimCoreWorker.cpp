@@ -169,7 +169,7 @@ int main(int argc, char** argv)
     host.ConfigurePortsStandardPadP1();
 
     // ----- New control-mode only -----
-    BreakpointMap bpmap = BPRegistry::as_map();
+    BreakpointMap bpmap = bp::BPRegistry::as_map();
     PhaseScriptVM vm(host, bpmap);
 
     // Advertise "NoProgram" at startup
@@ -200,6 +200,7 @@ int main(int argc, char** argv)
 
             psinit.default_timeout_ms = sp.timeout_ms;
             psinit.savestate_path = sp.savestate_path;
+            psinit.derived_buffer_type = (simcore::DBuf)sp.buff_kind;
 
             active_pk = sp.main_kind;
 

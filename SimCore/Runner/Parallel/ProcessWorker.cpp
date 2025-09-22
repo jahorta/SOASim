@@ -136,6 +136,7 @@ namespace simcore {
         sp.init_kind = init_kind;
         sp.main_kind = main_kind;
         sp.timeout_ms = init.default_timeout_ms;
+        sp.buff_kind = (uint8_t)init.derived_buffer_type;
 
         std::memset(sp.savestate_path, 0, sizeof(sp.savestate_path));
         if (!init.savestate_path.empty()) {

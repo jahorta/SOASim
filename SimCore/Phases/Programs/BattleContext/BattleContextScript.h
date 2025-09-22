@@ -2,7 +2,9 @@
 #include "../../../Runner/Script/PhaseScriptVM.h"
 #include "../../../Runner/Breakpoints/BPRegistry.h" // for battle::FirstTurnInputs
 
-namespace simcore::battlectx {
+using namespace simcore;
+
+namespace phase::battle::ctx {
 
     inline PhaseScript MakeBattleContextProbeProgram()
     {
@@ -13,6 +15,7 @@ namespace simcore::battlectx {
         ps.ops.push_back(OpLoadSnapshot()); // caller must have placed savestate into VM
         ps.ops.push_back(OpRunUntilBp());   // run neutral -> accept input
         ps.ops.push_back(OpGetBattleContext());
+        ps.ops.push_back(OpEmitResult(simcore::keys::battle::CTX_BLOB));
         ps.ops.push_back(OpReturnResult(0)); // success code 0
         return ps;
     }

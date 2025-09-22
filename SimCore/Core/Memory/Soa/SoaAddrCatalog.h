@@ -20,4 +20,7 @@ namespace addrprog::catalog {
 	// Turn order derived buffer entry: derived_battle::TurnOrderIdx_base + idx
 	uint32_t turn_order_idx(addrprog::Builder& b, uint16_t logical_id_index);
 
+	// Turn order derived buffer entry: derived_battle::TurnOrderIdx_base + idx
+	uint32_t item_drop_amt(addrprog::Builder& b, uint16_t item_id);
+
 }

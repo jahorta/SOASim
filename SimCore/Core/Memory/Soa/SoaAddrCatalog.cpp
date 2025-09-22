@@ -36,6 +36,14 @@ namespace addrprog::catalog {
         return b.current_offset();
     }
 
+    uint32_t item_drop_amt(addrprog::Builder& b, uint16_t item_id)
+    {
+        b.op_base_key(addr::derived::battle::DropsByItem_base);
+        b.op_index(item_id, 1);
+        b.op_end();
+        return b.current_offset();
+    }
+
     // Explicit instantiations for the common types you already use
     template uint32_t battle_treasure_slot<>(addrprog::Builder&, uint16_t, int16_t soa::BattleItemDropSlot::*);
     template uint32_t enemy_item_field<>(addrprog::Builder&, uint16_t, uint16_t, int16_t soa::ItemDrop::*);
