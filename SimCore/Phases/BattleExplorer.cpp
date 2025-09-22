@@ -430,7 +430,8 @@ namespace simcore::battleexplorer {
             ParallelPhaseScriptRunner& runner)
     {
         RunResultSummary sum{};
-        sum.jobs_total = paths.size() * ui.initial_frames.size();
+        uint64_t total_jobs = paths.size() * ui.initial_frames.size();
+        sum.jobs_total = total_jobs;
 
         // 1) Broadcast BattleRunner program to all workers
         PSInit init{};
@@ -457,7 +458,7 @@ namespace simcore::battleexplorer {
             phase::battle::runner::EncodeSpec spec;
         };
         std::unordered_map<uint64_t, Pending> pendings;
-        pendings.reserve(paths.size() * ui.initial_frames.size());
+        pendings.reserve(total_jobs);
 
 
         SCLOGI("[explorer] Submitting Jobs");
@@ -517,8 +518,9 @@ namespace simcore::battleexplorer {
             if (rr.ps.ctx.get<uint32_t>(simcore::keys::core::OUTCOME_CODE, oc)) {
                 is_success = (oc == static_cast<uint32_t>(battle::Outcome::Victory));
             }
+            --remaining;
 
-            SCLOGI("[explorer] Received results from: workerid=%d jobid=%d success=%s", rr.worker_id, rr.job_id, is_success ? "true" : "false");
+            SCLOGI("[explorer] Received results (%d/%d): workerid=%d jobid=%d success=%s", total_jobs - remaining, total_jobs, rr.worker_id, rr.job_id, is_success ? "true" : "false");
 
             auto p = pendings.find(rr.job_id)->second;
 
@@ -530,7 +532,6 @@ namespace simcore::battleexplorer {
             else {
                 sum.fails.emplace_back((battle::Outcome)oc, p.job_id, p.spec, rr);
             }
-            --remaining;
         }
 
         return sum;
