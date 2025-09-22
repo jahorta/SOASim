@@ -517,8 +517,9 @@ namespace sandbox {
 
         // 4) Active Predicates
         std::cout << "\nActive Predicates : " << ui.predicates.size();
-        for (auto p : ui.predicates) {
-            std::cout << "\n  [" << p.id << "] " << p.desc;
+        for (int i = 0; i < ui.predicates.size(); i++) {
+            auto p = ui.predicates[i];
+            std::cout << "\n  [" << i << "]" << "  (" << p.id << ") " << p.desc;
         }
 
         // 5) Options
@@ -629,7 +630,7 @@ namespace sandbox {
 
         for (;;) {
             render_overview(bc, ui, ex);
-            std::cout << "\n[1] Add turn  [2] Modify turn  [3] Add predicate  [4] Set options  [5] Load First Battle Defaults [R] Run  [B] Back\n> ";
+            std::cout << "\n[1] Add turn  [2] Modify turn  [3] Add predicate  [6] Remove predicate  [4] Set options  [5] Load First Battle Defaults [R] Run  [B] Back\n> ";
             char c; std::cin >> c;
             if (c == 'B' || c == 'b') break;
 
@@ -665,6 +666,15 @@ namespace sandbox {
             }
             else if (c == '5') {
                 get_first_battle_defaults(ui);
+            }
+            else if (c == '6') {
+                if (ui.predicates.empty()) continue;
+                std::string prompt = "Predicate Idx (0.." + std::to_string(ui.predicates.size()) + ")";
+                const int idx = prompt_int(prompt.c_str(), 0);
+                if (idx >= 0 && idx < static_cast<int>(ui.predicates.size())) {
+                    ui.predicates.erase(ui.predicates.begin() + idx);
+                }
+
             }
             else if (c == 'R' || c == 'r') {
                 auto paths = ex.enumerate_paths(bc, ui);
