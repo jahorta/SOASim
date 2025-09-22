@@ -43,7 +43,7 @@ namespace simcore {
 		GOTO,
 		GOTO_IF,                   // key cmp imm -> label
 		GOTO_IF_KEYS,
-		RETURN_RESULT,             // arg: u32 immediate outcome (written to OUTCOME_CODE & return)
+		RETURN_RESULT,             // keyimm -> put result (imm) into context (key)
 		CAPTURE_PRED_BASELINES,       
 		EVAL_PREDICATES_AT_HIT_BP,    
 		RECORD_PROGRESS_AT_BP, 
@@ -105,7 +105,7 @@ namespace simcore {
 	inline PSOp OpGoto(const std::string& s) { PSOp o; o.code = PSOpCode::GOTO;  o.jmp.name = s;  return o; }
 	inline PSOp OpGotoIf(simcore::keys::KeyId k, PSCmp c, uint32_t v, const std::string& s) { PSOp o; o.code = PSOpCode::GOTO_IF; o.jcc = { k,c,v,s }; return o; }
 	inline PSOp OpGotoIfKeys(simcore::keys::KeyId left, PSCmp c, simcore::keys::KeyId right, const std::string& s) { PSOp o; o.code = PSOpCode::GOTO_IF_KEYS; o.jcc2 = { left, c, right, s }; return o; }
-	inline PSOp OpReturnResult(uint32_t code) { PSOp o; o.code = PSOpCode::RETURN_RESULT; o.imm.v = code; return o; }
+	inline PSOp OpReturnResult(simcore::keys::KeyId k, uint32_t code) { PSOp o; o.code = PSOpCode::RETURN_RESULT; o.keyimm = {k, code}; return o; }
 	inline PSOp OpCapturePredBaselines() { PSOp o; o.code = PSOpCode::CAPTURE_PRED_BASELINES; return o; }
 	inline PSOp OpArmBpsFromPredTable() { PSOp o; o.code = PSOpCode::ARM_BPS_FROM_PRED_TABLE; return o; }
 	inline PSOp OpEvalPredicatesAtHitBP() { PSOp o; o.code = PSOpCode::EVAL_PREDICATES_AT_HIT_BP; return o; }

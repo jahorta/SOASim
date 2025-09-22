@@ -8,7 +8,7 @@ namespace simcore::keys::core {
 #define CORE_KEYS(X) \
   X(RUN_HIT_PC,        0x0000, "core.run.hit_pc")        \
   X(RUN_HIT_BP_KEY,    0x0001, "core.run.hit_bp")        \
-  X(OUTCOME_CODE,      0x0002, "core.run.outcome_code")  \
+  X(DW_RUN_OUTCOME_CODE,      0x0002, "core.run.outcome_code")  \
   X(ELAPSED_MS,        0x0003, "core.run.elapsed_ms")    \
 \
   X(VI_FIRST,          0x0020, "core.metrics.vi_first")  \

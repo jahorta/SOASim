@@ -129,6 +129,7 @@ namespace simcore {
         PSResult R{};
         PSContext ctx = job.ctx;
         predicate_bp_keys_.clear();
+        std::string _section = "Entry Point";
 
         // Always start by restoring the pre-captured snapshot for each job
         if (!load_snapshot()) return R;
@@ -156,35 +157,22 @@ namespace simcore {
             case PSOpCode::LABEL: { break; }
             case PSOpCode::GOTO: {
                 auto it = label_vm_pc_map.find(op.jmp.name);
-                if (it != label_vm_pc_map.end()) vm_pc = it->second;
+                if (it != label_vm_pc_map.end()) 
+                {
+                    _section = op.jmp.name;
+                    vm_pc = it->second;
+                }
                 break;
             }
 
             case PSOpCode::GOTO_IF: {
-                uint32_t v = 0;
-                ctx.get(op.jcc.key, v);
+                uint32_t lv = 0;
+                ctx.get(op.jcc.key, lv);
+                auto rv = op.jcc.imm;
+                auto cmp = op.jcc.cmp;
+                std::string name = op.jcc.name;
                 bool take = false;
-                switch (op.jcc.cmp) {
-                case PSCmp::EQ: take = (v == op.jcc.imm); break;
-                case PSCmp::NE: take = (v != op.jcc.imm); break;
-                case PSCmp::LT: take = (v < op.jcc.imm); break;
-                case PSCmp::LE: take = (v <= op.jcc.imm); break;
-                case PSCmp::GT: take = (v > op.jcc.imm); break;
-                case PSCmp::GE: take = (v >= op.jcc.imm); break;
-                }
-                if (take) {
-                    auto it = label_vm_pc_map.find(op.jcc.name);
-                    if (it != label_vm_pc_map.end()) vm_pc = it->second;
-                }
-                break;
-            }
-
-            case PSOpCode::GOTO_IF_KEYS: {
-                uint32_t lv = 0, rv = 0;
-                ctx.get(op.jcc2.left, lv);
-                ctx.get(op.jcc2.right, rv);
-                bool take = false;
-                switch (op.jcc2.cmp) {
+                switch (cmp) {
                 case PSCmp::EQ: take = (lv == rv); break;
                 case PSCmp::NE: take = (lv != rv); break;
                 case PSCmp::LT: take = (lv < rv); break;
@@ -193,8 +181,38 @@ namespace simcore {
                 case PSCmp::GE: take = (lv >= rv); break;
                 }
                 if (take) {
-                    auto it = label_vm_pc_map.find(op.jcc2.name);
-                    if (it != label_vm_pc_map.end()) vm_pc = it->second;
+                    auto it = label_vm_pc_map.find(name);
+                    if (it != label_vm_pc_map.end()) 
+                    {
+                        _section = name;
+                        vm_pc = it->second;
+                    }
+                }
+                break;
+            }
+
+            case PSOpCode::GOTO_IF_KEYS: {
+                uint32_t lv = 0, rv = 0;
+                ctx.get(op.jcc2.left, lv);
+                ctx.get(op.jcc2.right, rv);
+                auto cmp = op.jcc2.cmp;
+                std::string name = op.jcc2.name;
+                bool take = false;
+                switch (cmp) {
+                case PSCmp::EQ: take = (lv == rv); break;
+                case PSCmp::NE: take = (lv != rv); break;
+                case PSCmp::LT: take = (lv < rv); break;
+                case PSCmp::LE: take = (lv <= rv); break;
+                case PSCmp::GT: take = (lv > rv); break;
+                case PSCmp::GE: take = (lv >= rv); break;
+                }
+                if (take) {
+                    auto it = label_vm_pc_map.find(name);
+                    if (it != label_vm_pc_map.end()) 
+                    {
+                        _section = name;
+                        vm_pc = it->second;
+                    }
                 }
                 break;
             }
@@ -342,9 +360,11 @@ namespace simcore {
                 }
 
                 // mirror -> ctx
-                ctx[keys::core::OUTCOME_CODE] = static_cast<uint32_t>(outcome);
+                ctx[keys::core::DW_RUN_OUTCOME_CODE] = static_cast<uint32_t>(outcome);
                 ctx[keys::core::ELAPSED_MS] = elapsed_ms;
                 ctx[keys::core::RUN_HIT_PC] = rr.hit ? (uint32_t)rr.pc : (uint32_t)0u;
+                ctx[keys::core::VI_LAST] = (uint32_t)(host_.getViFieldCountApprox() & 0xFFFFFFFFull);
+                ctx[keys::core::POLL_MS] = poll_ms;
 
                 // derive hit BP id by matching PC
                 uint32_t hit_bp_key = 0;
@@ -357,18 +377,10 @@ namespace simcore {
                     }
                 }
                 ctx[keys::core::RUN_HIT_BP_KEY] = hit_bp_key;
-                R.ctx[keys::core::RUN_HIT_BP_KEY] = hit_bp_key;
                 // keep derived buffer in sync for this frame
                 if (derived_) derived_->update_on_bp(hit_bp_key, ctx, host_);
 
-                // mirror -> R.ctx
-                R.ctx[keys::core::OUTCOME_CODE] = static_cast<uint32_t>(outcome);
-                R.ctx[keys::core::ELAPSED_MS] = elapsed_ms;
-                R.ctx[keys::core::RUN_HIT_PC] = rr.hit ? rr.pc : 0u;
-                R.ctx[keys::core::VI_LAST] = (uint32_t)(host_.getViFieldCountApprox() & 0xFFFFFFFFull);
-                R.ctx[keys::core::POLL_MS] = poll_ms;
-
-                break; // never return; VM continues
+                break;
             }
 
             case PSOpCode::READ_U8: { uint8_t  v{}; if (!read_u8(op.rd.addr, v)) return R; ctx[op.rd.dst] = v; break; }
@@ -409,8 +421,10 @@ namespace simcore {
             }
 
             case PSOpCode::RETURN_RESULT: {
-                R.ctx[keys::core::OUTCOME_CODE] = op.imm.v;
-                R.ok = true;
+                R.ctx = ctx;
+                R.ctx[op.keyimm.key] = op.keyimm.imm;
+                uint32_t dw_outcome = 0; ctx.get(keys::core::DW_RUN_OUTCOME_CODE, dw_outcome);
+                R.ok = dw_outcome == 0;
                 return R;
             }
 

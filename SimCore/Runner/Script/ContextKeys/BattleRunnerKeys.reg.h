@@ -7,6 +7,7 @@ namespace simcore::keys::battle {
 #define BATTLE_KEYS(X) \
   X(ACTIVE_TURN,              0x0300, "battle.active_turn")   \
   X(INITIAL_INPUT,            0x0301, "battle.initial_input") \
+  X(BATTLE_OUTCOME,           0x0302, "battle.outcome_code") \
   X(INPUTPLAN_FRAME_COUNT,    0x0311, "battle.inputplan.frame_count") \
   X(INPUTPLAN,                0x0312, "battle.inputplan.frames") \
   X(CTX_BLOB,                 0x0320, "battle.CTX_BLOB")      \

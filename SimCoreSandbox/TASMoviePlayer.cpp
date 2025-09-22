@@ -71,7 +71,7 @@ namespace sandbox {
                 for (auto i : result.items) {
                     if (i.ok) SCLOGI("[rtc %d] Successful save to: %s", i.delta_sec, i.save_path.c_str());
                     else {
-                        uint32_t o_temp; i.ctx.get(simcore::keys::core::OUTCOME_CODE, o_temp); simcore::RunToBpOutcome outcome = static_cast<simcore::RunToBpOutcome>(o_temp);
+                        uint32_t o_temp; i.ctx.get(simcore::keys::core::DW_RUN_OUTCOME_CODE, o_temp); simcore::RunToBpOutcome outcome = static_cast<simcore::RunToBpOutcome>(o_temp);
                         if (outcome != simcore::RunToBpOutcome::Hit)
                             switch (outcome) {
                             case simcore::RunToBpOutcome::Aborted:

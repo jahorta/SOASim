@@ -466,7 +466,7 @@ namespace simcore::battleexplorer {
         {
             for (const auto& path : paths) {
                 phase::battle::runner::EncodeSpec spec{};
-                spec.run_ms = 30000;
+                spec.run_ms = 60000;
                 spec.vi_stall_ms = 2000;
                 spec.initial = initial;
                 spec.predicates = ui.predicates;
@@ -506,7 +506,7 @@ namespace simcore::battleexplorer {
             }
 
             if (!rr.ps.ok) {
-                uint32_t outcome; rr.ps.ctx.get(keys::core::OUTCOME_CODE, outcome);
+                uint32_t outcome; rr.ps.ctx.get(keys::core::DW_RUN_OUTCOME_CODE, outcome);
                 SCLOGW("[explorer] Job VM run not ok: worker=%d jobid=%d, outcome=%d", rr.worker_id, rr.job_id, outcome);
                 --remaining;
                 continue;
@@ -515,7 +515,7 @@ namespace simcore::battleexplorer {
             bool is_success = false;
             //Example A: outcome code
             uint32_t oc = 0;
-            if (rr.ps.ctx.get<uint32_t>(simcore::keys::core::OUTCOME_CODE, oc)) {
+            if (rr.ps.ctx.get<uint32_t>(simcore::keys::core::DW_RUN_OUTCOME_CODE, oc)) {
                 is_success = (oc == static_cast<uint32_t>(battle::Outcome::Victory));
             }
             --remaining;
