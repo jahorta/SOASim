@@ -63,7 +63,7 @@ namespace phase::battle::runner {
         ps.ops.push_back(OpGotoIf(keys::core::RUN_HIT_BP_KEY, PSCmp::EQ, (uint32_t)BP_BattleLoadComplete, LabelADV));
         ps.ops.push_back(OpGotoIf(keys::core::RUN_HIT_BP_KEY, PSCmp::NE, (uint32_t)BP_BattleAcceptInput, LabelB));
 
-        ps.ops.push_back(OpGotoIfKeys(keys::battle::ACTIVE_TURN, PSCmp::LT,
+        ps.ops.push_back(OpGotoIfKeys(keys::battle::ACTIVE_TURN, PSCmp::LE,
             keys::battle::LAST_TURN_IDX, LabelADV));
         ps.ops.push_back(OpReturnResult((uint32_t)Outcome::TurnsExhausted));
 
