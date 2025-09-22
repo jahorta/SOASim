@@ -670,6 +670,14 @@ namespace sandbox {
                 auto paths = ex.enumerate_paths(bc, ui);
                 auto summary = ex.run_paths(ui, paths, runner);
                 std::cout << "Submitted " << summary.jobs_total << " jobs; successes: " << summary.jobs_success << "\n";
+                if (summary.successes.size() > 0) std::cout << "\nSuccesses found!";
+                for (auto r : summary.successes) {
+                    std::cout << "\n  [" << r.job_id << "] " << simcore::battle::get_outcome_string(r.outcome) << ": initframe=(" << simcore::DescribeFrame(r.spec.initial) << ") " << soa::battle::actions::get_battle_path_summary(r.spec.path);
+                }
+                if (summary.fails.size() > 0) std::cout << "\nFailures:";
+                for (auto r : summary.fails) {
+                    std::cout << "\n  [" << r.job_id << "] " << simcore::battle::get_outcome_string(r.outcome) << ": initframe=(" << simcore::DescribeFrame(r.spec.initial) << ") " << soa::battle::actions::get_battle_path_summary(r.spec.path);
+                }
             }
         }
     }
