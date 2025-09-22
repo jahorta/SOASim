@@ -416,11 +416,39 @@ namespace sandbox {
         std::cout << "\n== Battle Context ==\n";
         std::cout << "Party Members: ";
         for (int i = 0; i < 4; i++) {
-            if (bc.slots[i].present) std::cout << "\n  [" << i << "] " << soa::text::PCNames[bc.slots[i].id] << "  (element=" << bc.slots[i].instance.current_weapon_element << ")";
+            if (!bc.slots[i].present) continue;
+            auto element = soa::text::get_element_name(bc.slots[i].instance.current_weapon_element);
+            auto name = soa::text::PCNames[bc.slots[i].id];
+            std::cout << "\n  [" << i << "] " << name << "  (element=" << element << ")";
         }
         std::cout << "\nEnemies: ";
         for (int i = 4; i < 12; i++) {
-            if (bc.slots[i].present) std::cout << "\n  [" << i << "] " << soa::text::EnemyNames[bc.slots[i].id] << "  ";
+            if (!bc.slots[i].present) continue;
+            auto name = soa::text::get_enemy_name(bc.slots[i].id);
+            std::cout << "\n  [" << i << "] " << name << "  ";
+        }
+        
+        std::cout << "\nItemDrops: ";
+        std::unordered_set<uint8_t> unique_enemy_types;
+        std::unordered_set<uint8_t> unique_slot_by_enemy_types;
+        for (int i = 4; i < 12; i++) {
+            if (!bc.slots[i].present) continue;
+            if (unique_enemy_types.contains((uint8_t)bc.slots[i].id)) continue;
+            unique_enemy_types.emplace(bc.slots[i].id);
+            unique_slot_by_enemy_types.emplace(i);
+        }
+        
+        for (auto i : unique_slot_by_enemy_types) {
+            auto name = soa::text::get_enemy_name(bc.slots[i].id);
+            std::cout << "\n  " << name;
+            for (auto item : bc.slots[i].enemy_def.items)
+            {
+                if (item.itemId < 0) continue;
+                auto item_name = soa::text::get_item_name((size_t)item.itemId);
+                auto amt = (int)item.amount;
+                auto chance = (int)item.chance;
+                std::cout << "\n    (" << chance << "%) " << item_name << " x" << amt;
+            }
         }
         std::cout << "\n";
     }
