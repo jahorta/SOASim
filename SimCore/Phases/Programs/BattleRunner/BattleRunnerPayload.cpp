@@ -94,8 +94,8 @@ namespace phase::battle::runner {
 
         uint32_t n_plans = (uint32_t)b_path.size();
         out_ctx[keys::battle::INITIAL_INPUT] = initial;
-        out_ctx[keys::battle::NUM_TURN_PLANS] = n_plans;
-        out_ctx[keys::battle::LAST_TURN_IDX] = n_plans;
+        out_ctx[keys::battle::NUM_TURN_PLANS] = (uint32_t)0;
+        out_ctx[keys::battle::LAST_TURN] = n_plans;
 
         out_ctx[keys::core::PRED_COUNT] = pred_count;
         out_ctx[keys::core::PRED_TABLE] = pred_table;   // now [records || blob]
