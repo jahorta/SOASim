@@ -200,6 +200,7 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="Phases\BattleExplorer.h" />
     <ClInclude Include="Phases\FirstBattleGenerator.h" />
+    <ClInclude Include="Phases\Programs\BattleContext\BattleContextPayload.h" />
     <ClInclude Include="Phases\Programs\BattleContext\BattleContextScript.h" />
     <ClInclude Include="Phases\Programs\BattleRunner\BattleOutcome.h" />
     <ClInclude Include="Phases\Programs\BattleRunner\BattleRunnerPayload.h" />
@@ -1100,6 +1101,7 @@
     <ClCompile Include="Core\Shims\StateBufferShim.cpp" />
     <ClCompile Include="Phases\BattleExplorer.cpp" />
     <ClCompile Include="Phases\FirstBattleGenerator.cpp" />
+    <ClCompile Include="Phases\Programs\BattleContext\BattleContextPayload.cpp" />
     <ClCompile Include="Phases\Programs\BattleRunner\BattleRunnerPayload.cpp" />
     <ClCompile Include="Phases\Programs\PlayTasMovie\TasMoviePayload.cpp" />
     <ClCompile Include="Phases\Programs\ProgramRegistry.cpp" />

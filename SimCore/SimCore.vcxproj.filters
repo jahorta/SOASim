@@ -282,6 +282,9 @@
     <ClInclude Include="Phases\Programs\ProgramRegistry.h">
       <Filter>Phases</Filter>
     </ClInclude>
+    <ClInclude Include="Phases\Programs\BattleContext\BattleContextPayload.h">
+      <Filter>Phases\BattleContext</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SimCore.cpp">
@@ -1027,6 +1030,9 @@
     </ClCompile>
     <ClCompile Include="Phases\Programs\ProgramRegistry.cpp">
       <Filter>Phases</Filter>
+    </ClCompile>
+    <ClCompile Include="Phases\Programs\BattleContext\BattleContextPayload.cpp">
+      <Filter>Phases\BattleContext</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
