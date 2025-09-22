@@ -1,10 +1,19 @@
 #define NOMINMAX
 #include "MenuBattleExplorer.h"
 #include "utils.h"
-#include "Core/Memory/Soa/SoaConstants.h"
 #include <iostream>
 #include <iomanip>
 #include <limits>
+#include <unordered_set>
+
+#include "Core/Memory/Soa/SoaConstants.h"
+#include "Core/Memory/Soa/SoaAddrCatalog.h"
+#include "Core/Memory/Soa/SoaAddrRegistry.h"
+#include "Phases/Programs/BattleRunner/BattleOutcome.h"
+#include "Phases/BattleExplorer.h"
+#include "Phases/Programs/BattleRunner/BattleRunnerPayload.h"
+#include "Core/Input/InputPlanFmt.h"
+
 
 namespace {
     using soa::battle::actions::BattleAction;
@@ -314,6 +323,85 @@ namespace {
         return true;
     }
 } // anon namespace
+
+
+namespace {
+    using simcore::battleexplorer::UI_Config;
+    using simcore::battleexplorer::UI_Turn;
+    using simcore::battleexplorer::UI_Action;
+    using simcore::pred::Spec;
+    using simcore::pred::PredKind;
+    using simcore::pred::PredFlag;
+    using simcore::pred::CmpOp;
+
+    static bool get_first_battle_defaults(UI_Config& out) {
+
+        UI_Action vyse{};
+        vyse.actor_slot = 0;
+        vyse.macro = BattleAction::Attack;
+        vyse.target.kind = TargetBindingKind::AnyEnemy;
+
+        UI_Action aika{};
+        aika.actor_slot = 1;
+        aika.macro = BattleAction::Attack;
+        aika.target.kind = TargetBindingKind::SameAsOtherPC;
+        aika.target.var_id = 0;
+
+        UI_Turn turn{vyse, aika};
+
+        out.turns = {turn, turn };
+
+        std::vector<Spec> specs{};
+        specs.reserve(4);
+
+        // Check that both players go first
+        Spec first{};
+        first.id = 0;
+        first.kind = PredKind::ABS;
+        first.required_bp = bp::battle::TurnIsReady;
+        first.set_flag(PredFlag::Active);
+        first.set_flag(PredFlag::RhsIsKey);
+        first.width = 1;
+        first.set_every_turn();
+        first.lhs_key = addr::derived::battle::TurnOrderPcMax;
+        first.cmp = CmpOp::LT;
+        first.rhs_key = addr::derived::battle::TurnOrderEcMin;
+        first.desc = "Players act before enemies. (max PC turn index is less than min EC turn index)";
+        specs.push_back(first);
+
+
+        // Check that we have 1 electribox after first turn
+        addrprog::Builder eb_count_addrprog;
+        addrprog::catalog::item_drop_amt(eb_count_addrprog, soa::itemid::Electri_Box);
+
+        Spec eb{};
+        eb.id = 1;
+        eb.kind = PredKind::ABS;
+        eb.required_bp = bp::battle::EndTurn;
+        eb.set_flag(PredFlag::Active);
+        eb.width = 1;
+        eb.set_every_turn();
+
+        eb.lhs_prog = eb_count_addrprog.blob();
+        eb.set_flag(PredFlag::LhsIsProg);
+
+        eb.cmp = CmpOp::EQ;
+
+        eb.rhs_key = addr::derived::battle::CurrentTurn;
+        eb.set_flag(PredFlag::RhsIsKey);
+
+        eb.desc = "Everyturn, we drop an electribox. (Electribox count equals turn number)";
+        specs.push_back(eb);
+
+        out.predicates = std::move(specs);
+
+
+        out.initial_frames = { simcore::GCInputFrame() };
+        out.fakeattack_budget = 0;
+        return true;
+    }
+}
+
 
 // Include what you need to print StructuredBattleContext nicely.
 // This is a thin shell you can expand as you hook real I/O helpers.
