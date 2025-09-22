@@ -629,7 +629,7 @@ namespace sandbox {
 
         for (;;) {
             render_overview(bc, ui, ex);
-            std::cout << "\n[1] Add turn  [2] Modify turn  [3] Add predicate  [4] Set options  [R] Run  [B] Back\n> ";
+            std::cout << "\n[1] Add turn  [2] Modify turn  [3] Add predicate  [4] Set options  [5] Load First Battle Defaults [R] Run  [B] Back\n> ";
             char c; std::cin >> c;
             if (c == 'B' || c == 'b') break;
 
@@ -657,6 +657,9 @@ namespace sandbox {
             }
             else if (c == '4') {
                 ui.fakeattack_budget = std::max(0, prompt_int("FakeAttack Budget", ui.fakeattack_budget));
+            }
+            else if (c == '5') {
+                get_first_battle_defaults(ui);
             }
             else if (c == 'R' || c == 'r') {
                 auto paths = ex.enumerate_paths(bc, ui);
