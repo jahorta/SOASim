@@ -299,6 +299,10 @@ namespace simcore {
                 }
                 host_.setEnableAllBreakpoints(true);
                 if (idx >= count) ctx[keys::core::PLAN_DONE] = uint32_t(1);
+
+                uint32_t cur_turn_plans = 0;
+                auto itTP = ctx.get(keys::battle::NUM_TURN_PLANS, cur_turn_plans);
+                ctx[keys::battle::NUM_TURN_PLANS] = cur_turn_plans > 0 ? cur_turn_plans - 1 : 0;
                 break;
             }
 
