@@ -624,6 +624,9 @@ namespace sandbox {
         // Also expect a cached last_battle_ctx from Gather Context step or fetch it now.
         soa::battle::ctx::BattleContext bc = ex.gather_context(runner);
 
+        runner.increment_epoch();
+        runner.reset_job_ids();
+
         for (;;) {
             render_overview(bc, ui, ex);
             std::cout << "\n[1] Add turn  [2] Modify turn  [3] Add predicate  [4] Set options  [R] Run  [B] Back\n> ";
