@@ -16,13 +16,15 @@
 #define BP_TABLE_BATTLE(X) \
   X(battle, BattleInit,            201, 0x8000a1dcu, "BattleInit") \
   X(battle, BattleInitComplete,    202, 0x8000a2d4u, "BattleInitComplete") \
-  X(battle, TurnInputs,            203, 0x800719dcu, "TurnInputs") \
+  X(battle, TurnInputs,            203, 0x80071740u, "TurnInputs") \
   X(battle, TurnIsReady,           204, 0x800715ecu, "TurnIsReady")  /* This should be at the end of the turn init fxn which generates enemy instructions and turn order. */\
   X(battle, StartTurn,             205, 0x800715dcu, "StartTurn") \
   X(battle, StartAction,           206, 0x800715dcu, "StartAction") \
-  X(battle, EndAction,             207, 0x8007033cu, "EndAction") \
-  X(battle, EndTurn,               208, 0x8007033cu, "EndTurn") \
-  X(battle, EndBattle,             209, 0xFEEDBEEFu, "EndBattle")
+  X(battle, EndAction,             207, 0x8007050cu, "EndAction") \
+  X(battle, EndTurn,               208, 0x800702a0u, "EndTurn") \
+  X(battle, EndBattleVictory,      209, 0x800706d8u, "Battle_Victory") \
+  X(battle, EndBattleDefeat,       210, 0x8007066cu, "Battle_Defeat") \
+  X(battle, BattleLoadComplete,    211, 0x800307a0u, "BattleInitComplete") \
 
 #define BP_TABLE_ALL(X) \
   BP_TABLE_OVERWORLD(X) \
