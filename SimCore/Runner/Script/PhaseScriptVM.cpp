@@ -242,6 +242,11 @@ namespace simcore {
                 uint32_t turn = 0;
                 ctx.get<uint32_t>(keys::battle::ACTIVE_TURN, turn);
 
+                if (turn == 0) {
+                    ctx[keys::battle::PLAN_MATERIALIZE_ERR] = (uint32_t)soa::battle::actions::MaterializeErr::InvalidTurnIdxZero;
+                    ctx[keys::core::PLAN_DONE] = (uint32_t)1;
+                }
+
                 // Pull typed BattlePath (vector<TurnPlanSpec>)
                 soa::battle::actions::BattlePath bp;
                 if (!ctx.get<soa::battle::actions::BattlePath>(keys::battle::TURN_PLANS, bp)) {
@@ -250,7 +255,7 @@ namespace simcore {
                     break;
                 }
 
-                if (turn >= bp.size()) {
+                if (turn > bp.size()) {
                     ctx[keys::battle::PLAN_MATERIALIZE_ERR] = (uint32_t)soa::battle::actions::MaterializeErr::OutOfTurns;
                     ctx[keys::core::PLAN_DONE] = (uint32_t)1;
                     break;
@@ -265,7 +270,7 @@ namespace simcore {
                     }
                 }
 
-                const auto& turn_plan = bp[turn];
+                const auto& turn_plan = bp[turn-1];
 
                 simcore::InputPlan plan;
                 auto err = soa::battle::actions::MaterializeErr::OK;
