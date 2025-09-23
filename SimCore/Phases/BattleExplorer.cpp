@@ -454,13 +454,14 @@ namespace simcore::battleexplorer {
         SCLOGI("[explorer] Creating Jobs");
         // 2) Submit one job per terminal BattlePath
         struct Pending {
-            uint64_t job_id;
+            uint64_t path_id;
+            int retry_count = -1;
             phase::battle::runner::EncodeSpec spec;
         };
         std::unordered_map<uint64_t, Pending> pendings;
         pendings.reserve(total_jobs);
 
-
+        uint64_t path_id = 0;
         SCLOGI("[explorer] Submitting Jobs");
         for (const auto& initial : ui.initial_frames)
         {
@@ -479,7 +480,7 @@ namespace simcore::battleexplorer {
                 job.payload = std::move(buf);
 
                 const uint64_t jid = runner.submit(job);
-                Pending p{ jid, spec };
+                Pending p{ path_id++, ui.max_retry_count, spec };
                 pendings.emplace(jid, p);
             }
         }
