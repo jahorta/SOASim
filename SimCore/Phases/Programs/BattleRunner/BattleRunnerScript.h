@@ -19,6 +19,10 @@ namespace phase::battle::runner {
 
     static const std::string LabelInputTurnActions = "APPLY_INPUTS";
     static const std::string LabelRunTurn = "RUN_TURN";
+    static const std::string LabelSetTimeoutSmall = "SET_TIMEOUT_SMALL";
+    static const std::string LabelSetTimeoutLarge = "SET_TIMEOUT_LARGE";
+    static const std::string LabelStartRun = "START_RUN";
+
     static const std::string LabelADV = "ADV";
     static const std::string LabelVictory = "RET_SUCCESS";
     static const std::string LabelDefeat = "RET_FAILURE";
@@ -75,7 +79,7 @@ namespace phase::battle::runner {
         ps.ops.push_back(OpSetTimeoutToMS(long_timeout));
         ps.ops.push_back(OpGotoIf(keys::core::RUN_HIT_BP_KEY, PSCmp::NE, (uint32_t)BP_BattleAcceptInput, LabelRunTurn));
 
-        ps.ops.push_back(OpGotoIfKeys(keys::battle::ACTIVE_TURN, PSCmp::LE, keys::battle::LAST_TURN, LabelADV));
+        ps.ops.push_back(OpGotoIfKeys(keys::battle::ACTIVE_TURN, PSCmp::LT, keys::battle::LAST_TURN, LabelADV));
         ps.ops.push_back(OpReturnResult(Battle_Outcome, (uint32_t)Outcome::TurnsExhausted));
 
         // ============  Label ADV  ===================
