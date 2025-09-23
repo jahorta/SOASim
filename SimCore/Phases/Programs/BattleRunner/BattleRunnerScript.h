@@ -17,8 +17,8 @@ namespace phase::battle::runner {
     static constexpr keys::KeyId DW_Outcome = keys::core::DW_RUN_OUTCOME_CODE;
     static constexpr keys::KeyId Battle_Outcome = keys::battle::BATTLE_OUTCOME;
 
-    static const std::string LabelA = "A";
-    static const std::string LabelB = "B";
+    static const std::string LabelInputTurnActions = "APPLY_INPUTS";
+    static const std::string LabelRunTurn = "RUN_TURN";
     static const std::string LabelADV = "ADV";
     static const std::string LabelVictory = "RET_SUCCESS";
     static const std::string LabelDefeat = "RET_FAILURE";
@@ -39,11 +39,11 @@ namespace phase::battle::runner {
 
         ps.ops.push_back(OpSetU32(keys::battle::ACTIVE_TURN, 0));
         ps.ops.push_back(OpApplyInputFrom(keys::battle::INITIAL_INPUT));
-        ps.ops.push_back(OpGoto(LabelB));  // Going to LabelB so that we can run until turn inputs checking that the initial battle state is favorable (might need to check turn_type at start of battle)
+        ps.ops.push_back(OpGoto(LabelRunTurn));  // Going to LabelRunTurn so that we can run until turn inputs checking that the initial battle state is favorable (might need to check turn_type at start of battle)
 
-        // ============  Label A  ===================
+        // ============  Label Input Turn Actions  ===================
         // Run all inputs
-        ps.ops.push_back(OpLabel(LabelA));
+        ps.ops.push_back(OpLabel(LabelInputTurnActions));
 
         // Get context and build a plan - fail fast if plan fails
         ps.ops.push_back(OpGetBattleContext());
@@ -52,13 +52,13 @@ namespace phase::battle::runner {
 
         // apply input plan
         ps.ops.push_back(OpApplyPlanFrameFrom(keys::battle::ACTIVE_TURN));
-        ps.ops.push_back(OpGotoIf(keys::core::PLAN_DONE, PSCmp::EQ, 1, LabelB));
-        ps.ops.push_back(OpGoto(LabelA));
+        ps.ops.push_back(OpGotoIf(keys::core::PLAN_DONE, PSCmp::EQ, 1, LabelRunTurn));
+        ps.ops.push_back(OpGoto(LabelInputTurnActions));
 
-        // ============  Label B  ===================
-        ps.ops.push_back(OpLabel(LabelB));
+        // ============  Label Run Turn  ===================
+        ps.ops.push_back(OpLabel(LabelRunTurn));
 
-        // Run to bp, check predicates, record progress
+        // set timeout based on bp
         ps.ops.push_back(OpRunUntilBp());
         ps.ops.push_back(OpGotoIf(DW_Outcome, PSCmp::NE, 0, LabelDWErr));
         ps.ops.push_back(OpEvalPredicatesAtHitBP()); // Sets whether all predicates passed into keys::core::PRED_ALL_PASSED
@@ -83,7 +83,7 @@ namespace phase::battle::runner {
         ps.ops.push_back(OpSetTimeoutToMS(short_timeout));
         ps.ops.push_back(OpAddU32(keys::battle::ACTIVE_TURN, 1));
         ps.ops.push_back(OpCapturePredBaselines());
-        ps.ops.push_back(OpGoto(LabelA));
+        ps.ops.push_back(OpGoto(LabelInputTurnActions));
 
         // ============  Label Victory  ===================
         ps.ops.push_back(OpLabel(LabelVictory));
