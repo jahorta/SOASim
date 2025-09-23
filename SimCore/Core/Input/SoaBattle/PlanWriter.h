@@ -13,7 +13,8 @@ namespace soa::battle::actions {
         NotEnoughResource = 2,
         InvalidNavigation = 3,
         OutOfTurns = 4,
-        BadBlob = 5
+        BadBlob = 5,
+        InvalidTurnIdxZero = 6
     };
 
     class PlanWriter {
