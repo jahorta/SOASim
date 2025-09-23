@@ -525,6 +525,7 @@ namespace sandbox {
         // 5) Options
         std::cout << "\nOptions:";
         std::cout << "\n  FakeAttack Budget = " << std::max(0, ui.fakeattack_budget);
+        std::cout << "\n  Job Retries (-1=inf) = " << ui.max_retry_count;
 
         // Footer: estimates
         const auto X = ex.estimate_paths_no_fake(ui, bc);
@@ -663,6 +664,7 @@ namespace sandbox {
             }
             else if (c == '4') {
                 ui.fakeattack_budget = std::max(0, prompt_int("FakeAttack Budget", ui.fakeattack_budget));
+                ui.max_retry_count = std::max(-1, prompt_int("Max Job Retries (-1=inf)", ui.max_retry_count));
             }
             else if (c == '5') {
                 get_first_battle_defaults(ui);
