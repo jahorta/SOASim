@@ -20,9 +20,7 @@ namespace simcore::battle {
         case Outcome::PlanMaterializeFailure: return "Input Plan Materialize failure";
         case Outcome::TurnsExhausted: return "Turns Exhausted";
         case Outcome::DWRunErr: return "DW Run Error";
-        case Outcome::Unknown: 
-        default:
-            return "Victory";
         }
+        return "Unknown Outcome";
     }
 } // namespace simcore::battle
