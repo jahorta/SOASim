@@ -151,10 +151,18 @@ namespace simcore {
             SCLOGT("[VM] running op: %s", get_psop_name(op.code).c_str());
 
             switch (op.code) {
-            case PSOpCode::ARM_PHASE_BPS_ONCE: { arm_bps_once(); break; }
-            case PSOpCode::LOAD_SNAPSHOT: { if (!load_snapshot()) return R; break; }
-            case PSOpCode::CAPTURE_SNAPSHOT: { if (!save_snapshot()) return R; break; }
-            case PSOpCode::LABEL: { break; }
+            case PSOpCode::ARM_PHASE_BPS_ONCE: 
+            { arm_bps_once(); break; }
+
+            case PSOpCode::LOAD_SNAPSHOT: 
+            { if (!load_snapshot()) return R; break; }
+
+            case PSOpCode::CAPTURE_SNAPSHOT: 
+            { if (!save_snapshot()) return R; break; }
+
+            case PSOpCode::LABEL: 
+            { break; }
+
             case PSOpCode::GOTO: {
                 auto it = label_vm_pc_map.find(op.jmp.name);
                 if (it != label_vm_pc_map.end()) 
@@ -383,8 +391,12 @@ namespace simcore {
                 break;
             }
 
-            case PSOpCode::READ_U8: { uint8_t  v{}; if (!read_u8(op.rd.addr, v)) return R; ctx[op.rd.dst] = v; break; }
-            case PSOpCode::READ_U16: { uint16_t v{}; if (!read_u16(op.rd.addr, v)) return R; ctx[op.rd.dst] = v; break; }
+            case PSOpCode::READ_U8: 
+            { uint8_t  v{}; if (!read_u8(op.rd.addr, v)) return R; ctx[op.rd.dst] = v; break; }
+
+            case PSOpCode::READ_U16: 
+            { uint16_t v{}; if (!read_u16(op.rd.addr, v)) return R; ctx[op.rd.dst] = v; break; }
+
             case PSOpCode::READ_U32:
             {
                 uint32_t v{};
@@ -397,8 +409,11 @@ namespace simcore {
                 ctx[op.rd.dst] = v;
                 break;
             }
-            case PSOpCode::READ_F32: { float    v{}; if (!read_f32(op.rd.addr, v)) return R; ctx[op.rd.dst] = v; break; }
-            case PSOpCode::READ_F64: { double   v{}; if (!read_f64(op.rd.addr, v)) return R; ctx[op.rd.dst] = v; break; }
+            case PSOpCode::READ_F32: 
+            { float    v{}; if (!read_f32(op.rd.addr, v)) return R; ctx[op.rd.dst] = v; break; }
+
+            case PSOpCode::READ_F64: 
+            { double   v{}; if (!read_f64(op.rd.addr, v)) return R; ctx[op.rd.dst] = v; break; }
 
             case PSOpCode::GET_BATTLE_CONTEXT:
             {
@@ -429,7 +444,7 @@ namespace simcore {
             }
 
             case PSOpCode::APPLY_INPUT_FROM: {
-                auto it = ctx.find(op.a_key.id);
+                auto it = ctx.find(op.key.id);
                 if (it == ctx.end()) return R;
                 if (auto p = std::get_if<GCInputFrame>(&it->second)) {
                     host_.setInput(*p);

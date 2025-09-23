@@ -87,18 +87,17 @@ namespace simcore {
 
 	// Only one of these will be used depending on `code`
 	struct PSOp {           
-		PSOpCode      code{};
-		PSArg_Read    rd{};
-		PSArg_Step    step{};
+		PSOpCode         code{};
+		PSArg_Read       rd{};
+		PSArg_Step       step{};
 		PSArg_Key        key{};
 		PSArg_Label      label{};
-		PSArg_Label   label{};
-		PSArg_Goto    jmp{};
-		PSArg_GotoIf  jcc{};
+		PSArg_Goto       jmp{};
+		PSArg_GotoIf     jcc{};
 		PSArg_GotoIfKeys jcc2{};
-		PSArg_Plan    plan{};
-		PSArg_ImmU32  imm{};
-		PSArg_KeyImm  keyimm{};
+		PSArg_Plan       plan{};
+		PSArg_ImmU32     imm{};
+		PSArg_KeyImm     keyimm{};
 	};
 
 	inline PSOp OpLabel(const std::string& s) { PSOp o; o.code = PSOpCode::LABEL; o.label.name = s; return o; }
