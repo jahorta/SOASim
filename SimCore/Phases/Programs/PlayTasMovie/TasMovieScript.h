@@ -23,7 +23,7 @@ namespace simcore::tasmovie {
         p.ops.push_back(OpMoviePlayFrom(keys::tas::DTM_PATH));
 
         // 3) Set a per-job timeout derived from the DTM header.
-        p.ops.push_back(OpSetTimeoutFrom(keys::core::RUN_MS));
+        p.ops.push_back(OpSetTimeoutFromKey(keys::core::RUN_MS));
 
         // 4) Run until any armed canonical BP triggers (or failure/timeouts/watchdogs).
         p.ops.push_back(OpRunUntilBp());
