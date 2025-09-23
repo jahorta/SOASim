@@ -670,7 +670,7 @@ namespace sandbox {
             }
             else if (c == "6") {
                 if (ui.predicates.empty()) continue;
-                std::string prompt = "Predicate Idx (0.." + std::to_string(ui.predicates.size()) + ")";
+                std::string prompt = "Predicate Idx [0.." + std::to_string(ui.predicates.size() - 1) + "]";
                 const int idx = prompt_int(prompt.c_str(), 0);
                 if (idx >= 0 && idx < static_cast<int>(ui.predicates.size())) {
                     ui.predicates.erase(ui.predicates.begin() + idx);
