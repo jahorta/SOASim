@@ -27,10 +27,11 @@ namespace simcore {
 		APPLY_INPUT_FROM,          // key -> GCInputFrame
 		STEP_FRAMES,               // literal step count ok to keep
 		RUN_UNTIL_BP,              // uses current timeout
+		SET_TIMEOUT,               // imm -> time out in ms
+		SET_TIMEOUT_FROM,          // key -> uint32
 
 		READ_U8, READ_U16, READ_U32, READ_F32, READ_F64, GET_BATTLE_CONTEXT,
 
-		SET_TIMEOUT_FROM,          // key -> uint32
 		EMIT_RESULT,               // literal: which key to emit
 
 		GC_SLOT_A_SET_FROM,        // key -> path
@@ -90,8 +91,8 @@ namespace simcore {
 		PSOpCode      code{};
 		PSArg_Read    rd{};
 		PSArg_Step    step{};
-		PSArg_Timeout to{};
-		PSArg_Key     a_key{};
+		PSArg_Key        key{};
+		PSArg_Label      label{};
 		PSArg_Label   label{};
 		PSArg_Goto    jmp{};
 		PSArg_GotoIf  jcc{};
@@ -112,16 +113,17 @@ namespace simcore {
 	inline PSOp OpRecordProgressAtBP() { PSOp o; o.code = PSOpCode::RECORD_PROGRESS_AT_BP; return o; }
 	inline PSOp OpSetU32(simcore::keys::KeyId key, uint32_t v) { PSOp o; o.code = PSOpCode::SET_U32; o.keyimm = { key,v }; return o; }
 	inline PSOp OpAddU32(simcore::keys::KeyId key, uint32_t v) { PSOp o; o.code = PSOpCode::ADD_U32; o.keyimm = { key,v }; return o; }
-	inline PSOp OpApplyPlanFrameFrom(simcore::keys::KeyId key) { PSOp o; o.code = PSOpCode::APPLY_BATTLE_INPUTPLAN_FRAMES; o.a_key = { key }; return o; }
+	inline PSOp OpApplyPlanFrameFrom(simcore::keys::KeyId key) { PSOp o; o.code = PSOpCode::APPLY_BATTLE_INPUTPLAN_FRAMES; o.key = { key }; return o; }
 	inline PSOp OpBuildTurnInputFromActions() { PSOp o; o.code = PSOpCode::BUILD_TURN_INPUTPLAN_FROM_BATTLE_PATH; return o; }
 
 
-	inline PSOp OpGcSlotASet(simcore::keys::KeyId k) { PSOp o; o.code = PSOpCode::GC_SLOT_A_SET_FROM; o.a_key.id = k; return o; }
-	inline PSOp OpApplyInputFrom(simcore::keys::KeyId k) { PSOp o; o.code = PSOpCode::APPLY_INPUT_FROM;   o.a_key.id = k; return o; }
+	inline PSOp OpGcSlotASet(simcore::keys::KeyId k) { PSOp o; o.code = PSOpCode::GC_SLOT_A_SET_FROM; o.key.id = k; return o; }
+	inline PSOp OpApplyInputFrom(simcore::keys::KeyId k) { PSOp o; o.code = PSOpCode::APPLY_INPUT_FROM;   o.key.id = k; return o; }
 	inline PSOp OpSetTimeoutFromKey(simcore::keys::KeyId k) { PSOp o; o.code = PSOpCode::SET_TIMEOUT_FROM;   o.key.id = k; return o; }
-	inline PSOp OpMoviePlayFrom(simcore::keys::KeyId k) { PSOp o; o.code = PSOpCode::MOVIE_PLAY_FROM;    o.a_key.id = k; return o; }
-	inline PSOp OpSaveSavestateFrom(simcore::keys::KeyId k) { PSOp o; o.code = PSOpCode::SAVE_SAVESTATE_FROM; o.a_key.id = k; return o; }
-	inline PSOp OpRequireDiscGameIdFrom(simcore::keys::KeyId k) { PSOp o; o.code = PSOpCode::REQUIRE_DISC_GAMEID_FROM; o.a_key.id = k; return o; }
+	inline PSOp OpSetTimeoutToMS(uint32_t ms) { PSOp o; o.code = PSOpCode::SET_TIMEOUT;   o.imm.v = ms; return o; }
+	inline PSOp OpMoviePlayFrom(simcore::keys::KeyId k) { PSOp o; o.code = PSOpCode::MOVIE_PLAY_FROM;    o.key.id = k; return o; }
+	inline PSOp OpSaveSavestateFrom(simcore::keys::KeyId k) { PSOp o; o.code = PSOpCode::SAVE_SAVESTATE_FROM; o.key.id = k; return o; }
+	inline PSOp OpRequireDiscGameIdFrom(simcore::keys::KeyId k) { PSOp o; o.code = PSOpCode::REQUIRE_DISC_GAMEID_FROM; o.key.id = k; return o; }
 
 	// READ_* ops now store into a numeric key:
 	inline PSOp OpReadU8(uint32_t addr, simcore::keys::KeyId dst) { PSOp o; o.code = PSOpCode::READ_U8;  o.rd = { addr,dst }; return o; }

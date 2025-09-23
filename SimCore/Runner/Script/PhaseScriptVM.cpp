@@ -415,8 +415,8 @@ namespace simcore {
 
             case PSOpCode::EMIT_RESULT:
             {
-                SCLOGD("[VM] EMIT_RESULT %s=%08X", keys::name_for_id(op.a_key.id).data(), ctx[op.a_key.id]);
-                R.ctx[op.a_key.id] = ctx[op.a_key.id]; // copy selected value to result
+                SCLOGD("[VM] EMIT_RESULT %s=%08X", keys::name_for_id(op.key.id).data(), ctx[op.key.id]);
+                R.ctx[op.key.id] = ctx[op.key.id]; // copy selected value to result
                 break;
             }
 
@@ -442,20 +442,21 @@ namespace simcore {
 
             case PSOpCode::SET_TIMEOUT_FROM: {
                 uint32_t timeout_ms;
-                ctx.get<uint32_t>(op.a_key.id, timeout_ms);
+                ctx.get<uint32_t>(op.key.id, timeout_ms);
+                ctx[keys::core::RUN_MS] = timeout_ms;
                 break;
             }
 
             case PSOpCode::MOVIE_PLAY_FROM: {
                 std::string path;
-                ctx.get<std::string>(op.a_key.id, path);
+                ctx.get<std::string>(op.key.id, path);
                 if (!host_.startMoviePlayback(path)) return R;
                 break;
             }
 
             case PSOpCode::SAVE_SAVESTATE_FROM: {
                 std::string path;
-                ctx.get<std::string>(op.a_key.id, path);
+                ctx.get<std::string>(op.key.id, path);
                 if (!host_.saveSavestateBlocking(path)) return R;
                 break;
             }
@@ -464,7 +465,7 @@ namespace simcore {
 
                 const char* id6 = nullptr;
                 std::string tmp;
-                ctx.get<std::string>(op.a_key.id, tmp);
+                ctx.get<std::string>(op.key.id, tmp);
                 if (tmp.size() < 6) return R;
                 id6 = tmp.c_str();
 
