@@ -10,6 +10,7 @@ namespace phase::battle::runner {
 
     static constexpr BPKey BP_BattleLoadComplete = bp::battle::BattleLoadComplete;
     static constexpr BPKey BP_BattleAcceptInput = bp::battle::TurnInputs;
+    static constexpr BPKey BP_BattleInputsDone = bp::battle::TurnIsReady;
     static constexpr BPKey BP_Victory = bp::battle::EndBattleVictory;
     static constexpr BPKey BP_Defeat = bp::battle::EndBattleDefeat;
 
@@ -25,12 +26,12 @@ namespace phase::battle::runner {
     static const std::string LabelMaterializeFail = "RET_PLAN_MAT_FAILURE";
     static const std::string LabelDWErr = "RET_DW_RUN_ERROR";
 
-    inline PhaseScript MakeBattleRunnerProgram()
+    inline PhaseScript MakeBattleRunnerProgram(uint32_t short_timeout = 20000, uint32_t long_timeout = 120000)
     {
         using simcore::battle::Outcome;
         
         PhaseScript ps{};
-        ps.canonical_bp_keys = { BP_BattleAcceptInput, BP_Victory, BP_Defeat, BP_BattleLoadComplete };
+        ps.canonical_bp_keys = { BP_BattleAcceptInput, BP_BattleInputsDone, BP_Victory, BP_Defeat, BP_BattleLoadComplete };
 
         ps.ops.push_back(OpArmPhaseBps());
         ps.ops.push_back(OpArmBpsFromPredTable());
@@ -71,13 +72,15 @@ namespace phase::battle::runner {
         
         // If we are not to the next input bp, keep running
         ps.ops.push_back(OpGotoIf(keys::core::RUN_HIT_BP_KEY, PSCmp::EQ, (uint32_t)BP_BattleLoadComplete, LabelADV));
-        ps.ops.push_back(OpGotoIf(keys::core::RUN_HIT_BP_KEY, PSCmp::NE, (uint32_t)BP_BattleAcceptInput, LabelB));
+        ps.ops.push_back(OpSetTimeoutToMS(long_timeout));
+        ps.ops.push_back(OpGotoIf(keys::core::RUN_HIT_BP_KEY, PSCmp::NE, (uint32_t)BP_BattleAcceptInput, LabelRunTurn));
 
         ps.ops.push_back(OpGotoIfKeys(keys::battle::ACTIVE_TURN, PSCmp::LE, keys::battle::LAST_TURN, LabelADV));
         ps.ops.push_back(OpReturnResult(Battle_Outcome, (uint32_t)Outcome::TurnsExhausted));
 
         // ============  Label ADV  ===================
         ps.ops.push_back(OpLabel(LabelADV));
+        ps.ops.push_back(OpSetTimeoutToMS(short_timeout));
         ps.ops.push_back(OpAddU32(keys::battle::ACTIVE_TURN, 1));
         ps.ops.push_back(OpCapturePredBaselines());
         ps.ops.push_back(OpGoto(LabelA));
