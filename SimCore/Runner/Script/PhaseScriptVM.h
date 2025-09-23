@@ -61,7 +61,6 @@ namespace simcore {
 
 	struct PSArg_Read { uint32_t addr; simcore::keys::KeyId dst; };
 	struct PSArg_Step { uint32_t n; };
-	struct PSArg_Timeout { uint32_t ms; };
 	struct PSArg_Path { std::string path; };
 	struct PSArg_ID6 { char id[6]{}; };
 	struct PSArg_Key { simcore::keys::KeyId id; };
@@ -134,7 +133,7 @@ namespace simcore {
 	inline PSOp OpGetBattleContext() { PSOp o; o.code = PSOpCode::GET_BATTLE_CONTEXT; return o; }
 
 	// EMIT_RESULT now exports a numeric key:
-	inline PSOp OpEmitResult(simcore::keys::KeyId k) { PSOp o; o.code = PSOpCode::EMIT_RESULT; o.a_key.id = k; return o; }
+	inline PSOp OpEmitResult(simcore::keys::KeyId k) { PSOp o; o.code = PSOpCode::EMIT_RESULT; o.key.id = k; return o; }
 
 	// OTHERS
 	inline PSOp OpMovieStop() { PSOp o; o.code = PSOpCode::MOVIE_STOP; return o; }

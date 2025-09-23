@@ -440,6 +440,9 @@ namespace simcore {
                 break;
             }
 
+            case PSOpCode::SET_TIMEOUT: 
+            { ctx[keys::core::RUN_MS] = op.imm.v; break; }
+
             case PSOpCode::SET_TIMEOUT_FROM: {
                 uint32_t timeout_ms;
                 ctx.get<uint32_t>(op.key.id, timeout_ms);
