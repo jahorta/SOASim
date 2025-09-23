@@ -700,6 +700,8 @@ namespace sandbox {
                     }
                     std::cout << "\n  [" << r.job_id << "] " << outcome_s << ":\n  initframe=(" << simcore::DescribeFrame(r.spec.initial) << ") " << soa::battle::actions::get_battle_path_summary(r.spec.path);
                 }
+                std::cout << "\n\n Press Enter to Continue...";
+                std::string c; std::getline(std::cin, c);
             }
         }
     }
