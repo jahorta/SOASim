@@ -675,7 +675,7 @@ namespace sandbox {
                 if (idx >= 0 && idx < static_cast<int>(ui.predicates.size())) {
                     ui.predicates.erase(ui.predicates.begin() + idx);
                 }
-
+                for (uint32_t i = 0; i < ui.predicates.size(); i++) ui.predicates[i].id = i;
             }
             else if (c == "R" || c == "r") {
                 auto paths = ex.enumerate_paths(bc, ui);
