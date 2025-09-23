@@ -610,6 +610,7 @@ namespace sandbox {
 
         BattleExplorer ex = BattleExplorer(savestate_path);
         UI_Config ui;
+        ui.initial_frames.emplace_back(GCInputFrame{});
 
         simcore::ParallelPhaseScriptRunner runner{ app.workers };
 
