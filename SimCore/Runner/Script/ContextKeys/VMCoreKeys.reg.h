@@ -28,6 +28,7 @@ namespace simcore::keys::core {
   X(PRED_TOTAL,        0x0083, "core.pred.total_passed")  \
   X(PRED_PASSED,       0x0084, "core.pred.count_passed_at_bp")   \
   X(PRED_ALL_PASSED,   0x0085, "core.pred.all_passed")   \
+  X(PRED_FIRST_FAILED, 0x0085, "core.pred.first_failed")   \
 \
   X(WORKER_ERROR,      0x00A0, "core.output.worker_err")
 
