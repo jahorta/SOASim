@@ -17,6 +17,19 @@ namespace soa::battle::actions {
         InvalidTurnIdxZero = 6
     };
 
+    inline std::string get_materialize_err_string(MaterializeErr e) {
+        switch (e) {
+        case MaterializeErr::OK: return "No Error";
+        case MaterializeErr::NoValidTarget: return "No Valid Target";
+        case MaterializeErr::NotEnoughResource: return "Not Enough Resources";
+        case MaterializeErr::InvalidNavigation: return "Invalid Menu Navigation";
+        case MaterializeErr::OutOfTurns: return "Out of Turns";
+        case MaterializeErr::BadBlob: return "Bad BattlePath Blob";
+        case MaterializeErr::InvalidTurnIdxZero: return "Invalid Turn Number (0)";
+        }
+        return "No Error";
+    }
+
     class PlanWriter {
     public:
         PlanWriter(const soa::battle::ctx::BattleContext& bc);
