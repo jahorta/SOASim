@@ -552,7 +552,7 @@ namespace simcore {
 
                 uint32_t total = 0; ctx.get(keys::core::PRED_TOTAL, total);
                 uint32_t pass = 0;
-                uint32_t all_passed = 1;
+                uint32_t all_passed = 1;  ctx.get(keys::core::PRED_ALL_PASSED, all_passed);
 
                 auto itN = ctx.find(keys::core::PRED_COUNT);
                 auto itT = ctx.find(keys::core::PRED_TABLE);
@@ -627,7 +627,11 @@ namespace simcore {
 
                     ++total;
                     if (ok) ++pass;
-                    else all_passed = 0;
+                    else if (all_passed)
+                    {
+                        ctx[keys::core::PRED_FIRST_FAILED] = r.id;
+                        all_passed = 0;
+                    }
                 }
                 ctx[keys::core::PRED_PASSED] = pass;
                 ctx[keys::core::PRED_ALL_PASSED] = all_passed;
