@@ -494,14 +494,11 @@ namespace simcore::battleexplorer {
                 continue;
             }
 
-
-            
-
             // Only count results that correspond to our epoch; runner handles epochs internally.
             // Validate transport OK + VM OK
             if (!rr.accepted) {
                 // Transport or VM failure; treat as non-success and continue
-                SCLOGW("[explorer] Job was not accepted: worker=%d jobid=%d", rr.worker_id, rr.job_id);
+                SCLOGW("[explorer] Job was not accepted (probably wrong epoch): worker=%d jobid=%d", rr.worker_id, rr.job_id);
                 --remaining;
                 continue;
             }
@@ -544,7 +541,7 @@ namespace simcore::battleexplorer {
                 }
                 else {
                     SCLOGW("[explorer] Job VM failed (%d) due to unknown reason, not resubmiting: worker=%d jobid=%d, outcome=%d", p.path_id, rr.worker_id, rr.job_id, outcome);
-                --remaining;
+                    --remaining;
                 }
                 continue;
             }
@@ -552,22 +549,22 @@ namespace simcore::battleexplorer {
             bool is_success = false;
             //Example A: outcome code
             uint32_t oc = 0;
-            if (rr.ps.ctx.get<uint32_t>(simcore::keys::core::DW_RUN_OUTCOME_CODE, oc)) {
+            if (rr.ps.ctx.get<uint32_t>(keys::battle::BATTLE_OUTCOME, oc)) {
                 is_success = (oc == static_cast<uint32_t>(battle::Outcome::Victory));
             }
             --remaining;
 
-            SCLOGI("[explorer] Received results (%d/%d): workerid=%d jobid=%d success=%s", total_jobs - remaining, total_jobs, rr.worker_id, rr.job_id, is_success ? "true" : "false");
+            SCLOGI("[explorer] Received results (%d/%d): workerid=%d jobid=%d success=%s%s", total_jobs - remaining, total_jobs, rr.worker_id, rr.job_id, is_success ? "true" : "false ", oc == 0 ? "" : battle::get_outcome_string((battle::Outcome)oc).c_str());
 
             auto p = pendings.find(rr.job_id)->second;
 
             if (is_success) 
             {
-                sum.successes.emplace_back((battle::Outcome)oc, p.job_id, p.spec, rr);
+                sum.successes.emplace_back((battle::Outcome)oc, p.path_id, p.spec, rr);
                 ++sum.jobs_success;
             }
             else {
-                sum.fails.emplace_back((battle::Outcome)oc, p.job_id, p.spec, rr);
+                sum.fails.emplace_back((battle::Outcome)oc, p.path_id, p.spec, rr);
             }
         }
 
