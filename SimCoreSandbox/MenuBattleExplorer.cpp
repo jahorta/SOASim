@@ -13,6 +13,7 @@
 #include "Phases/BattleExplorer.h"
 #include "Phases/Programs/BattleRunner/BattleRunnerPayload.h"
 #include "Core/Input/InputPlanFmt.h"
+#include "Core/Input/SoaBattle/PlanWriter.h"
 
 
 namespace {
@@ -150,7 +151,7 @@ namespace {
             if (!s.empty()) {
                 try { v = std::stoi(s); }
                 catch (...) { continue; }
-            }
+                }
             if (v >= minv && v <= maxv) return v;
         }
     }
