@@ -632,22 +632,20 @@ namespace sandbox {
         for (;;) {
             render_overview(bc, ui, ex);
             std::cout << "\n[1] Add turn  [2] Modify turn  [3] Add predicate  [6] Remove predicate  [4] Set options  [5] Load First Battle Defaults [R] Run  [B] Back\n> ";
-            char c; std::cin >> c;
-            if (c == 'B' || c == 'b') break;
+            std::string c; if (!std::getline(std::cin, c)) return;
+            if (c == "B" || c == "b") break;
 
-            if (c == '1') {
+            if (c == "1") {
                 UI_Turn t{};
                 for (int s : list_present_pcs(bc)) {
                     simcore::battleexplorer::UI_Action ua{};
-                    // consume trailing newline before getline prompts
-                    if (std::cin.peek() == '\n') std::cin.get();
                     if (build_ui_action_for_actor(bc, static_cast<uint8_t>(s), ua)) {
                         t.push_back(std::move(ua));
                     }
                 }
                 ui.turns.push_back(std::move(t));
             }
-            else if (c == '2') {
+            else if (c == "2") {
                 std::cout << "[Not implemented]";
                 continue;
 
@@ -657,19 +655,19 @@ namespace sandbox {
                     // TODO: edit ui.turns[idx].spec entries per player
                 }
             }
-            else if (c == '3') {
+            else if (c == "3") {
                 std::cout << "[Not implemented]";
                 continue;
                 // TODO: predicate catalog ? push into ui.predicates
             }
-            else if (c == '4') {
+            else if (c == "4") {
                 ui.fakeattack_budget = std::max(0, prompt_int("FakeAttack Budget", ui.fakeattack_budget));
                 ui.max_retry_count = std::max(-1, prompt_int("Max Job Retries (-1=inf)", ui.max_retry_count));
             }
-            else if (c == '5') {
+            else if (c == "5") {
                 get_first_battle_defaults(ui);
             }
-            else if (c == '6') {
+            else if (c == "6") {
                 if (ui.predicates.empty()) continue;
                 std::string prompt = "Predicate Idx (0.." + std::to_string(ui.predicates.size()) + ")";
                 const int idx = prompt_int(prompt.c_str(), 0);
@@ -678,7 +676,7 @@ namespace sandbox {
                 }
 
             }
-            else if (c == 'R' || c == 'r') {
+            else if (c == "R" || c == "r") {
                 auto paths = ex.enumerate_paths(bc, ui);
                 auto summary = ex.run_paths(ui, paths, runner);
                 std::cout << "Submitted " << summary.jobs_total << " jobs; successes: " << summary.jobs_success << "\n";
