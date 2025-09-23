@@ -506,9 +506,45 @@ namespace simcore::battleexplorer {
             }
 
             if (!rr.ps.ok) {
+                auto p = pendings.find(rr.job_id)->second;
+                pendings.erase(rr.job_id);
                 uint32_t outcome; rr.ps.ctx.get(keys::core::DW_RUN_OUTCOME_CODE, outcome);
-                SCLOGW("[explorer] Job VM run not ok: worker=%d jobid=%d, outcome=%d", rr.worker_id, rr.job_id, outcome);
+                if (outcome != (uint32_t)RunToBpOutcome::Hit)
+                {
+                    bool do_retry = false;
+                    if (p.retry_count < 0) do_retry = true;
+                    else if (p.retry_count > 0) {
+                        p.retry_count--;
+                        do_retry = true;
+                    }
+                    SCLOGW("[explorer] Job VM run not ok (%d) %sattempting to resubmit (%s retries): worker=%d jobid=%d, outcome=%d", 
+                        p.path_id, 
+                        do_retry ? "" : "not ", 
+                        p.retry_count < 0 ? "inf" : std::to_string(p.retry_count).c_str(), 
+                        rr.worker_id, 
+                        rr.job_id, 
+                        outcome);
+
+                    if (do_retry) 
+                    {
+                        std::vector<uint8_t> buf;
+                        phase::battle::runner::encode_payload(p.spec, buf);
+
+                        PSJob job{};
+                        job.payload = std::move(buf);
+                        uint64_t jid = runner.submit(job);
+                        pendings.emplace(jid, p);
+                        
+                    }
+                    else {
+                        --remaining;
+                    }
+
+                }
+                else {
+                    SCLOGW("[explorer] Job VM failed (%d) due to unknown reason, not resubmiting: worker=%d jobid=%d, outcome=%d", p.path_id, rr.worker_id, rr.job_id, outcome);
                 --remaining;
+                }
                 continue;
             }
 

@@ -34,6 +34,7 @@ namespace simcore::battleexplorer {
         int                        fakeattack_budget = 0; // B >= 0
         std::vector<pred::Spec>    predicates;      // enabled predicates (+ params)
         std::vector<GCInputFrame>  initial_frames;
+        int                        max_retry_count = 0;
     };
 
     struct JobResult {
