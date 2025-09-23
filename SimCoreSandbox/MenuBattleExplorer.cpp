@@ -687,7 +687,18 @@ namespace sandbox {
                 }
                 if (summary.fails.size() > 0) std::cout << "\nFailures:";
                 for (auto r : summary.fails) {
-                    std::cout << "\n  [" << r.job_id << "] " << simcore::battle::get_outcome_string(r.outcome) << ": initframe=(" << simcore::DescribeFrame(r.spec.initial) << ") " << soa::battle::actions::get_battle_path_summary(r.spec.path);
+                    std::string outcome_s = simcore::battle::get_outcome_string(r.outcome);
+                    if (r.outcome == simcore::battle::Outcome::PlanMaterializeFailure) 
+                    {
+                        uint32_t err; r.pr.ps.ctx.get(keys::battle::PLAN_MATERIALIZE_ERR, err);
+                        outcome_s = outcome_s + ": " + soa::battle::actions::get_materialize_err_string((soa::battle::actions::MaterializeErr)err);
+                    }
+                    else if (r.outcome == simcore::battle::Outcome::PredFailure) {
+                        uint32_t perr; r.pr.ps.ctx.get(keys::core::PRED_FIRST_FAILED, perr);
+                        if (perr >= 0 && perr < ui.predicates.size()) outcome_s = outcome_s + ": " + ui.predicates[perr].desc;
+                        else outcome_s = outcome_s + ": unknown predicate id=" + std::to_string(perr);
+                    }
+                    std::cout << "\n  [" << r.job_id << "] " << outcome_s << ":\n  initframe=(" << simcore::DescribeFrame(r.spec.initial) << ") " << soa::battle::actions::get_battle_path_summary(r.spec.path);
                 }
             }
         }
