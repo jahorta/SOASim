@@ -73,6 +73,9 @@
     <Filter Include="Phases\SeedProbe">
       <UniqueIdentifier>{9970f495-ed71-4548-bb91-77f7142e3522}</UniqueIdentifier>
     </Filter>
+    <Filter Include="DB">
+      <UniqueIdentifier>{07954794-7b78-495a-b539-797c40af33f9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -1040,6 +1043,15 @@
     <None Include="_TODO.md" />
     <None Include="Utils\soa_struct_reflector.py">
       <Filter>Utils</Filter>
+    </None>
+    <None Include="DB\migration\0001.sql">
+      <Filter>DB</Filter>
+    </None>
+    <None Include="DB\migration\0002.sql">
+      <Filter>DB</Filter>
+    </None>
+    <None Include="DB\migration\0003.sql">
+      <Filter>DB</Filter>
     </None>
   </ItemGroup>
 </Project>

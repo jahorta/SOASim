@@ -1123,6 +1123,9 @@
     <ClCompile Include="Utils\SafeEnv.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="DB\migration\0001.sql" />
+    <None Include="DB\migration\0002.sql" />
+    <None Include="DB\migration\0003.sql" />
     <None Include="Interesting SOA Addresses.md">
       <SubType>
       </SubType>
