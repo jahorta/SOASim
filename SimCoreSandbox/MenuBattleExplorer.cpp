@@ -683,6 +683,7 @@ namespace sandbox {
             }
             else if (c == "5") {
                 get_first_battle_defaults(ui);
+                for (uint32_t i = 0; i < ui.predicates.size(); i++) ui.predicates[i].id = i;
             }
             else if (c == "6") {
                 if (ui.predicates.empty()) continue;
