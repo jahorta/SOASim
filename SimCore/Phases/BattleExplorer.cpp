@@ -507,6 +507,7 @@ namespace simcore::battleexplorer {
                 auto p = pendings.find(rr.job_id)->second;
                 pendings.erase(rr.job_id);
                 uint32_t outcome; rr.ps.ctx.get(keys::core::DW_RUN_OUTCOME_CODE, outcome);
+                uint32_t timeout_ms; rr.ps.ctx.get(keys::core::RUN_MS, timeout_ms);
                 if (outcome != (uint32_t)RunToBpOutcome::Hit)
                 {
                     bool do_retry = false;
@@ -515,13 +516,16 @@ namespace simcore::battleexplorer {
                         p.retry_count--;
                         do_retry = true;
                     }
-                    SCLOGW("[explorer] Job VM run not ok (%d) %sattempting to resubmit (%s retries): worker=%d jobid=%d, outcome=%d", 
+                    SCLOGW("[explorer] Job VM run not ok (%d) %sattempting to resubmit (%s retries): worker=%d jobid=%d, outcome=%d%s%s", 
                         p.path_id, 
                         do_retry ? "" : "not ", 
                         p.retry_count < 0 ? "inf" : std::to_string(p.retry_count).c_str(), 
                         rr.worker_id, 
                         rr.job_id, 
-                        outcome);
+                        outcome,
+                        outcome == (uint32_t)RunToBpOutcome::Timeout ? " timeout_ms=" : "",
+                        outcome == (uint32_t)RunToBpOutcome::Timeout ? std::to_string(timeout_ms).c_str() : ""
+                    );
 
                     if (do_retry) 
                     {
