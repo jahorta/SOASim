@@ -136,7 +136,7 @@
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "$out='$(IntDir)GeneratedMigrations.h';" ^
-  "$srcDir='$(ProjectDir)SimCore\DB\migration';" ^
+  "$srcDir='$(ProjectDir)DB\migration';" ^
   "$files=Get-ChildItem -Path $srcDir -Filter *.sql | Sort-Object Name;" ^
   "$head='// generated' + [Environment]::NewLine + '#pragma once' + [Environment]::NewLine + '#include &lt;vector&gt;' + [Environment]::NewLine + '#include &lt;string&gt;' + [Environment]::NewLine + 'namespace simcore{namespace db{ static inline const std::vector&lt;std::pair&lt;std::string,std::string&gt;&gt; kEmbeddedMigrations = {';" ^
   "Set-Content -Path $out -Value $head -Encoding UTF8;" ^
@@ -176,7 +176,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "$out='$(IntDir)GeneratedMigrations.h';" ^
-  "$srcDir='$(ProjectDir)SimCore\DB\migration';" ^
+  "$srcDir='$(ProjectDir)DB\migration';" ^
   "$files=Get-ChildItem -Path $srcDir -Filter *.sql | Sort-Object Name;" ^
   "$head='// generated' + [Environment]::NewLine + '#pragma once' + [Environment]::NewLine + '#include &lt;vector&gt;' + [Environment]::NewLine + '#include &lt;string&gt;' + [Environment]::NewLine + 'namespace simcore{namespace db{ static inline const std::vector&lt;std::pair&lt;std::string,std::string&gt;&gt; kEmbeddedMigrations = {';" ^
   "Set-Content -Path $out -Value $head -Encoding UTF8;" ^
@@ -215,10 +215,27 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     <ClInclude Include="Core\Memory\Soa\SoaStructs.h" />
     <ClInclude Include="Core\Memory\Soa\SoaStructs.reflect.h" />
     <ClInclude Include="Core\Shims\StateBufferShim.h" />
-    <ClInclude Include="DB\DbEnv.h" />
-    <ClInclude Include="DB\MigrationRunner.h" />
-    <ClInclude Include="DB\ObjectStore.h" />
+    <ClInclude Include="DB\AddressProgramRepo.h" />
+    <ClInclude Include="DB\BattlePlanAtomRepo.h" />
+    <ClInclude Include="DB\BattlePlanTurnRepo.h" />
+    <ClInclude Include="DB\DBCore\DbEnv.h" />
+    <ClInclude Include="DB\DBCore\DbResult.h" />
+    <ClInclude Include="DB\DBCore\DbRetryPolicy.h" />
+    <ClInclude Include="DB\DBCore\DbService.h" />
+    <ClInclude Include="DB\DBCore\MigrationRunner.h" />
+    <ClInclude Include="DB\DBCore\MigrationRunner_Embedded.h" />
+    <ClInclude Include="DB\DBCore\ObjectStore.h" />
+    <ClInclude Include="DB\DeltaSeedRepo.h" />
+    <ClInclude Include="DB\ExplorerRunRepo.h" />
+    <ClInclude Include="DB\ExplorerSettingsPredicateRepo.h" />
+    <ClInclude Include="DB\ExplorerSettingsRepo.h" />
+    <ClInclude Include="DB\PredicateSpecRepo.h" />
+    <ClInclude Include="DB\Query.h" />
+    <ClInclude Include="DB\SavestateHelpers.h" />
     <ClInclude Include="DB\SavestateRepo.h" />
+    <ClInclude Include="DB\SeedProbeRepo.h" />
+    <ClInclude Include="DB\TasMovieRepo.h" />
+    <ClInclude Include="DB\VersionStampRepo.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Phases\BattleExplorer.h" />
     <ClInclude Include="Phases\FirstBattleGenerator.h" />
@@ -1121,10 +1138,24 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     <ClCompile Include="Core\Memory\Soa\SoaAddrProgramBuilder.cpp" />
     <ClCompile Include="Core\Memory\Soa\SoaAddrRegistry.cpp" />
     <ClCompile Include="Core\Shims\StateBufferShim.cpp" />
-    <ClCompile Include="DB\DbEnv.cpp" />
-    <ClCompile Include="DB\MigrationRunner.cpp" />
-    <ClCompile Include="DB\ObjectStore.cpp" />
+    <ClCompile Include="DB\AddressProgramRepo.cpp" />
+    <ClCompile Include="DB\BattlePlanAtomrepo.cpp" />
+    <ClCompile Include="DB\BattlePlanTurnRepo.cpp" />
+    <ClCompile Include="DB\DBCore\DbEnv.cpp" />
+    <ClCompile Include="DB\DBCore\DbService.cpp" />
+    <ClCompile Include="DB\DBCore\MigrationRunner.cpp" />
+    <ClCompile Include="DB\DBCore\ObjectStore.cpp" />
+    <ClCompile Include="DB\DeltaSeedRepo.cpp" />
+    <ClCompile Include="DB\ExplorerRunRepo.cpp" />
+    <ClCompile Include="DB\ExplorerSettingsPredicateRepo.cpp" />
+    <ClCompile Include="DB\ExplorerSettingsRepo.cpp" />
+    <ClCompile Include="DB\PredicateSpecRepo.cpp" />
+    <ClCompile Include="DB\Query.cpp" />
+    <ClCompile Include="DB\SavestateHelpers.cpp" />
     <ClCompile Include="DB\SavestateRepo.cpp" />
+    <ClCompile Include="DB\SeedProbeRepo.cpp" />
+    <ClCompile Include="DB\TasMovieRepo.cpp" />
+    <ClCompile Include="DB\VersionStampRepo.cpp" />
     <ClCompile Include="Phases\BattleExplorer.cpp" />
     <ClCompile Include="Phases\FirstBattleGenerator.cpp" />
     <ClCompile Include="Phases\Programs\BattleContext\BattleContextPayload.cpp" />
@@ -1152,6 +1183,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     <None Include="DB\migration\0001.sql" />
     <None Include="DB\migration\0002.sql" />
     <None Include="DB\migration\0003.sql" />
+    <None Include="DB\migration\0004.sql" />
+    <None Include="DB\migration\0005.sql" />
+    <None Include="DB\update_generated_migrations.bat" />
     <None Include="Interesting SOA Addresses.md">
       <SubType>
       </SubType>

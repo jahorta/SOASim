@@ -79,6 +79,15 @@
     <Filter Include="DB\Migration">
       <UniqueIdentifier>{9ae008db-3dc2-4b7a-b1df-5692a1c350b8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="DB\Core">
+      <UniqueIdentifier>{dd7b8fe8-953c-4cc7-a17e-ee7ac9b98360}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DB\PhaseRepos">
+      <UniqueIdentifier>{1385e30c-bd1f-4e11-bba3-9bb95341a6ad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DB\CatalogRepos">
+      <UniqueIdentifier>{4c95c6c0-ff90-4a2d-b7d9-122f63a1df53}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -291,16 +300,67 @@
     <ClInclude Include="Phases\Programs\BattleContext\BattleContextPayload.h">
       <Filter>Phases\BattleContext</Filter>
     </ClInclude>
+    <ClInclude Include="DB\DBCore\DbEnv.h">
+      <Filter>DB\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\DBCore\DbResult.h">
+      <Filter>DB\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\DBCore\DbRetryPolicy.h">
+      <Filter>DB\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\DBCore\DbService.h">
+      <Filter>DB\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\DBCore\MigrationRunner.h">
+      <Filter>DB\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\DBCore\MigrationRunner_Embedded.h">
+      <Filter>DB\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\DBCore\ObjectStore.h">
+      <Filter>DB\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\ExplorerRunRepo.h">
+      <Filter>DB\PhaseRepos</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\DeltaSeedRepo.h">
+      <Filter>DB\PhaseRepos</Filter>
+    </ClInclude>
     <ClInclude Include="DB\SavestateRepo.h">
-      <Filter>DB</Filter>
+      <Filter>DB\PhaseRepos</Filter>
     </ClInclude>
-    <ClInclude Include="DB\DbEnv.h">
-      <Filter>DB</Filter>
+    <ClInclude Include="DB\SeedProbeRepo.h">
+      <Filter>DB\PhaseRepos</Filter>
     </ClInclude>
-    <ClInclude Include="DB\MigrationRunner.h">
-      <Filter>DB</Filter>
+    <ClInclude Include="DB\TasMovieRepo.h">
+      <Filter>DB\PhaseRepos</Filter>
     </ClInclude>
-    <ClInclude Include="DB\ObjectStore.h">
+    <ClInclude Include="DB\SavestateHelpers.h">
+      <Filter>DB\PhaseRepos</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\ExplorerSettingsRepo.h">
+      <Filter>DB\CatalogRepos</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\PredicateSpecRepo.h">
+      <Filter>DB\CatalogRepos</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\AddressProgramRepo.h">
+      <Filter>DB\CatalogRepos</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\BattlePlanAtomRepo.h">
+      <Filter>DB\CatalogRepos</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\BattlePlanTurnRepo.h">
+      <Filter>DB\CatalogRepos</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\ExplorerSettingsPredicateRepo.h">
+      <Filter>DB\CatalogRepos</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\VersionStampRepo.h">
+      <Filter>DB\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\Query.h">
       <Filter>DB</Filter>
     </ClInclude>
   </ItemGroup>
@@ -1052,16 +1112,58 @@
     <ClCompile Include="Phases\Programs\BattleContext\BattleContextPayload.cpp">
       <Filter>Phases\BattleContext</Filter>
     </ClCompile>
-    <ClCompile Include="DB\DbEnv.cpp">
-      <Filter>DB</Filter>
+    <ClCompile Include="DB\DBCore\DbEnv.cpp">
+      <Filter>DB\Core</Filter>
     </ClCompile>
-    <ClCompile Include="DB\MigrationRunner.cpp">
-      <Filter>DB</Filter>
+    <ClCompile Include="DB\DBCore\DbService.cpp">
+      <Filter>DB\Core</Filter>
     </ClCompile>
-    <ClCompile Include="DB\ObjectStore.cpp">
-      <Filter>DB</Filter>
+    <ClCompile Include="DB\DBCore\MigrationRunner.cpp">
+      <Filter>DB\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\DBCore\ObjectStore.cpp">
+      <Filter>DB\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\DeltaSeedRepo.cpp">
+      <Filter>DB\PhaseRepos</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\ExplorerRunRepo.cpp">
+      <Filter>DB\PhaseRepos</Filter>
     </ClCompile>
     <ClCompile Include="DB\SavestateRepo.cpp">
+      <Filter>DB\PhaseRepos</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\TasMovieRepo.cpp">
+      <Filter>DB\PhaseRepos</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\SavestateHelpers.cpp">
+      <Filter>DB\PhaseRepos</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\SeedProbeRepo.cpp">
+      <Filter>DB\PhaseRepos</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\ExplorerSettingsRepo.cpp">
+      <Filter>DB\CatalogRepos</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\PredicateSpecRepo.cpp">
+      <Filter>DB\CatalogRepos</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\AddressProgramRepo.cpp">
+      <Filter>DB\CatalogRepos</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\BattlePlanAtomrepo.cpp">
+      <Filter>DB\CatalogRepos</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\BattlePlanTurnRepo.cpp">
+      <Filter>DB\CatalogRepos</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\ExplorerSettingsPredicateRepo.cpp">
+      <Filter>DB\CatalogRepos</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\VersionStampRepo.cpp">
+      <Filter>DB\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\Query.cpp">
       <Filter>DB</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1078,6 +1180,15 @@
       <Filter>DB\Migration</Filter>
     </None>
     <None Include="DB\migration\0002.sql">
+      <Filter>DB\Migration</Filter>
+    </None>
+    <None Include="DB\migration\0004.sql">
+      <Filter>DB\Migration</Filter>
+    </None>
+    <None Include="DB\migration\0005.sql">
+      <Filter>DB\Migration</Filter>
+    </None>
+    <None Include="DB\update_generated_migrations.bat">
       <Filter>DB\Migration</Filter>
     </None>
   </ItemGroup>

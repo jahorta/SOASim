@@ -1,5 +1,6 @@
 #pragma once
-#include "DbEnv.h"
+#include "DBCore/DbEnv.h"
+#include "DBCore/DbResult.h"
 #include <string>
 #include <cstdint>
 #include <optional>
@@ -17,9 +18,9 @@ namespace simcore {
 
         class SavestateRepo {
         public:
-            static int64_t plan(DbEnv::Tx& tx, int savestate_type, const std::string& note);
-            static void finalize(DbEnv::Tx& tx, int64_t id, int64_t object_ref_id);
-            static std::optional<SavestateRow> get(DbEnv::Tx& tx, int64_t id);
+            static DbResult<int64_t> plan(DbEnv& env, int savestate_type, const std::string& note);
+            static DbResult<void> finalize(DbEnv& env, int64_t id, int64_t object_ref_id);
+            static std::optional<SavestateRow> get(DbEnv& env, int64_t id);
         };
 
     } // namespace db

@@ -50,6 +50,7 @@ CREATE TABLE seed_delta (
   seed_delta INTEGER NOT NULL,
   delta_key  BLOB NOT NULL,
   is_grid    INTEGER NOT NULL,
+  is_unique  INTEGER NOT NULL,
   complete   INTEGER NOT NULL DEFAULT 0
 );
 

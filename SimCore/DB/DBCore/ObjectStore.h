@@ -7,7 +7,7 @@
 namespace simcore {
     namespace db {
 
-        enum class Compression { None = 0, Zstd = 1 };
+        enum class Compression { None = 0, Zstd = 1, lz4 = 2 };
 
         struct ObjectRefRow {
             int64_t id{};

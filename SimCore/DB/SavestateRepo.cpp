@@ -4,33 +4,37 @@
 
 namespace simcore {
     namespace db {
-
-        int64_t SavestateRepo::plan(DbEnv::Tx& tx, int savestate_type, const std::string& note) {
+        
+        DbResult<int64_t> SavestateRepo::plan(DbEnv& env, int savestate_type, const std::string& note) {
+            sqlite3* db = env.handle();
             sqlite3_stmt* stmt{};
-            auto db = tx.handle();
-            sqlite3_prepare_v2(db, "INSERT INTO savestate(savestate_type, note, complete) VALUES (?,?,0);",
+            int rc = sqlite3_prepare_v2(db, "INSERT INTO savestate(savestate_type, note, complete) VALUES (?,?,0);",
                 -1, &stmt, nullptr);
+            if (rc != SQLITE_OK) return DbResult<int64_t>::Err({ map_sqlite_err(rc),rc,"prepare" });
             sqlite3_bind_int(stmt, 1, savestate_type);
             sqlite3_bind_text(stmt, 2, note.c_str(), -1, SQLITE_TRANSIENT);
-            sqlite3_step(stmt);
+            rc = sqlite3_step(stmt);
             sqlite3_finalize(stmt);
-            return sqlite3_last_insert_rowid(db);
+            if (rc != SQLITE_DONE) return DbResult<int64_t>::Err({ map_sqlite_err(rc),rc,"insert" });
+            return DbResult<int64_t>::Ok(sqlite3_last_insert_rowid(db));
         }
 
-        void SavestateRepo::finalize(DbEnv::Tx& tx, int64_t id, int64_t object_ref_id) {
+        DbResult<void> SavestateRepo::finalize(DbEnv& env, int64_t id, int64_t object_ref_id) {
+            sqlite3* db = env.handle();
             sqlite3_stmt* stmt{};
-            auto db = tx.handle();
-            sqlite3_prepare_v2(db, "UPDATE savestate SET object_ref_id=?, complete=1 WHERE id=?;",
+            int rc = sqlite3_prepare_v2(db, "UPDATE savestate SET object_ref_id=?, complete=1 WHERE id=?;",
                 -1, &stmt, nullptr);
             sqlite3_bind_int64(stmt, 1, object_ref_id);
             sqlite3_bind_int64(stmt, 2, id);
-            sqlite3_step(stmt);
+            rc = sqlite3_step(stmt);
             sqlite3_finalize(stmt);
+            if (rc != SQLITE_DONE) return DbResult<void>::Err({ map_sqlite_err(rc),rc,"update" });
+            return DbResult<void>(true);
         }
 
-        std::optional<SavestateRow> SavestateRepo::get(DbEnv::Tx& tx, int64_t id) {
+        std::optional<SavestateRow> SavestateRepo::get(DbEnv& env, int64_t id) {
+            sqlite3* db = env.handle();
             sqlite3_stmt* stmt{};
-            auto db = tx.handle();
             sqlite3_prepare_v2(db, "SELECT id, savestate_type, note, object_ref_id, complete FROM savestate WHERE id=?;",
                 -1, &stmt, nullptr);
             sqlite3_bind_int64(stmt, 1, id);
