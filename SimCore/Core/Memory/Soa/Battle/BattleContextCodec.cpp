@@ -19,9 +19,10 @@ namespace soa::battle::ctx::codec {
             uint32_t p = 0;
             if (!view.read_u32(addr::Registry::spec(addr::battle::CombatantInstancesTable).base + i * 4, p)) return false;
             if (p && view.in_mem1(p)) {
-                out.slots[i].present = 1;
                 out.slots[i].instance_addr = p;
                 (void)soa::readers::read(view, p, out.slots[i].instance);
+                out.slots[i].present = !(out.slots[i].instance.status_flags & StatusFlags::Fled);
+                out.slots[i].is_alive = !(out.slots[i].instance.status_flags & StatusFlags::Dead);
             }
         }
 
@@ -98,6 +99,7 @@ namespace soa::battle::ctx::codec {
         for (int i = 0; i < 12; ++i) {
             const auto& s = in.slots[i];
             out.push_back(char(s.present));
+            out.push_back(char(s.is_alive));
             out.push_back(char(s.is_player));
             append_u16_native(out, s.id);
             out.push_back(char(s.has_enemy_def));
@@ -131,6 +133,7 @@ namespace soa::battle::ctx::codec {
             s = {};
 
             if (p + 1 > end) return false; s.present = static_cast<uint8_t>(*p++);
+            if (p + 1 > end) return false; s.is_alive = static_cast<uint8_t>(*p++);
             if (p + 1 > end) return false; s.is_player = static_cast<uint8_t>(*p++);
             if (!read_u16_native(p, end, s.id)) return false;
             if (p + 1 > end) return false; s.has_enemy_def = static_cast<uint8_t>(*p++);

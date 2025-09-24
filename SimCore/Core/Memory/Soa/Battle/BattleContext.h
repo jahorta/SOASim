@@ -5,6 +5,11 @@
 
 namespace soa::battle::ctx {
 
+    enum StatusFlags : uint32_t {
+        Dead = 1 << 8,
+        Fled = 1 << 13,
+    };
+
     struct BattleSlot
     {
         uint8_t  present{ 0 };       // slot has a live instance
