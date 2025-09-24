@@ -396,11 +396,26 @@ namespace {
 
         out.predicates = std::move(specs);
 
-
-        out.initial_frames = { simcore::GCInputFrame() };
-        out.fakeattack_budget = 0;
         return true;
     }
+
+    static bool load_unique_input_frames_sample(UI_Config& out) {
+        out.initial_frames = {
+            GCInputFrame(),
+            GCInputFrame().JStick(48, 48),
+            GCInputFrame().JStick(190, 48),
+            GCInputFrame().JStick(89, 64),
+            GCInputFrame().JStick(64, 89),
+            GCInputFrame().JStick(89, 89),
+            GCInputFrame().JStick(73, 173),
+            GCInputFrame().CStick(48, 48),
+            GCInputFrame().JStick(198, 56).CStick(56, 198).Triggers(148, 48),
+            GCInputFrame().JStick(89, 144).CStick(81, 56).Triggers(173, 190),
+            GCInputFrame().JStick(48, 144).CStick(48, 48).Triggers(56, 165),
+        };
+        return true;
+    }
+
 }
 
 
@@ -633,7 +648,7 @@ namespace sandbox {
 
         for (;;) {
             render_overview(bc, ui, ex);
-            std::cout << "\n[1] Add turn  [2] Modify turn  [3] Add predicate  [6] Remove predicate  [4] Set options  [5] Load First Battle Defaults [R] Run  [B] Back\n> ";
+            std::cout << "\n[1] Add turn  [2] Modify turn  [3] Add predicate  [6] Remove predicate  [4] Set options  [5] Load First Battle Defaults [7] Add unique Input Frame Starts [R] Run  [B] Back\n> ";
             std::string c; if (!std::getline(std::cin, c)) return;
             if (c == "B" || c == "b") break;
 
@@ -677,6 +692,9 @@ namespace sandbox {
                     ui.predicates.erase(ui.predicates.begin() + idx);
                 }
                 for (uint32_t i = 0; i < ui.predicates.size(); i++) ui.predicates[i].id = i;
+            }
+            else if (c == "7") {
+                load_unique_input_frames_sample(ui);
             }
             else if (c == "R" || c == "r") {
                 auto paths = ex.enumerate_paths(bc, ui);
