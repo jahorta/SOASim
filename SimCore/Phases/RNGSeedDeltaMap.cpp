@@ -536,8 +536,6 @@ namespace simcore {
             return true;
             };
 
-
-
         auto all_satisfied = [&]() { for (auto& s : states) if (!s.satisfied) return false; return true; };
 
         // Initial wave: one per target
