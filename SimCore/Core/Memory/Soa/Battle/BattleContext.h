@@ -10,6 +10,7 @@ namespace soa::battle::ctx {
         uint8_t  present{ 0 };       // slot has a live instance
         uint8_t  is_player{ 0 };     // 1 for slots [0..3]
         uint16_t id{ 0 };            // from 0x80309DCC
+        uint8_t  is_alive{ 0 };
         uint8_t  has_enemy_def{ 0 }; // 1 iff enemy slot and enemy_def is resolved
 
         // Materialized snapshots (byte-faithful images from MEM1)

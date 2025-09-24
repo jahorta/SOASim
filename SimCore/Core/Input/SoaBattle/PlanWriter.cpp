@@ -39,7 +39,7 @@ namespace soa::battle::actions {
         if (base < 0) return -1;
         if (!mask) return base;
         for (int i = 4; i < 12; ++i) {
-            if (bc_.slots[i].present && !bc_.slots[i].is_player) {
+            if (bc_.slots[i].present && bc_.slots[i].is_alive && !bc_.slots[i].is_player) {
                 if (mask & (1u << (i & 31u))) return i - 4;
             }
         }
