@@ -169,12 +169,12 @@ namespace simcore {
             std::this_thread::sleep_until(steady_clock::now() + milliseconds(1));
         }
 
-        UICommon::Shutdown();
         Wiimote::Shutdown();
         Keyboard::Shutdown();
         Pad::Shutdown();
         g_controller_interface.Shutdown();
         Core::Shutdown(*m_system);
+        UICommon::Shutdown();
     }
 
     void DolphinWrapper::stop() {
