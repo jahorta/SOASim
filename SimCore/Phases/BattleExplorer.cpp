@@ -602,7 +602,7 @@ namespace simcore::battleexplorer {
             if (choices.empty()) return 0;
             total *= static_cast<uint64_t>(choices.size());
         }
-        return total;
+        return total * ui.initial_frames.size();
     }
 
     uint64_t BattleExplorer::estimate_paths_with_fake(const UI_Config& ui, const uint64_t paths_wo_fake) const {
