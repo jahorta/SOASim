@@ -177,7 +177,7 @@ namespace soa {
         uint32_t battleState_flags_2;
         uint32_t Current_HP;
         uint32_t Max_HP;
-        int32_t status_flags;
+        uint32_t status_flags;
         uint32_t new_status_flags;
         uint16_t destruction_recharge_1;
         uint16_t destruction_recharge_2;
