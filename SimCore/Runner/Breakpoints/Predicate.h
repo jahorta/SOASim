@@ -48,6 +48,18 @@ namespace simcore::pred {
     enum class PredKind : uint8_t { ABS = 0, DELTA = 1 };
     enum class CmpOp : uint8_t { EQ = 0, NE = 1, LT = 2, LE = 3, GT = 4, GE = 5 };
 
+    inline std::string get_cmp_string(CmpOp cmp) {
+        switch (cmp) {
+        case CmpOp::EQ: return "==";
+        case CmpOp::NE: return "!=";
+        case CmpOp::LT: return "<";
+        case CmpOp::LE: return "<=";
+        case CmpOp::GT: return ">";
+        case CmpOp::GE: return ">=";
+        }
+        return "(?)";
+    }
+
     struct Spec {
         uint16_t id{ 0 };
         uint16_t required_bp{ 0 };
