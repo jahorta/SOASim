@@ -57,7 +57,7 @@ namespace soa::battle::actions {
         std::vector<std::string> path;
         for (int i = 0; i < bp.size(); i++) {
             auto tp = bp[i];
-            path.emplace_back("\n Turn=" + std::to_string(i) + " FakeAtk:" + std::to_string(tp.fake_attack_count));
+            path.emplace_back("\n    Turn=" + std::to_string(i) + " FakeAtk:" + std::to_string(tp.fake_attack_count));
             for (auto sp : tp.spec) {
                 std::string actor = " [" + std::to_string(sp.actor_slot) + "] " + get_action_string(sp.macro);
                 if (sp.macro == BattleAction::Attack) 
