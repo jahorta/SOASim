@@ -76,6 +76,9 @@
     <Filter Include="DB">
       <UniqueIdentifier>{07954794-7b78-495a-b539-797c40af33f9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="DB\Migration">
+      <UniqueIdentifier>{9ae008db-3dc2-4b7a-b1df-5692a1c350b8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -287,6 +290,18 @@
     </ClInclude>
     <ClInclude Include="Phases\Programs\BattleContext\BattleContextPayload.h">
       <Filter>Phases\BattleContext</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\SavestateRepo.h">
+      <Filter>DB</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\DbEnv.h">
+      <Filter>DB</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\MigrationRunner.h">
+      <Filter>DB</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\ObjectStore.h">
+      <Filter>DB</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1037,6 +1052,18 @@
     <ClCompile Include="Phases\Programs\BattleContext\BattleContextPayload.cpp">
       <Filter>Phases\BattleContext</Filter>
     </ClCompile>
+    <ClCompile Include="DB\DbEnv.cpp">
+      <Filter>DB</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\MigrationRunner.cpp">
+      <Filter>DB</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\ObjectStore.cpp">
+      <Filter>DB</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\SavestateRepo.cpp">
+      <Filter>DB</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Interesting SOA Addresses.md" />
@@ -1044,14 +1071,14 @@
     <None Include="Utils\soa_struct_reflector.py">
       <Filter>Utils</Filter>
     </None>
+    <None Include="DB\migration\0003.sql">
+      <Filter>DB\Migration</Filter>
+    </None>
     <None Include="DB\migration\0001.sql">
-      <Filter>DB</Filter>
+      <Filter>DB\Migration</Filter>
     </None>
     <None Include="DB\migration\0002.sql">
-      <Filter>DB</Filter>
-    </None>
-    <None Include="DB\migration\0003.sql">
-      <Filter>DB</Filter>
+      <Filter>DB\Migration</Filter>
     </None>
   </ItemGroup>
 </Project>

@@ -117,7 +117,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UseStandardPreprocessor>true</UseStandardPreprocessor>
     </ClCompile>
     <Link>
@@ -132,7 +132,16 @@
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
     <PreBuildEvent>
-      <Command>python "$(ProjectDir)Utils\soa_struct_reflector.py" "$(ProjectDir)Core\Memory\Soa\SoaStructs.h" "$(ProjectDir)Core\Memory\Soa\SoaStructs.reflect.h"</Command>
+      <Command>python "$(ProjectDir)Utils\soa_struct_reflector.py" "$(ProjectDir)Core\Memory\Soa\SoaStructs.h" "$(ProjectDir)Core\Memory\Soa\SoaStructs.reflect.h"
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+  "$out='$(IntDir)GeneratedMigrations.h';" ^
+  "$srcDir='$(ProjectDir)SimCore\DB\migration';" ^
+  "$files=Get-ChildItem -Path $srcDir -Filter *.sql | Sort-Object Name;" ^
+  "$head='// generated' + [Environment]::NewLine + '#pragma once' + [Environment]::NewLine + '#include &lt;vector&gt;' + [Environment]::NewLine + '#include &lt;string&gt;' + [Environment]::NewLine + 'namespace simcore{namespace db{ static inline const std::vector&lt;std::pair&lt;std::string,std::string&gt;&gt; kEmbeddedMigrations = {';" ^
+  "Set-Content -Path $out -Value $head -Encoding UTF8;" ^
+  "foreach($f in $files){ $name=$f.Name; $txt=[IO.File]::ReadAllText($f.FullName); Add-Content -Path $out -Value ('  {\"'+$name+'\", R\"SQL('+$txt+')SQL\"},') -Encoding UTF8; }" ^
+  "Add-Content -Path $out -Value ('}; }} // ns') -Encoding UTF8;"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -146,7 +155,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UseStandardPreprocessor>true</UseStandardPreprocessor>
     </ClCompile>
     <Link>
@@ -163,7 +172,16 @@
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
     <PreBuildEvent>
-      <Command>python "$(ProjectDir)Utils\soa_struct_reflector.py" "$(ProjectDir)Core\Memory\Soa\SoaStructs.h" "$(ProjectDir)Core\Memory\Soa\SoaStructs.reflect.h"</Command>
+      <Command>python "$(ProjectDir)Utils\soa_struct_reflector.py" "$(ProjectDir)Core\Memory\Soa\SoaStructs.h" "$(ProjectDir)Core\Memory\Soa\SoaStructs.reflect.h"
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+  "$out='$(IntDir)GeneratedMigrations.h';" ^
+  "$srcDir='$(ProjectDir)SimCore\DB\migration';" ^
+  "$files=Get-ChildItem -Path $srcDir -Filter *.sql | Sort-Object Name;" ^
+  "$head='// generated' + [Environment]::NewLine + '#pragma once' + [Environment]::NewLine + '#include &lt;vector&gt;' + [Environment]::NewLine + '#include &lt;string&gt;' + [Environment]::NewLine + 'namespace simcore{namespace db{ static inline const std::vector&lt;std::pair&lt;std::string,std::string&gt;&gt; kEmbeddedMigrations = {';" ^
+  "Set-Content -Path $out -Value $head -Encoding UTF8;" ^
+  "foreach($f in $files){ $name=$f.Name; $txt=[IO.File]::ReadAllText($f.FullName); Add-Content -Path $out -Value ('  {\"'+$name+'\", R\"SQL('+$txt+')SQL\"},') -Encoding UTF8; }" ^
+  "Add-Content -Path $out -Value ('}; }} // ns') -Encoding UTF8;"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -197,6 +215,10 @@
     <ClInclude Include="Core\Memory\Soa\SoaStructs.h" />
     <ClInclude Include="Core\Memory\Soa\SoaStructs.reflect.h" />
     <ClInclude Include="Core\Shims\StateBufferShim.h" />
+    <ClInclude Include="DB\DbEnv.h" />
+    <ClInclude Include="DB\MigrationRunner.h" />
+    <ClInclude Include="DB\ObjectStore.h" />
+    <ClInclude Include="DB\SavestateRepo.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Phases\BattleExplorer.h" />
     <ClInclude Include="Phases\FirstBattleGenerator.h" />
@@ -1099,6 +1121,10 @@
     <ClCompile Include="Core\Memory\Soa\SoaAddrProgramBuilder.cpp" />
     <ClCompile Include="Core\Memory\Soa\SoaAddrRegistry.cpp" />
     <ClCompile Include="Core\Shims\StateBufferShim.cpp" />
+    <ClCompile Include="DB\DbEnv.cpp" />
+    <ClCompile Include="DB\MigrationRunner.cpp" />
+    <ClCompile Include="DB\ObjectStore.cpp" />
+    <ClCompile Include="DB\SavestateRepo.cpp" />
     <ClCompile Include="Phases\BattleExplorer.cpp" />
     <ClCompile Include="Phases\FirstBattleGenerator.cpp" />
     <ClCompile Include="Phases\Programs\BattleContext\BattleContextPayload.cpp" />
