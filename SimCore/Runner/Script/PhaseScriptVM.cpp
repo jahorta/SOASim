@@ -649,7 +649,7 @@ namespace simcore {
                     if (ok) ++pass;
                     else if (all_passed)
                     {
-                        ctx[keys::core::PRED_FIRST_FAILED] = r.id;
+                        ctx[keys::core::PRED_FIRST_FAILED] = (uint32_t)r.id;
                         ctx[keys::core::PRED_FAILED_CMP_STR] = std::to_string(lhs) + " " + simcore::pred::get_cmp_string((simcore::pred::CmpOp)r.cmp) + " " + std::to_string(rhs);
                         all_passed = 0;
                     }
