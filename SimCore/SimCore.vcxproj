@@ -136,7 +136,7 @@
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "$out='$(IntDir)GeneratedMigrations.h';" ^
-  "$srcDir='$(ProjectDir)SimCore\DB\migration';" ^
+  "$srcDir='$(ProjectDir)DB\migration';" ^
   "$files=Get-ChildItem -Path $srcDir -Filter *.sql | Sort-Object Name;" ^
   "$head='// generated' + [Environment]::NewLine + '#pragma once' + [Environment]::NewLine + '#include &lt;vector&gt;' + [Environment]::NewLine + '#include &lt;string&gt;' + [Environment]::NewLine + 'namespace simcore{namespace db{ static inline const std::vector&lt;std::pair&lt;std::string,std::string&gt;&gt; kEmbeddedMigrations = {';" ^
   "Set-Content -Path $out -Value $head -Encoding UTF8;" ^
@@ -176,7 +176,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "$out='$(IntDir)GeneratedMigrations.h';" ^
-  "$srcDir='$(ProjectDir)SimCore\DB\migration';" ^
+  "$srcDir='$(ProjectDir)DB\migration';" ^
   "$files=Get-ChildItem -Path $srcDir -Filter *.sql | Sort-Object Name;" ^
   "$head='// generated' + [Environment]::NewLine + '#pragma once' + [Environment]::NewLine + '#include &lt;vector&gt;' + [Environment]::NewLine + '#include &lt;string&gt;' + [Environment]::NewLine + 'namespace simcore{namespace db{ static inline const std::vector&lt;std::pair&lt;std::string,std::string&gt;&gt; kEmbeddedMigrations = {';" ^
   "Set-Content -Path $out -Value $head -Encoding UTF8;" ^
@@ -217,6 +217,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     <ClInclude Include="Core\Shims\StateBufferShim.h" />
     <ClInclude Include="DB\DbEnv.h" />
     <ClInclude Include="DB\MigrationRunner.h" />
+    <ClInclude Include="DB\MigrationRunner_Embedded.h" />
     <ClInclude Include="DB\ObjectStore.h" />
     <ClInclude Include="DB\SavestateRepo.h" />
     <ClInclude Include="framework.h" />

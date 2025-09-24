@@ -303,6 +303,9 @@
     <ClInclude Include="DB\ObjectStore.h">
       <Filter>DB</Filter>
     </ClInclude>
+    <ClInclude Include="DB\MigrationRunner_Embedded.h">
+      <Filter>DB</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SimCore.cpp">

@@ -1,10 +1,22 @@
 #pragma once
-#include "DbEnv.h"
-#include "MigrationRunner.h"
-#include "GeneratedMigrations.h"
+
 #include <sqlite3.h>
 #include <stdexcept>
 #include <string>
+
+#ifdef __INTELLISENSE__
+#include <vector>
+namespace simcore {
+    namespace db {
+        inline const std::vector<std::pair<std::string, std::string>> kEmbeddedMigrations{};
+    }
+}
+#else
+#include "GeneratedMigrations.h"
+#endif
+
+#include "DbEnv.h"
+#include "MigrationRunner.h"
 
 namespace simcore::db {
     inline int ApplyEmbeddedMigrations(DbEnv& env) {
