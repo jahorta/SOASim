@@ -38,6 +38,24 @@ namespace simcore::db {
             static DbResult Err(DbError e) { DbResult r; r.ok = false; r.error = std::move(e); return r; }
         };
 
+        template <>
+        struct DbResult<void> {
+            bool ok{ false };
+            DbError error{};
+
+            static DbResult Ok() {
+                DbResult r;
+                r.ok = true;
+                return r;
+            }
+            static DbResult Err(DbError e) {
+                DbResult r;
+                r.ok = false;
+                r.error = std::move(e);
+                return r;
+            }
+        };
+
 
 
 } // namespace simcore::db
