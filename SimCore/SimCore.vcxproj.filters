@@ -363,9 +363,6 @@
     <ClInclude Include="DB\Query.h">
       <Filter>DB</Filter>
     </ClInclude>
-    <ClInclude Include="DB\MigrationRunner_Embedded.h">
-      <Filter>DB</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SimCore.cpp">
@@ -1191,7 +1188,7 @@
     <None Include="DB\migration\0005.sql">
       <Filter>DB\Migration</Filter>
     </None>
-    <None Include="DB\update_generated_migrations.bat">
+    <None Include="DB\update_generated_migrations_command.txt">
       <Filter>DB\Migration</Filter>
     </None>
   </ItemGroup>

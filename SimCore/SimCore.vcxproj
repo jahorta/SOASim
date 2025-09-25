@@ -135,13 +135,23 @@
       <Command>python "$(ProjectDir)Utils\soa_struct_reflector.py" "$(ProjectDir)Core\Memory\Soa\SoaStructs.h" "$(ProjectDir)Core\Memory\Soa\SoaStructs.reflect.h"
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+  "$ErrorActionPreference='Stop';" ^
+  "$null=[IO.Directory]::CreateDirectory('$(IntDir)');" ^
   "$out='$(IntDir)GeneratedMigrations.h';" ^
+  "$stamp='$(IntDir)Migrations.files.txt';" ^
   "$srcDir='$(ProjectDir)DB\migration';" ^
-  "$files=Get-ChildItem -Path $srcDir -Filter *.sql | Sort-Object Name;" ^
+  "$files=Get-ChildItem -Path $srcDir -Filter *.sql -File | Sort-Object Name;" ^
+  "$names=($files | ForEach-Object Name) -join [Environment]::NewLine;" ^
+  "if(Test-Path $stamp){ $prev=Get-Content -Path $stamp -Raw } else { $prev='' }" ^
+  "if($prev -eq $names){ Write-Host 'No new migration files; skipping embedding.'; exit 0 }" ^
   "$head='// generated' + [Environment]::NewLine + '#pragma once' + [Environment]::NewLine + '#include &lt;vector&gt;' + [Environment]::NewLine + '#include &lt;string&gt;' + [Environment]::NewLine + 'namespace simcore{namespace db{ static inline const std::vector&lt;std::pair&lt;std::string,std::string&gt;&gt; kEmbeddedMigrations = {';" ^
-  "Set-Content -Path $out -Value $head -Encoding UTF8;" ^
-  "foreach($f in $files){ $name=$f.Name; $txt=[IO.File]::ReadAllText($f.FullName); Add-Content -Path $out -Value ('  {\"'+$name+'\", R\"SQL('+$txt+')SQL\"},') -Encoding UTF8; }" ^
-  "Add-Content -Path $out -Value ('}; }} // ns') -Encoding UTF8;"</Command>
+  "$tmp = $out + '.tmp';" ^
+  "Set-Content -Path $tmp -Value $head -Encoding UTF8;" ^
+  "foreach($f in $files){ $name=$f.Name; $txt=[IO.File]::ReadAllText($f.FullName); Add-Content -Path $tmp -Value ('  {\"'+$name+'\", R\"SQL('+$txt+')SQL\"},') -Encoding UTF8; }" ^
+  "Add-Content -Path $tmp -Value ('}; }} // ns') -Encoding UTF8;" ^
+  "Move-Item -Force -Path $tmp -Destination $out;" ^
+  "Set-Content -Path $stamp -Value $names -Encoding UTF8;" ^
+  "Write-Host 'Embedded migrations header regenerated due to new files.'"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -175,13 +185,23 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
       <Command>python "$(ProjectDir)Utils\soa_struct_reflector.py" "$(ProjectDir)Core\Memory\Soa\SoaStructs.h" "$(ProjectDir)Core\Memory\Soa\SoaStructs.reflect.h"
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+  "$ErrorActionPreference='Stop';" ^
+  "$null=[IO.Directory]::CreateDirectory('$(IntDir)');" ^
   "$out='$(IntDir)GeneratedMigrations.h';" ^
+  "$stamp='$(IntDir)Migrations.files.txt';" ^
   "$srcDir='$(ProjectDir)DB\migration';" ^
-  "$files=Get-ChildItem -Path $srcDir -Filter *.sql | Sort-Object Name;" ^
+  "$files=Get-ChildItem -Path $srcDir -Filter *.sql -File | Sort-Object Name;" ^
+  "$names=($files | ForEach-Object Name) -join [Environment]::NewLine;" ^
+  "if(Test-Path $stamp){ $prev=Get-Content -Path $stamp -Raw } else { $prev='' }" ^
+  "if($prev -eq $names){ Write-Host 'No new migration files; skipping embedding.'; exit 0 }" ^
   "$head='// generated' + [Environment]::NewLine + '#pragma once' + [Environment]::NewLine + '#include &lt;vector&gt;' + [Environment]::NewLine + '#include &lt;string&gt;' + [Environment]::NewLine + 'namespace simcore{namespace db{ static inline const std::vector&lt;std::pair&lt;std::string,std::string&gt;&gt; kEmbeddedMigrations = {';" ^
-  "Set-Content -Path $out -Value $head -Encoding UTF8;" ^
-  "foreach($f in $files){ $name=$f.Name; $txt=[IO.File]::ReadAllText($f.FullName); Add-Content -Path $out -Value ('  {\"'+$name+'\", R\"SQL('+$txt+')SQL\"},') -Encoding UTF8; }" ^
-  "Add-Content -Path $out -Value ('}; }} // ns') -Encoding UTF8;"</Command>
+  "$tmp = $out + '.tmp';" ^
+  "Set-Content -Path $tmp -Value $head -Encoding UTF8;" ^
+  "foreach($f in $files){ $name=$f.Name; $txt=[IO.File]::ReadAllText($f.FullName); Add-Content -Path $tmp -Value ('  {\"'+$name+'\", R\"SQL('+$txt+')SQL\"},') -Encoding UTF8; }" ^
+  "Add-Content -Path $tmp -Value ('}; }} // ns') -Encoding UTF8;" ^
+  "Move-Item -Force -Path $tmp -Destination $out;" ^
+  "Set-Content -Path $stamp -Value $names -Encoding UTF8;" ^
+  "Write-Host 'Embedded migrations header regenerated due to new files.'"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -1185,7 +1205,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     <None Include="DB\migration\0003.sql" />
     <None Include="DB\migration\0004.sql" />
     <None Include="DB\migration\0005.sql" />
-    <None Include="DB\update_generated_migrations.bat" />
+    <None Include="DB\update_generated_migrations_command.txt" />
     <None Include="Interesting SOA Addresses.md">
       <SubType>
       </SubType>
