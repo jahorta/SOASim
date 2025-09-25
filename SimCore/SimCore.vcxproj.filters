@@ -363,6 +363,15 @@
     <ClInclude Include="DB\Query.h">
       <Filter>DB</Filter>
     </ClInclude>
+    <ClInclude Include="DB\DBCore\DbHealth.h">
+      <Filter>DB\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\DBCore\CoordinatorClock.h">
+      <Filter>DB\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\DBCore\DbEventsRepo.h">
+      <Filter>DB\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SimCore.cpp">
@@ -1166,6 +1175,15 @@
     <ClCompile Include="DB\Query.cpp">
       <Filter>DB</Filter>
     </ClCompile>
+    <ClCompile Include="DB\DBCore\CoordinatorClock.cpp">
+      <Filter>DB\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\DBCore\DbHealth.cpp">
+      <Filter>DB\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\DBCore\DbEventsRepo.cpp">
+      <Filter>DB\Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Interesting SOA Addresses.md" />
@@ -1189,6 +1207,9 @@
       <Filter>DB\Migration</Filter>
     </None>
     <None Include="DB\update_generated_migrations_command.txt">
+      <Filter>DB\Migration</Filter>
+    </None>
+    <None Include="DB\migration\0006.sql">
       <Filter>DB\Migration</Filter>
     </None>
   </ItemGroup>

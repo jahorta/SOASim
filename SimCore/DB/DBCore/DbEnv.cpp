@@ -2,10 +2,8 @@
 
 #include <sqlite3.h>
 #include <stdexcept>
-#include <memory>
 
-namespace simcore {
-    namespace db {
+namespace simcore::db {
 
         DbEnv::~DbEnv() {
             if (m_db) sqlite3_close(m_db);
@@ -19,7 +17,11 @@ namespace simcore {
             // Pragmas
             sqlite3_exec(db, "PRAGMA foreign_keys = ON;", nullptr, nullptr, nullptr);
             sqlite3_exec(db, "PRAGMA journal_mode = WAL;", nullptr, nullptr, nullptr);
+            sqlite3_exec(db, "PRAGMA synchronous = NORMAL;", nullptr, nullptr, nullptr);
+            sqlite3_exec(db, "PRAGMA temp_store = MEMORY;", nullptr, nullptr, nullptr);
+            sqlite3_exec(db, "PRAGMA wal_autocheckpoint = 1000;", nullptr, nullptr, nullptr);
             sqlite3_exec(db, "PRAGMA busy_timeout = 5000;", nullptr, nullptr, nullptr);
+
             return std::unique_ptr<DbEnv>(new DbEnv(db));
         }
 
@@ -40,5 +42,4 @@ namespace simcore {
             m_committed = true;
         }
 
-    } // namespace db
-} // namespace simcore
+} // namespace simcore::db

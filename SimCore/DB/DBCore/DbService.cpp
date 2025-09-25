@@ -1,18 +1,22 @@
 #include "DbService.h"
 
+#include <thread>
+#include <queue>
+#include <future>
+#include <sqlite3.h>
+
 #include "MigrationRunner.h"
 #include "MigrationRunner_Embedded.h"
-
-#include <chrono>
-#include <exception>
-#include <sqlite3.h>
+#include "DbHealth.h"
+#include "DbEventsRepo.h"
+#include "CoordinatorClock.h"
+#include "../../Utils/Log.h"
 
 namespace simcore {
     namespace db {
 
         DBService::DBService() = default;
         DBService::~DBService() { stop(); }
-
         DBService& DBService::instance() { static DBService inst; return inst; }
 
         void DBService::start(const std::string& db_path) {
@@ -20,8 +24,29 @@ namespace simcore {
             if (!m_running.compare_exchange_strong(expected, true)) return;
 
             m_env = DbEnv::open(db_path);
+
+            CoordinatorClock::instance().boot();
+
             try { ApplyEmbeddedMigrations(*m_env); }
             catch (...) {}
+
+            auto health = RunDbHealth(*m_env, false);
+
+            if (!health.ok) {
+                SCLOGE("[db] health failed: wal=%d fkeys=%d sync=%s ver_ok=%d ver=%d",
+                    (int)health.wal, (int)health.foreign_keys, health.synchronous.c_str(),
+                    (int)health.schema_version_ok, health.schema_version);
+                for (auto& n : health.notes) SCLOGE("[db] note: %s", n.c_str());
+                throw std::runtime_error("DB health check failed");
+            }
+            else {
+                SCLOGI("[db] health ok: ver=%d, sync=%s, busy=%dms, boot_id=%s, boot_wall=%s",
+                    health.schema_version, health.synchronous.c_str(), health.busy_timeout_ms,
+                    CoordinatorClock::instance().boot_id().c_str(),
+                    CoordinatorClock::instance().boot_wall_utc_iso().c_str());
+            }
+
+            (void)DbEventsRepo::InsertBootEvent(*m_env, "coordinator_booted", "");
 
             m_worker = std::thread([this]() { workerLoop(); });
         }

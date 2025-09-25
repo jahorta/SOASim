@@ -238,7 +238,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     <ClInclude Include="DB\AddressProgramRepo.h" />
     <ClInclude Include="DB\BattlePlanAtomRepo.h" />
     <ClInclude Include="DB\BattlePlanTurnRepo.h" />
+    <ClInclude Include="DB\DBCore\CoordinatorClock.h" />
     <ClInclude Include="DB\DBCore\DbEnv.h" />
+    <ClInclude Include="DB\DBCore\DbEventsRepo.h" />
+    <ClInclude Include="DB\DBCore\DbHealth.h" />
     <ClInclude Include="DB\DBCore\DbResult.h" />
     <ClInclude Include="DB\DBCore\DbRetryPolicy.h" />
     <ClInclude Include="DB\DBCore\DbService.h" />
@@ -1161,7 +1164,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     <ClCompile Include="DB\AddressProgramRepo.cpp" />
     <ClCompile Include="DB\BattlePlanAtomrepo.cpp" />
     <ClCompile Include="DB\BattlePlanTurnRepo.cpp" />
+    <ClCompile Include="DB\DBCore\CoordinatorClock.cpp" />
     <ClCompile Include="DB\DBCore\DbEnv.cpp" />
+    <ClCompile Include="DB\DBCore\DbEventsRepo.cpp" />
+    <ClCompile Include="DB\DBCore\DbHealth.cpp" />
     <ClCompile Include="DB\DBCore\DbService.cpp" />
     <ClCompile Include="DB\DBCore\MigrationRunner.cpp" />
     <ClCompile Include="DB\DBCore\ObjectStore.cpp" />
@@ -1205,6 +1211,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     <None Include="DB\migration\0003.sql" />
     <None Include="DB\migration\0004.sql" />
     <None Include="DB\migration\0005.sql" />
+    <None Include="DB\migration\0006.sql" />
     <None Include="DB\update_generated_migrations_command.txt" />
     <None Include="Interesting SOA Addresses.md">
       <SubType>
