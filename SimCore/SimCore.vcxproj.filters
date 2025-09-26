@@ -37,9 +37,6 @@
     <Filter Include="Runner\Parallel">
       <UniqueIdentifier>{b647e348-4ca8-4ad9-b705-221011c4a2ab}</UniqueIdentifier>
     </Filter>
-    <Filter Include="_TODO">
-      <UniqueIdentifier>{2d740122-075a-47be-a3de-5b927af8ae86}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Runner\Breakpoints">
       <UniqueIdentifier>{eb90977c-bb6f-467c-9b6a-46f72e40aa63}</UniqueIdentifier>
     </Filter>
@@ -370,6 +367,9 @@
       <Filter>DB\Core</Filter>
     </ClInclude>
     <ClInclude Include="DB\DBCore\DbEventsRepo.h">
+      <Filter>DB\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\DBCore\SeedProgramKinds.h">
       <Filter>DB\Core</Filter>
     </ClInclude>
   </ItemGroup>
@@ -1184,6 +1184,9 @@
     <ClCompile Include="DB\DBCore\DbEventsRepo.cpp">
       <Filter>DB\Core</Filter>
     </ClCompile>
+    <ClCompile Include="DB\DBCore\SeedProgramKinds.cpp">
+      <Filter>DB\Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Interesting SOA Addresses.md" />
@@ -1210,6 +1213,18 @@
       <Filter>DB\Migration</Filter>
     </None>
     <None Include="DB\migration\0006.sql">
+      <Filter>DB\Migration</Filter>
+    </None>
+    <None Include="DB\migration\0007.sql">
+      <Filter>DB\Migration</Filter>
+    </None>
+    <None Include="DB\migration\0008.sql">
+      <Filter>DB\Migration</Filter>
+    </None>
+    <None Include="DB\migration\0009.sql">
+      <Filter>DB\Migration</Filter>
+    </None>
+    <None Include="DB\migration\0010.sql">
       <Filter>DB\Migration</Filter>
     </None>
   </ItemGroup>

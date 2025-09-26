@@ -248,6 +248,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     <ClInclude Include="DB\DBCore\MigrationRunner.h" />
     <ClInclude Include="DB\DBCore\MigrationRunner_Embedded.h" />
     <ClInclude Include="DB\DBCore\ObjectStore.h" />
+    <ClInclude Include="DB\DBCore\SeedProgramKinds.h" />
     <ClInclude Include="DB\DeltaSeedRepo.h" />
     <ClInclude Include="DB\ExplorerRunRepo.h" />
     <ClInclude Include="DB\ExplorerSettingsPredicateRepo.h" />
@@ -1171,6 +1172,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     <ClCompile Include="DB\DBCore\DbService.cpp" />
     <ClCompile Include="DB\DBCore\MigrationRunner.cpp" />
     <ClCompile Include="DB\DBCore\ObjectStore.cpp" />
+    <ClCompile Include="DB\DBCore\SeedProgramKinds.cpp" />
     <ClCompile Include="DB\DeltaSeedRepo.cpp" />
     <ClCompile Include="DB\ExplorerRunRepo.cpp" />
     <ClCompile Include="DB\ExplorerSettingsPredicateRepo.cpp" />
@@ -1212,6 +1214,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     <None Include="DB\migration\0004.sql" />
     <None Include="DB\migration\0005.sql" />
     <None Include="DB\migration\0006.sql" />
+    <None Include="DB\migration\0007.sql" />
+    <None Include="DB\migration\0008.sql" />
+    <None Include="DB\migration\0009.sql" />
+    <None Include="DB\migration\0010.sql" />
     <None Include="DB\update_generated_migrations_command.txt" />
     <None Include="Interesting SOA Addresses.md">
       <SubType>
