@@ -254,6 +254,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     <ClInclude Include="DB\ExplorerSettingsPredicateRepo.h" />
     <ClInclude Include="DB\ExplorerSettingsRepo.h" />
     <ClInclude Include="DB\PredicateSpecRepo.h" />
+    <ClInclude Include="DB\ProgramDB\ExplorerRunDBCodec.h" />
+    <ClInclude Include="DB\ProgramDB\Fingerprint.h" />
+    <ClInclude Include="DB\ProgramDB\IniKV.h" />
+    <ClInclude Include="DB\ProgramDB\IProgramDBCodec.h" />
+    <ClInclude Include="DB\ProgramDB\SeedProbeDBCodec.h" />
+    <ClInclude Include="DB\ProgramDB\TasMovieDBCodec.h" />
     <ClInclude Include="DB\Query.h" />
     <ClInclude Include="DB\SavestateHelpers.h" />
     <ClInclude Include="DB\SavestateRepo.h" />
@@ -1178,6 +1184,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     <ClCompile Include="DB\ExplorerSettingsPredicateRepo.cpp" />
     <ClCompile Include="DB\ExplorerSettingsRepo.cpp" />
     <ClCompile Include="DB\PredicateSpecRepo.cpp" />
+    <ClCompile Include="DB\ProgramDB\ExplorerRunDBCodec.cpp" />
+    <ClCompile Include="DB\ProgramDB\Fingerprint.cpp" />
+    <ClCompile Include="DB\ProgramDB\IProgramDBCodec.cpp" />
+    <ClCompile Include="DB\ProgramDB\SeedProbeDBCodec.cpp" />
+    <ClCompile Include="DB\ProgramDB\TasMovieDBCodec.cpp" />
     <ClCompile Include="DB\Query.cpp" />
     <ClCompile Include="DB\SavestateHelpers.cpp" />
     <ClCompile Include="DB\SavestateRepo.cpp" />

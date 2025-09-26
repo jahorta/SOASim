@@ -10,6 +10,9 @@ namespace simcore::db {
             Locked,
             Constraint,
             IO,
+            Unique,
+            NotFound,
+            InvalidArgument,
             Unknown
         };
 
@@ -22,8 +25,10 @@ namespace simcore::db {
         static DbErrorKind map_sqlite_err(int code) {
             if (code == SQLITE_BUSY) return DbErrorKind::Busy;
             if (code == SQLITE_LOCKED) return DbErrorKind::Locked;
-            if (code == SQLITE_CONSTRAINT || code == SQLITE_CONSTRAINT_UNIQUE || code == SQLITE_CONSTRAINT_PRIMARYKEY)
+            if (code == SQLITE_CONSTRAINT || code == SQLITE_CONSTRAINT_PRIMARYKEY)
                 return DbErrorKind::Constraint;
+            if (code == SQLITE_CONSTRAINT_UNIQUE)
+                return DbErrorKind::Unique;
             if (code == SQLITE_IOERR) return DbErrorKind::IO;
             return DbErrorKind::Unknown;
         }
@@ -36,6 +41,7 @@ namespace simcore::db {
 
             static DbResult Ok(T v) { DbResult r; r.ok = true; r.value = std::move(v); return r; }
             static DbResult Err(DbError e) { DbResult r; r.ok = false; r.error = std::move(e); return r; }
+            
         };
 
         template <>

@@ -85,6 +85,9 @@
     <Filter Include="DB\CatalogRepos">
       <UniqueIdentifier>{4c95c6c0-ff90-4a2d-b7d9-122f63a1df53}</UniqueIdentifier>
     </Filter>
+    <Filter Include="DB\ProgramCodecs">
+      <UniqueIdentifier>{cdeaa0cf-dc17-4849-beb2-0c34fa2ddbf4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -371,6 +374,24 @@
     </ClInclude>
     <ClInclude Include="DB\DBCore\SeedProgramKinds.h">
       <Filter>DB\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\ProgramDB\ExplorerRunDBCodec.h">
+      <Filter>DB\ProgramCodecs</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\ProgramDB\Fingerprint.h">
+      <Filter>DB\ProgramCodecs</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\ProgramDB\IniKV.h">
+      <Filter>DB\ProgramCodecs</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\ProgramDB\IProgramDBCodec.h">
+      <Filter>DB\ProgramCodecs</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\ProgramDB\SeedProbeDBCodec.h">
+      <Filter>DB\ProgramCodecs</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\ProgramDB\TasMovieDBCodec.h">
+      <Filter>DB\ProgramCodecs</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1186,6 +1207,21 @@
     </ClCompile>
     <ClCompile Include="DB\DBCore\SeedProgramKinds.cpp">
       <Filter>DB\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\ProgramDB\ExplorerRunDBCodec.cpp">
+      <Filter>DB\ProgramCodecs</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\ProgramDB\SeedProbeDBCodec.cpp">
+      <Filter>DB\ProgramCodecs</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\ProgramDB\TasMovieDBCodec.cpp">
+      <Filter>DB\ProgramCodecs</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\ProgramDB\Fingerprint.cpp">
+      <Filter>DB\ProgramCodecs</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\ProgramDB\IProgramDBCodec.cpp">
+      <Filter>DB\ProgramCodecs</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
