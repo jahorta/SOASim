@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS jobs (
                        ('QUEUED','CLAIMED','RUNNING','SUCCEEDED','FAILED',
                         'CANCELED','SUPERSEDED','SUCCEEDED_WINNER','SUCCEEDED_DUPLICATE')),
     attempts         INTEGER NOT NULL DEFAULT 0,
-    max_attempts     INTEGER NOT NULL DEFAULT 3,
+    max_attempts     INTEGER NOT NULL DEFAULT 5,
     claimed_by_token TEXT    NULL,
     lease_expires_at INTEGER NULL,
     queued_at        INTEGER NOT NULL DEFAULT (strftime('%s','now'))
