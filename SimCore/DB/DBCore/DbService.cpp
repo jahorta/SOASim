@@ -10,6 +10,7 @@
 #include "DbHealth.h"
 #include "DbEventsRepo.h"
 #include "CoordinatorClock.h"
+#include "SeedProgramKinds.h"
 #include "../../Utils/Log.h"
 
 namespace simcore {
@@ -45,6 +46,9 @@ namespace simcore {
                     CoordinatorClock::instance().boot_id().c_str(),
                     CoordinatorClock::instance().boot_wall_utc_iso().c_str());
             }
+
+            auto seed_programs = SeedProgramKinds(*m_env);
+
 
             (void)DbEventsRepo::InsertBootEvent(*m_env, "coordinator_booted", "");
 
