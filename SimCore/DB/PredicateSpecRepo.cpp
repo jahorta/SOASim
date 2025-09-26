@@ -27,7 +27,7 @@ namespace simcore {
             sqlite3_stmt* st{};
             int rc = sqlite3_prepare_v2(db,
                 "INSERT INTO predicate_spec(spec_version,pred_id,required_bp,kind,width,cmp_op,flags,"
-                "lhs_addr,lhs_key,rhs_value,rhs_key,turn_mask,lhs_prog_id,rhs_prog_id,description)"
+                "lhs_addr,lhs_key,rhs_value,rhs_key,turn_mask,lhs_prog_id,rhs_prog_id,desc)"
                 "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);", -1, &st, nullptr);
             if (rc != SQLITE_OK) return DbResult<int64_t>::Err({ map_sqlite_err(rc),rc,"prepare" });
             bind_spec(st, r);
@@ -44,7 +44,7 @@ namespace simcore {
             sqlite3_stmt* st{};
             rc = sqlite3_prepare_v2(db,
                 "INSERT INTO predicate_spec(spec_version,pred_id,required_bp,kind,width,cmp_op,flags,"
-                "lhs_addr,lhs_key,rhs_value,rhs_key,turn_mask,lhs_prog_id,rhs_prog_id,description)"
+                "lhs_addr,lhs_key,rhs_value,rhs_key,turn_mask,lhs_prog_id,rhs_prog_id,desc)"
                 "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);", -1, &st, nullptr);
             if (rc != SQLITE_OK) { sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, nullptr); return DbResult<int64_t>::Err({ map_sqlite_err(rc),rc,"prepare" }); }
             int64_t cnt = 0;
@@ -65,7 +65,7 @@ namespace simcore {
             sqlite3* db = env.handle();
             sqlite3_stmt* st{};
             int rc = sqlite3_prepare_v2(db,
-                "SELECT id,spec_version,pred_id,required_bp,kind,width,cmp_op,flags,lhs_addr,lhs_key,rhs_value,rhs_key,turn_mask,lhs_prog_id,rhs_prog_id,description "
+                "SELECT id,spec_version,pred_id,required_bp,kind,width,cmp_op,flags,lhs_addr,lhs_key,rhs_value,rhs_key,turn_mask,lhs_prog_id,rhs_prog_id,desc "
                 "FROM predicate_spec WHERE id=?;", -1, &st, nullptr);
             if (rc != SQLITE_OK) return DbResult<PredicateSpecRow>::Err({ map_sqlite_err(rc),rc,"prepare" });
             sqlite3_bind_int64(st, 1, id);
@@ -96,7 +96,7 @@ namespace simcore {
             sqlite3* db = env.handle();
             sqlite3_stmt* st{};
             int rc = sqlite3_prepare_v2(db,
-                "SELECT id,spec_version,pred_id,required_bp,kind,width,cmp_op,flags,lhs_addr,lhs_key,rhs_value,rhs_key,turn_mask,lhs_prog_id,rhs_prog_id,description "
+                "SELECT id,spec_version,pred_id,required_bp,kind,width,cmp_op,flags,lhs_addr,lhs_key,rhs_value,rhs_key,turn_mask,lhs_prog_id,rhs_prog_id,desc "
                 "FROM predicate_spec WHERE required_bp=? ORDER BY pred_id;", -1, &st, nullptr);
             if (rc != SQLITE_OK) return DbResult<std::vector<PredicateSpecRow>>::Err({ map_sqlite_err(rc),rc,"prepare" });
             sqlite3_bind_int(st, 1, required_bp);
@@ -130,7 +130,7 @@ namespace simcore {
             sqlite3* db = env.handle();
             sqlite3_stmt* st{};
             int rc = sqlite3_prepare_v2(db,
-                "SELECT id,spec_version,pred_id,required_bp,kind,width,cmp_op,flags,lhs_addr,lhs_key,rhs_value,rhs_key,turn_mask,lhs_prog_id,rhs_prog_id,description "
+                "SELECT id,spec_version,pred_id,required_bp,kind,width,cmp_op,flags,lhs_addr,lhs_key,rhs_value,rhs_key,turn_mask,lhs_prog_id,rhs_prog_id,desc "
                 "FROM predicate_spec WHERE pred_id=? ORDER BY required_bp;", -1, &st, nullptr);
             if (rc != SQLITE_OK) return DbResult<std::vector<PredicateSpecRow>>::Err({ map_sqlite_err(rc),rc,"prepare" });
             sqlite3_bind_int(st, 1, pred_id);
