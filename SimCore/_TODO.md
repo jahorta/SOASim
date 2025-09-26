@@ -9,15 +9,15 @@
     - Idempotency on hot ingest paths (e.g., predicate results keyed by (run_id, path_id, pred_id, turn)).
 
 New shape to implement:
- - DB = source of truth. We add sim-centric tables: job_sets, jobs, job_events, job_results, workers, artifacts, and program_kinds.
+ - DB = source of truth. We add sim-centric tables: job_sets, jobs, job_events, workers, artifacts, and program_kinds.  All DB interaction should ultimately go through DBService.
  - PhaseCoordinators become DB clients. They only: setup_job_set -> queue_jobs -> poll_progress -> retrieve_results, and can register next-phase triggers in the DB.
- - Program DB codecs per ProgramKind. Each kind ships encode/decode job, encode/decode progress, encode/decode results. Coordinator uses these for all DB <-> wire conversions.
+ - Program DB codecs per ProgramKind. Each kind ships encode/decode job, encode/decode progress, encode/decode results. Coordinators uses these for all DB <-> wire conversions.
  - WorkerCoordinator replaces ParallelPhaseScriptRunner. One controller thread + N ProcessWorker threads; each thread owns a SimCoreWorker.exe child (one Dolphin per process).
  - Scheduling via DB. Pick QUEUED jobs by effective priority (per-kind base + aging + per-job overrides). Use leases; renew on heartbeats; requeue on expiry.
- - rogram swaps = process restart. Reuse a child only if next job's ProgramKind matches; otherwise kill & spawn fresh (simple, clean isolation).
+ - Program swaps = process restart. Reuse a child only if next job's ProgramKind matches; otherwise kill & spawn fresh (simple, clean isolation).
  - Online dedupe for SeedProbe. Winners table (job_set_id, delta_id) with UNIQUE constraint: first success becomes SUCCEEDED_WINNER; queued siblings become SUPERSEDED; later successes -> SUCCEEDED_DUPLICATE. Progress = winners_found / total_deltas.
- - Domain repos stay authoritative. SeedProbeRepo / TasMovieRepo / ExplorerRunRepo define WHAT to run and store domain summaries. Scheduling uses jobs; results also recorded back into the domain repos (e.g., SeedDeltaRepo as a results ledger, not a queue).
- - Artifacts are content-addressed. Big inputs/outputs live once in artifacts and are referenced by jobs/results.
+ - Domain repos stay authoritative. SeedProbeRepo / TasMovieRepo / ExplorerRunRepo define WHAT to run and store domain summaries. Scheduling uses jobs; results recorded back into the domain repos (e.g., SeedDeltaRepo as a results ledger, not a queue).
+ - Artifacts are content-addressed. Big inputs/outputs live once in artifacts and are referenced by jobs/results. Artifacts use the object_ref table.
  - Idempotency via fingerprints. jobs.fingerprint UNIQUE prevents duplicate enqueue across restarts.
  - Triggers in DB. After any terminal job update, WorkerCoordinator evaluates triggers (e.g., "all succeeded") and enqueues next phases via the relevant program codec.
 
@@ -38,7 +38,6 @@ New shape to implement:
  - jobs(job_id PK, job_set_id FK, program_kind, fingerprint UNIQUE, priority, state, attempts, max_attempts, claimed_by_worker, lease_expires_at, queued_at, created_at)
  - state: QUEUED | CLAIMED | RUNNING | SUCCEEDED | FAILED | CANCELED | SUPERSEDED | SUCCEEDED_WINNER | SUCCEEDED_DUPLICATE
  - job_events(event_id PK, job_id FK, ts, event_kind, payload_json)
- - job_results(job_id PK, status, result_artifact_id FK NULL, stats_json, finished_at)
  - artifacts(artifact_id PK(hash), kind, bytes, meta_json, created_at)
  - workers(worker_id PK, pid, current_program_kind NULL, last_heartbeat, state)
 #### Views:
@@ -49,7 +48,7 @@ New shape to implement:
  - fingerprint = hash(program_kind + program_version + domain_ref + payload blueprint) -> idempotent enqueue.
 
 ## Milestone 2 - Program DB codecs (per ProgramKind)
-*Your note honored: SeedProbeRepo / TasMovieRepo / ExplorerRunRepo remain the domain definitions. Scheduling uses jobs; results land back in their domain repos (plus generic job_results).*
+*Your note honored: SeedProbeRepo / TasMovieRepo / ExplorerRunRepo remain the domain definitions. Scheduling uses jobs; results land back in their domain repos.*
 #### Each ProgramKind gets a ProgramXDB.{h,cpp} with:
  - encode_job_into_db(job_set_id, job_spec...) -> job_id
  - decode_job_from_db(job_id) -> WorkerDispatch (terminal PSJob payload, fully formed PSContext, ready to send)
@@ -60,13 +59,16 @@ New shape to implement:
 #### Mapping to your repos:
  - ##### SeedProbe:
     - Inputs: read from SeedProbeRepo (probe metadata). For the grid, don't use SeedDeltaRepo to queue; instead, generate jobs directly into jobs.
+    - Progress: sent to SeedProbeRepo.
     - Results: on success, write a record to SeedDeltaRepo (this is now your results ledger).
  - ##### TasMovie:
     - Inputs: read from TasMovieRepo.
-    - Results: persist summary to job_results and, if you want historical lookup, a TasMovie-specific table/repo.
+    - Progress: sent to TasMovieRepo.
+    - Results: persist summary to TasMovieRepo.
   - #### ExplorerRun:
     - Inputs: ExplorerRunRepo row is the domain root; individual exploration jobs are jobs.
-    - Results: ExplorerRunRepo::AppendProgress() can keep the human log; structured results go to artifacts + job_results.
+    - Progress: ExplorerRunRepo::AppendProgress() can keep the human log
+    - Results: Results go into the explorer_run repo.
 
 ## Milestone 3 - Online dedupe for SeedProbe (no separate reduce step)
 #### Tables (new):
