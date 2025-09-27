@@ -9,7 +9,7 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SQLITE_ROOT)\include;$(DOLPHIN_ROOT)\include\Source;$(DOLPHIN_ROOT)\include\Source\Core;$(DOLPHIN_ROOT)\include\Externals\fmt\fmt\include;$(DOLPHIN_ROOT)\include\Externals\lz4\lz4\lib;$(DOLPHIN_ROOT)\include\Externals\zlib-ng;$(GTEST_ROOT)\googletest\include;$(GTEST_ROOT)\googlemock-include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SQLITE_ROOT)\include;$(DOLPHIN_ROOT)\include\Source;$(DOLPHIN_ROOT)\include\Source\Core;$(DOLPHIN_ROOT)\include\Externals\fmt\fmt\include;$(DOLPHIN_ROOT)\include\Externals\lz4\lz4\lib;$(DOLPHIN_ROOT)\include\Externals\mbedtls\include;$(DOLPHIN_ROOT)\include\Externals\zlib-ng;$(GTEST_ROOT)\googletest\include;$(GTEST_ROOT)\googlemock-include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
