@@ -46,9 +46,9 @@ CREATE TABLE seed_probe (
 -- Seed deltas
 CREATE TABLE seed_delta (
   id INTEGER PRIMARY KEY,
-  probe_id INTEGER NOT NULL REFERENCES seed_probe(id),
+  probe_id   INTEGER NOT NULL REFERENCES seed_probe(id),
   seed_delta INTEGER NOT NULL,
-  delta_key  BLOB NOT NULL,
+  input      BLOB NOT NULL,  -- GCInputFrame as a blob
   is_grid    INTEGER NOT NULL,
   is_unique  INTEGER NOT NULL,
   complete   INTEGER NOT NULL DEFAULT 0
