@@ -59,7 +59,6 @@ CREATE UNIQUE INDEX ux_address_program_nk
 CREATE TABLE predicate_spec (
   id INTEGER PRIMARY KEY,
   spec_version INTEGER NOT NULL,
-  pred_id INTEGER NOT NULL,
   required_bp INTEGER NOT NULL,
   kind INTEGER NOT NULL,
   width INTEGER NOT NULL,
@@ -74,7 +73,6 @@ CREATE TABLE predicate_spec (
   rhs_prog_id INTEGER REFERENCES address_program(id),
   desc TEXT
 );
-CREATE INDEX ix_predicate_spec_pred ON predicate_spec(pred_id);
 CREATE INDEX ix_predicate_spec_bp   ON predicate_spec(required_bp);
 
 -- Explorer settings <-> predicate linkage
