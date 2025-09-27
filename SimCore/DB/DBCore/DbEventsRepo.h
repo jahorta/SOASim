@@ -1,11 +1,14 @@
 #pragma once
+#include "DbResult.h"
+#include "DbRetryPolicy.h"
+#include "DbService.h"
 #include <string>
 #include <vector>
 #include <cstdint>
-#include "DbEnv.h"
-#include "DbResult.h"
+#include <future>
 
-namespace simcore::db {
+namespace simcore {
+    namespace db {
 
         struct DbEventRow {
             int64_t id{};
@@ -17,23 +20,35 @@ namespace simcore::db {
         };
 
         struct DbEventsRepo {
-            static DbResult<int64_t> Insert(DbEnv& env,
-                const std::string& kind,
+            // Async
+            static std::future<DbResult<int64_t>> InsertAsync(const std::string& kind,
                 int64_t created_mono_ns,
                 const std::string& created_utc,
                 const std::string& coord_boot_id,
-                const std::string& payload);
+                const std::string& payload,
+                RetryPolicy rp = {});
+            static std::future<DbResult<void>>    InsertBootEventAsync(const std::string& kind,
+                const std::string& payload,
+                RetryPolicy rp = {});
+            static std::future<DbResult<std::vector<DbEventRow>>> ListRecentAsync(int limit, RetryPolicy rp = {});
+            static std::future<DbResult<std::vector<DbEventRow>>> ListSinceAsync(int64_t since_mono_ns,
+                const std::string& kind_filter,
+                RetryPolicy rp = {});
 
-            static DbResult<void> InsertBootEvent(DbEnv& env,
-                const std::string& kind,
-                const std::string& payload);
-
-            static DbResult<std::vector<DbEventRow>> ListRecent(DbEnv& env,
-                int limit);
-
-            static DbResult<std::vector<DbEventRow>> ListSince(DbEnv& env,
-                int64_t since_mono_ns,
-                const std::string& kind_filter); // empty = all
+            // Blocking
+            static inline DbResult<int64_t> Insert(const std::string& k, int64_t ns, const std::string& utc, const std::string& boot, const std::string& p) {
+                return InsertAsync(k, ns, utc, boot, p).get();
+            }
+            static inline DbResult<void> InsertBootEvent(const std::string& k, const std::string& p) {
+                return InsertBootEventAsync(k, p).get();
+            }
+            static inline DbResult<std::vector<DbEventRow>> ListRecent(int limit) {
+                return ListRecentAsync(limit).get();
+            }
+            static inline DbResult<std::vector<DbEventRow>> ListSince(int64_t ns, const std::string& kf) {
+                return ListSinceAsync(ns, kf).get();
+            }
         };
 
-} // namespace simcore::db
+    } // namespace db
+} // namespace simcore

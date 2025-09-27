@@ -2,20 +2,20 @@
 #include "CoordinatorClock.h"
 #include <sqlite3.h>
 
-namespace simcore::db {
+namespace simcore {
+    namespace db {
 
-        DbResult<int64_t> DbEventsRepo::Insert(DbEnv& env,
+        static inline DbResult<int64_t> Impl_Insert(DbEnv& env,
             const std::string& kind,
             int64_t created_mono_ns,
             const std::string& created_utc,
             const std::string& coord_boot_id,
-            const std::string& payload)
-        {
+            const std::string& payload) {
+
             sqlite3* db = env.handle();
             sqlite3_stmt* st{};
             int rc = sqlite3_prepare_v2(db,
-                "INSERT INTO db_event(kind, created_mono_ns, created_utc, coord_boot_id, payload) "
-                "VALUES(?, ?, ?, ?, ?);",
+                "INSERT INTO db_event(kind, created_mono_ns, created_utc, coord_boot_id, payload) VALUES(?, ?, ?, ?, ?);",
                 -1, &st, nullptr);
             if (rc != SQLITE_OK) return DbResult<int64_t>::Err({ map_sqlite_err(rc), rc, "prepare insert db_event" });
 
@@ -33,30 +33,20 @@ namespace simcore::db {
             return DbResult<int64_t>::Ok(sqlite3_last_insert_rowid(db));
         }
 
-        DbResult<void> DbEventsRepo::InsertBootEvent(DbEnv& env,
-            const std::string& kind,
-            const std::string& payload)
-        {
+        static inline DbResult<void> Impl_InsertBootEvent(DbEnv& env, const std::string& kind, const std::string& payload) {
             auto& clk = CoordinatorClock::instance();
-            auto r = Insert(env, kind,
-                clk.mono_now_ns(),
-                clk.boot_wall_utc_iso(),
-                clk.boot_id(),
-                payload);
+            auto r = Impl_Insert(env, kind, clk.mono_now_ns(), clk.boot_wall_utc_iso(), clk.boot_id(), payload);
             if (!r.ok) return DbResult<void>::Err(r.error);
             return DbResult<void>::Ok();
         }
 
-        DbResult<std::vector<DbEventRow>> DbEventsRepo::ListRecent(DbEnv& env, int limit)
-        {
+        static inline DbResult<std::vector<DbEventRow>> Impl_ListRecent(DbEnv& env, int limit) {
             sqlite3* db = env.handle();
             sqlite3_stmt* st{};
             int rc = sqlite3_prepare_v2(db,
-                "SELECT id, kind, created_mono_ns, created_utc, coord_boot_id, payload "
-                "FROM db_event ORDER BY created_mono_ns DESC LIMIT ?;",
+                "SELECT id, kind, created_mono_ns, created_utc, coord_boot_id, payload FROM db_event ORDER BY created_mono_ns DESC LIMIT ?;",
                 -1, &st, nullptr);
             if (rc != SQLITE_OK) return DbResult<std::vector<DbEventRow>>::Err({ map_sqlite_err(rc), rc, "prepare list recent" });
-
             sqlite3_bind_int(st, 1, (limit <= 0 ? 50 : limit));
             std::vector<DbEventRow> out;
             while ((rc = sqlite3_step(st)) == SQLITE_ROW) {
@@ -75,19 +65,13 @@ namespace simcore::db {
             return DbResult<std::vector<DbEventRow>>::Ok(std::move(out));
         }
 
-        DbResult<std::vector<DbEventRow>> DbEventsRepo::ListSince(DbEnv& env,
-            int64_t since_mono_ns,
-            const std::string& kind_filter)
-        {
+        static inline DbResult<std::vector<DbEventRow>> Impl_ListSince(DbEnv& env, int64_t since_mono_ns, const std::string& kind_filter) {
             sqlite3* db = env.handle();
             sqlite3_stmt* st{};
             const char* SQL_ALL =
-                "SELECT id, kind, created_mono_ns, created_utc, coord_boot_id, payload "
-                "FROM db_event WHERE created_mono_ns > ? ORDER BY created_mono_ns ASC;";
+                "SELECT id, kind, created_mono_ns, created_utc, coord_boot_id, payload FROM db_event WHERE created_mono_ns > ? ORDER BY created_mono_ns ASC;";
             const char* SQL_KIND =
-                "SELECT id, kind, created_mono_ns, created_utc, coord_boot_id, payload "
-                "FROM db_event WHERE created_mono_ns > ? AND kind=? ORDER BY created_mono_ns ASC;";
-
+                "SELECT id, kind, created_mono_ns, created_utc, coord_boot_id, payload FROM db_event WHERE created_mono_ns > ? AND kind=? ORDER BY created_mono_ns ASC;";
             int rc = sqlite3_prepare_v2(db, kind_filter.empty() ? SQL_ALL : SQL_KIND, -1, &st, nullptr);
             if (rc != SQLITE_OK) return DbResult<std::vector<DbEventRow>>::Err({ map_sqlite_err(rc), rc, "prepare list since" });
 
@@ -111,4 +95,27 @@ namespace simcore::db {
             return DbResult<std::vector<DbEventRow>>::Ok(std::move(out));
         }
 
-} // namespace simcore::db
+        // Async
+
+        std::future<DbResult<int64_t>> DbEventsRepo::InsertAsync(const std::string& k, int64_t ns, const std::string& utc, const std::string& boot, const std::string& p, RetryPolicy rp) {
+            return DBService::instance().submit_res<int64_t>(OpType::Write, Priority::Normal, rp,
+                [=](DbEnv& e) { return Impl_Insert(e, k, ns, utc, boot, p); });
+        }
+
+        std::future<DbResult<void>> DbEventsRepo::InsertBootEventAsync(const std::string& k, const std::string& p, RetryPolicy rp) {
+            return DBService::instance().submit_res<void>(OpType::Write, Priority::High, rp,
+                [=](DbEnv& e) { return Impl_InsertBootEvent(e, k, p); });
+        }
+
+        std::future<DbResult<std::vector<DbEventRow>>> DbEventsRepo::ListRecentAsync(int limit, RetryPolicy rp) {
+            return DBService::instance().submit_res<std::vector<DbEventRow>>(OpType::Read, Priority::Normal, rp,
+                [=](DbEnv& e) { return Impl_ListRecent(e, limit); });
+        }
+
+        std::future<DbResult<std::vector<DbEventRow>>> DbEventsRepo::ListSinceAsync(int64_t ns, const std::string& kf, RetryPolicy rp) {
+            return DBService::instance().submit_res<std::vector<DbEventRow>>(OpType::Read, Priority::Normal, rp,
+                [=](DbEnv& e) { return Impl_ListSince(e, ns, kf); });
+        }
+
+    } // namespace db
+} // namespace simcore

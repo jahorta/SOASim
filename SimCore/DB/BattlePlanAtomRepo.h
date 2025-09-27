@@ -1,5 +1,4 @@
 #pragma once
-#include "DBCore/DbEnv.h"
 #include "DBCore/DbResult.h"
 #include "DBCore/DbRetryPolicy.h"
 #include "DBCore/DbService.h"
@@ -23,25 +22,33 @@ namespace simcore {
         };
 
         struct BattlePlanAtomRepo {
-            static DbResult<int64_t> Ensure(DbEnv& env,
+            static std::future<DbResult<int64_t>> EnsureAsync(
                 int32_t wire_version,
-                const std::vector<uint8_t>& wire_bytes,
+                std::vector<uint8_t> wire_bytes,
                 int32_t action_type,
                 int32_t actor_slot,
                 int32_t is_prelude,
                 int32_t param_item_id,
-                int32_t target_slot);
+                int32_t target_slot,
+                RetryPolicy rp = {});
 
-            static DbResult<BattlePlanAtomRow> Get(DbEnv& env, int64_t id);
+            static std::future<DbResult<BattlePlanAtomRow>> GetAsync(int64_t id, RetryPolicy rp = {});
 
-            static inline std::future<DbResult<int64_t>>
-                EnsureAsync(int32_t wire_version, std::vector<uint8_t> wire_bytes, int32_t action_type,
-                    int32_t actor_slot, int32_t is_prelude, int32_t param_item_id, int32_t target_slot,
-                    RetryPolicy rp = {}) {
-                return DBService::instance().submit_res<int64_t>(OpType::Write, Priority::Normal, rp,
-                    [=, wb = std::move(wire_bytes)](DbEnv& e) { return Ensure(e, wire_version, wb, action_type, actor_slot, is_prelude, param_item_id, target_slot); });
+            static inline DbResult<int64_t> Ensure(
+                int32_t wire_version,
+                std::vector<uint8_t> wire_bytes,
+                int32_t action_type,
+                int32_t actor_slot,
+                int32_t is_prelude,
+                int32_t param_item_id,
+                int32_t target_slot) {
+                return EnsureAsync(wire_version, std::move(wire_bytes), action_type, actor_slot, is_prelude, param_item_id, target_slot).get();
+            }
+
+            static inline DbResult<BattlePlanAtomRow> Get(int64_t id) {
+                return GetAsync(id).get();
             }
         };
 
-    }
-} // namespace simcore::db
+    } // namespace db
+} // namespace simcore

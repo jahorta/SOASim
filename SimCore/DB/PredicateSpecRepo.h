@@ -1,5 +1,4 @@
 #pragma once
-#include "DBCore/DbEnv.h"
 #include "DBCore/DbResult.h"
 #include "DBCore/DbRetryPolicy.h"
 #include "DBCore/DbService.h"
@@ -15,7 +14,6 @@ namespace simcore {
         struct PredicateSpecRow {
             int64_t id{};
             int32_t spec_version{};
-            int32_t pred_id{};
             int32_t required_bp{};
             int32_t kind{};
             int32_t width{};
@@ -32,12 +30,18 @@ namespace simcore {
         };
 
         struct PredicateSpecRepo {
-            static DbResult<int64_t> Insert(DbEnv& env, const PredicateSpecRow& r);
-            static DbResult<int64_t> BulkInsert(DbEnv& env, const std::vector<PredicateSpecRow>& rows);
-            static DbResult<PredicateSpecRow> Get(DbEnv& env, int64_t id);
-            static DbResult<std::vector<PredicateSpecRow>> ListByBp(DbEnv& env, int32_t required_bp);
-            static DbResult<std::vector<PredicateSpecRow>> ListByPredId(DbEnv& env, int32_t pred_id);
+            // Async (catalog writes/reads)
+            static std::future<DbResult<int64_t>> InsertAsync(const PredicateSpecRow& r, RetryPolicy rp = {});
+            static std::future<DbResult<int64_t>> BulkInsertAsync(std::vector<PredicateSpecRow>& rows, RetryPolicy rp = {});
+            static std::future<DbResult<PredicateSpecRow>> GetAsync(int64_t id, RetryPolicy rp = {});
+            static std::future<DbResult<std::vector<PredicateSpecRow>>> ListByBpAsync(int32_t required_bp, RetryPolicy rp = {});
+
+            // Blocking conveniences
+            static inline DbResult<int64_t> Insert(const PredicateSpecRow& r) { return InsertAsync(r).get(); }
+            static inline DbResult<int64_t> BulkInsert(std::vector<PredicateSpecRow>& rows) { return BulkInsertAsync(rows).get(); }
+            static inline DbResult<PredicateSpecRow> Get(int64_t id) { return GetAsync(id).get(); }
+            static inline DbResult<std::vector<PredicateSpecRow>> ListByBp(int32_t bp) { return ListByBpAsync(bp).get(); }
         };
 
-    }
-} // namespace simcore::db
+    } // db
+} // simcore

@@ -1,5 +1,4 @@
 #pragma once
-#include "DBCore/DbEnv.h"
 #include "DBCore/DbResult.h"
 #include "DBCore/DbRetryPolicy.h"
 #include "DBCore/DbService.h"
@@ -7,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <optional>
 
 namespace simcore {
     namespace db {
@@ -21,35 +21,24 @@ namespace simcore {
         };
 
         struct SeedProbeRepo {
-            static DbResult<int64_t> Create(DbEnv& env, int64_t savestate_id, int64_t version_id, int64_t neutral_seed);
-            static DbResult<void>    MarkRunning(DbEnv& env, int64_t probe_id);
-            static DbResult<void>    SetNeutralSeed(DbEnv& env, int64_t probe_id, int64_t neutral_seed);
-            static DbResult<void>    MarkDone(DbEnv& env, int64_t probe_id);
-            static DbResult<SeedProbeRow> Get(DbEnv& env, int64_t probe_id);
-            static DbResult<std::vector<SeedProbeRow>> ListActiveForSavestate(DbEnv& env, int64_t savestate_id);
-            static DbResult<std::vector<SeedProbeRow>> ListPlanned(DbEnv& env);
+            // Async
+            static std::future<DbResult<int64_t>> CreateAsync(int64_t savestate_id, int64_t version_id, int64_t neutral_seed, RetryPolicy rp = {});
+            static std::future<DbResult<void>>    MarkRunningAsync(int64_t probe_id, RetryPolicy rp = {});
+            static std::future<DbResult<void>>    SetNeutralSeedAsync(int64_t probe_id, int64_t neutral_seed, RetryPolicy rp = {});
+            static std::future<DbResult<void>>    MarkDoneAsync(int64_t probe_id, RetryPolicy rp = {});
+            static std::future<DbResult<SeedProbeRow>> GetAsync(int64_t probe_id, RetryPolicy rp = {});
+            static std::future<DbResult<std::vector<SeedProbeRow>>> ListActiveForSavestateAsync(int64_t savestate_id, RetryPolicy rp = {});
+            static std::future<DbResult<std::vector<SeedProbeRow>>> ListPlannedAsync(RetryPolicy rp = {});
 
-            static inline std::future<DbResult<int64_t>>
-                CreateAsync(int64_t savestate_id, int64_t version_id, int64_t neutral_seed, RetryPolicy rp = {}) {
-                return DBService::instance().submit_res<int64_t>(OpType::Write, Priority::Normal, rp,
-                    [=](DbEnv& e) { return Create(e, savestate_id, version_id, neutral_seed); });
-            }
-            static inline std::future<DbResult<void>>
-                MarkRunningAsync(int64_t probe_id, RetryPolicy rp = {}) {
-                return DBService::instance().submit_res<void>(OpType::Write, Priority::High, rp,
-                    [=](DbEnv& e) { return MarkRunning(e, probe_id); });
-            }
-            static inline std::future<DbResult<void>>
-                MarkDoneAsync(int64_t probe_id, RetryPolicy rp = {}) {
-                return DBService::instance().submit_res<void>(OpType::Write, Priority::Normal, rp,
-                    [=](DbEnv& e) { return MarkDone(e, probe_id); });
-            }
-            static inline std::future<DbResult<std::vector<SeedProbeRow>>>
-                ListPlannedAsync(RetryPolicy rp = {}) {
-                return DBService::instance().submit_res<std::vector<SeedProbeRow>>(OpType::Read, Priority::High, rp,
-                    [](DbEnv& e) { return ListPlanned(e); });
-            }
+            // Blocking convenience
+            static inline DbResult<int64_t> Create(int64_t savestate_id, int64_t version_id, int64_t neutral_seed) { return CreateAsync(savestate_id, version_id, neutral_seed).get(); }
+            static inline DbResult<void>    MarkRunning(int64_t probe_id) { return MarkRunningAsync(probe_id).get(); }
+            static inline DbResult<void>    SetNeutralSeed(int64_t probe_id, int64_t neutral_seed) { return SetNeutralSeedAsync(probe_id, neutral_seed).get(); }
+            static inline DbResult<void>    MarkDone(int64_t probe_id) { return MarkDoneAsync(probe_id).get(); }
+            static inline DbResult<SeedProbeRow> Get(int64_t probe_id) { return GetAsync(probe_id).get(); }
+            static inline DbResult<std::vector<SeedProbeRow>> ListActiveForSavestate(int64_t savestate_id) { return ListActiveForSavestateAsync(savestate_id).get(); }
+            static inline DbResult<std::vector<SeedProbeRow>> ListPlanned() { return ListPlannedAsync().get(); }
         };
 
     }
-} // namespace simcore::db
+}

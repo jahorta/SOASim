@@ -1,8 +1,12 @@
 #pragma once
-#include "DbEnv.h"
+#include "DbResult.h"
+#include "DbRetryPolicy.h"
+#include "DbService.h"
 #include <string>
 #include <optional>
 #include <cstdint>
+#include <future>
+#include <vector>
 
 namespace simcore {
     namespace db {
@@ -18,10 +22,15 @@ namespace simcore {
 
         class ObjectStore {
         public:
-            static ObjectRefRow finalize(DbEnv::Tx& tx,
-                const std::string& staged_path,
+            // Async: finalize a staged file into the object store and upsert object_ref
+            static std::future<DbResult<ObjectRefRow>> FinalizeAsync(const std::string& staged_path,
                 const std::string& objdir,
-                Compression comp = Compression::None);
+                Compression comp = Compression::None,
+                RetryPolicy rp = {});
+            // Blocking
+            static inline DbResult<ObjectRefRow> Finalize(const std::string& staged_path, const std::string& objdir, Compression comp = Compression::None) {
+                return FinalizeAsync(staged_path, objdir, comp).get();
+            }
         };
 
     } // namespace db

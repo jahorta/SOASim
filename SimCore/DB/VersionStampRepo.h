@@ -1,10 +1,10 @@
 #pragma once
-#include "DBCore/DbEnv.h"
 #include "DBCore/DbResult.h"
 #include "DBCore/DbRetryPolicy.h"
 #include "DBCore/DbService.h"
 #include <future>
 #include <string>
+#include <cstdint>
 
 namespace simcore {
     namespace db {
@@ -18,24 +18,22 @@ namespace simcore {
         };
 
         struct VersionStampRepo {
-            static DbResult<int64_t> Ensure(DbEnv& env,
-                const std::string& dolphin_build_hash,
+            // Async
+            static std::future<DbResult<int64_t>> EnsureAsync(const std::string& dolphin_build_hash,
                 const std::string& wrapper_commit,
                 const std::string& simcore_commit,
-                const std::string& vm_opcode_hash);
+                const std::string& vm_opcode_hash,
+                RetryPolicy rp = {});
+            static std::future<DbResult<VersionStampRow>> GetAsync(int64_t id, RetryPolicy rp = {});
 
-            static DbResult<VersionStampRow> Get(DbEnv& env, int64_t id);
-
-            static inline std::future<DbResult<int64_t>>
-                EnsureAsync(const std::string& dolphin_build_hash,
-                    const std::string& wrapper_commit,
-                    const std::string& simcore_commit,
-                    const std::string& vm_opcode_hash,
-                    RetryPolicy rp = {}) {
-                return DBService::instance().submit_res<int64_t>(OpType::Write, Priority::Normal, rp,
-                    [=](DbEnv& e) { return Ensure(e, dolphin_build_hash, wrapper_commit, simcore_commit, vm_opcode_hash); });
+            // Blocking
+            static inline DbResult<int64_t> Ensure(const std::string& a, const std::string& b, const std::string& c, const std::string& d) {
+                return EnsureAsync(a, b, c, d).get();
+            }
+            static inline DbResult<VersionStampRow> Get(int64_t id) {
+                return GetAsync(id).get();
             }
         };
 
-    }
-} // namespace simcore::db
+    } // namespace db
+} // namespace simcore
